@@ -9,7 +9,7 @@ K = [20, -10, 0, 0;
     0, -10, 20, -10;
     0, 0, -10, 20];
 
-n = 4;  r = 2; % r is assumed to be even 
+n = 4;  r = 2; % 
 lambda_prev = rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
 [Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-16, 1);
 
@@ -22,21 +22,14 @@ H1r = @(s) cr*((s*Ir-Ar)\br);
 H2r = @(s1, s2) br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\br); 
 
 l1 = lambda(1); l2 = lambda(2);
-fprintf('Linear interpolation?')
+fprintf('1st-order optimality conditions, 2r in total')
 [H1(-l1)-H1r(-l1), H1(-l2)-H1r(-l2)]
 
-fprintf('Quadratic interpolation?')
+fprintf('2nd-order optimality conditions, r^2 in total')
 [H2(-l1,-l1)-H2r(-l1,-l1)]
 [H2(-l1,-l2)-H2r(-l1,-l2)]
 [H2(-l2,-l1)-H2r(-l2,-l1)]
 [H2(-l2,-l2)-H2r(-l2,-l2)]
-
-% Ar = diag([-9.437, -3.5904]);
-% phir = [2.7314, 13.5855];
-% Krtilde = [13.5319, -7.1861;
-%     -7.1861, 58.7025];
-% br = ones(2,1);
-% cr = [2.7314, 13.5855];
 
 % Derivatives?
 H1_prime = @(s) -c*((s*I-A)\((s*I-A)\b));
@@ -62,7 +55,7 @@ H2r_s2prime = @(s1,s2) -br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\((s2*Ir-Ar)\br)); % Par
 % So, strictly derivatives are not interpolated... But are the mixed
 % conditions satisfied? 
 
-fprintf('Mixed linear + quadratic optimality conditions')
+fprintf('Mixed linear + quadratic optimality conditions, 2r in total')
 
 ROpart1 = 2*phi(1)*H1r_prime(-l1) + ...
     kappa(1,1)*H2r_s1prime(-l1,-l1) + kappa(1,2)*H2r_s1prime(-l1,-l2) + ...
