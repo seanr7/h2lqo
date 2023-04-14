@@ -77,13 +77,15 @@ end
 
 %% a random example...
 n = 10;
-r = 2;
+r = 4;
 
 % TODO: Somewhere under the hood, I must be assuming implicitly that A is a
 % diagonal matrix at the start, because the code fails if that is not the
 % case...
-A = diag(rand(n,1));  b = rand(n,1);  c = rand(1,n);  K = rand(n,n);
-K = (K+K')/2;
+
+A = diag(rand(n,1));
+b = rand(n,1);  c = rand(1,n);  
+K = rand(n,n);  K = (K+K')/2;
 
 lambda_prev = rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
 [Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-12, 1);
