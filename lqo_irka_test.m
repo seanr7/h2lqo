@@ -3,6 +3,92 @@ clc
 clear all
 close all
 
+%%
+addpath('/Users/seanr/Desktop/h2lqo/benchmarks/')
+load('heat-cont.mat')
+A = full(A);    B = full(B);    C = full(C);
+[n,~] = size(A);    p = 1; % relevant dimensions
+b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
+K = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
+
+r = 10; % 
+lambda_prev = -rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
+[Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-10, 1);
+
+%% H2 errors
+addpath('/Users/seanr/Documents/MATLAB/Research/QuadBT/code4Sean_Oct10th_2022',...
+    '/Users/seanr/Documents/MATLAB/Research/QuadBT/Quad-PRBT')
+
+% load('heat-cont.mat')
+load('iss1R.mat')
+A = full(A);    B = full(B);    C = full(C);
+[n,~] = size(A);    p = 1; % relevant dimensions
+b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
+M = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
+M = M*10e-2;
+
+testcases = 20;
+lambda_init = -10*rand(testcases,1);  phi_init = rand(testcases,1); 
+tmp = rand(testcases,testcases);
+kappa_init = (tmp+tmp')/2;
+count = 1;
+for r = 2:2:testcases
+    [Ar, br, cr, Mr, lambda, phi, kappa] = lqo_irka(A, b, c, M, lambda_init(1:r), phi_init(1:r), kappa_init(1:r,1:r), 100, 10e-8, 0);
+    % Compute H2 error
+    Aerr_irka = blkdiag(A, Ar);
+    berr_irka = [b; br];
+    cerr_irka = [c, -cr];
+    Merr_irka = blkdiag(M, -Mr);
+    Perr_irka = lyap(Aerr_irka, berr_irka*berr_irka');
+    Qerr_irka = lyap(Aerr_irka', cerr_irka'*cerr_irka + Merr_irka*Perr_irka*Merr_irka);
+    H2_errors_irka(count) = sqrt(berr_irka'*Qerr_irka*berr_irka);
+% 
+% 
+%     P_qbt = lyap(A,b*b'); % OF P
+%     U = chol(P_qbt+eye(n,n)*10e-16);
+%     Q_qbt = lyap(A',c'*c + M*P_qbt*M); % OF Q
+%     L = chol(Q_qbt+eye(n,n)*10e-16);
+%     
+%     [Z,S,Y] = svd(U'*L2);
+%     hsv = diag(S);
+%     
+%     Z1 = Z(:,1:r);
+%     Y1 = Y(:,1:r);
+%     S1 = S(1:r,1:r);
+%     
+%     W = L*Y1/(sqrt(S1));
+%     V = U*Z1/(sqrt(S1));
+%     
+%     Ar = W'*A*V;
+%     br = W'*b;
+%     cr = c*V;
+%     Mr = V'*M*V;
+%     Aerr_qbt = blkdiag(A, Ar);
+%     berr_qbt = [b; br];
+%     cerr_qbt = [c, -cr];
+%     Merr_qbt = blkdiag(M, -Mr);
+%     Perr_qbt = lyap(Aerr_qbt, berr_qbt*berr_qbt');
+%     Qerr_qbt = lyap(Aerr_qbt', cerr_qbt'*cerr_qbt + Merr_qbt*Perr_qbt*Merr_qbt);
+%     H2_errors_qbt(count) = sqrt(berr_qbt'*Qerr_qbt*berr_qbt);
+%     [Ar, br, cr, Mr, interp_pts] = twosided_lqo(A, b, c, M, lambda_init(1:r), phi_init(1:r), kappa_init(1:r,1:r), 10e-8);
+%     Aerr_tsia = blkdiag(A, Ar);
+%     berr_tsia = [b; br];
+%     cerr_tsia = [c, -cr];
+%     Merr_tsia = blkdiag(M, -Mr);
+%     Perr_tsia = lyap(Aerr_tsia, berr_tsia*berr_tsia');
+%     Qerr_tsia = lyap(Aerr_tsia', cerr_tsia'*cerr_tsia + Merr_tsia*Perr_tsia*Merr_tsia);
+%     H2_errors_tsia(count) = sqrt(berr_tsia'*Qerr_tsia*berr_tsia);
+    count = count + 1;
+end
+golden_ratio = (sqrt(5)+1)/2;
+axes('position', [.125 .15 .75 golden_ratio-1])
+semilogy([2:2:testcases], H2_errors_irka, '-o','markersize', 10, 'linewidth',2)
+hold on
+% semilogy([2:2:testcases], H2_errors_qbt, '-*','markersize', 10, 'linewidth',2)
+xlabel('Order of reduction, $r$','FontSize',14,'Interpreter','latex')
+ylabel('$\|\mathcal{S}-\mathcal{S}_r\|_{\mathcal{H}_2}$','FontSize',14, 'Interpreter','latex')
+legend('LQO-IRKA', 'LQO-TSIA')
+
 %% example from lqo Overleaf doc
 
 A = -diag([1,2,3,4]);    b = [1;1;2;2];  c = [2,2,3,3];
@@ -221,9 +307,125 @@ while err(iter) > eps && iter < itermax
     lambda_prev = lambda;   phi_prev = phi;    kappa_prev = kappa;
 end
 if plot_conv == true
-    semilogy([1:iter], err, '-o', LineWidth=1.5)
+    golden_ratio = (sqrt(5)+1)/2;
+    axes('position', [.125 .15 .75 golden_ratio-1])
+    semilogy([1:iter], err, '-o','linewidth',2)
     xlim([1,iter])
-    xlabel('Iteration count')
-    ylabel('Magnitude of change in \lambda')
+    xlabel('Iteration count','FontSize',14,'Interpreter','latex')
+    ylabel('Magnitude of change in $\lambda(\mathbf{A})$','FontSize',14, 'Interpreter','latex')
 end
+end
+
+%% TSIA
+function [Ar, br, cr, Kr, interp_pts] = twosided_lqo(A, b, c, K, lambda, phi, kappa, eps)
+% Author: Sean Reiter
+% Date Modified: 3-27-23
+% 
+% Please report any issues with this code to seanr7@vt.edu
+%
+% Function to implement two-sided iterative algorithm for MOR of LQO
+% systems in: [Gosea/Antoulas, '19]: `` A two-sided iterative framework for
+% model reduction of linear systems with quadratic output''.
+%
+% Inputs:
+% :param (A, b, c, K): ((n,n), (n,1), (1,n), (n,n)) State-space realization 
+%                      of LQO FOM.
+% :param lambda      : Left interpolation points
+% :param mu          : Right interpolation points
+% :param eps         : Convergence tol
+
+%%
+% Build initial projection bases 
+r = length(lambda);     [~,n] = size(A);
+% if mod(r,2) ~= 0 % For now, assume even no. of interpolation points
+%     error('An even number if interpolation points is assumed')
+% end
+% if r ~= length(mu)
+%     error('Must have an equal number of left/right interpolation points')
+% end
+
+% Vr = zeros(n,r);    Wr = zeros(n,r);
+I = eye(n,n);
+% for k = 1:(r/2)
+%     Vr(:,2*(k-1)+1) = (lambda(2*(k-1)+1)*I-A)\b;     Vr(:,2*k) = (lambda(2*k)*I-A)\b; 
+%     Wr(:,2*(k-1)+1) = (mu(2*(k-1)+1)*I-A')\c';       Wr(:,2*k) = ((mu(2*k)*I-A')\K)*((lambda(2*(k-1)+1)*I-A)\b); 
+% end
+% % Initial projection step 
+% Wrt = Wr';  Vrt = Vr';
+% Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
+% cr = c*Vr;  Kr = Vrt*K*Vr;
+% Initialise
+Vr = zeros(n,r);     Wr = zeros(n,r);
+% TODO: This part below can be optimized so as to not repeat any linear
+% solves 
+for k = 1:r
+    % Right
+    Vr(:,k) = (-lambda(k)*I-A)\b;     
+    % Left
+    Wr(:,k) = phi(k)*((-lambda(k)*I-A')\c');
+    tmp = (-lambda(k)*I-A')\K';
+    for i = 1:r
+        Wr(:,k) = Wr(:,k) + kappa(i,k)*tmp*((-lambda(i)*I-A)\b);
+    end
+end
+[Vr,~] = qr(Vr, "econ");     [Wr,~] = qr(Wr, "econ");
+% Compute ROM, check for convergence
+Wrt = Wr';  Vrt = Vr';
+Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
+cr = c*Vr;  Kr = Vrt*K*Vr;
+lambda = eig(Ar);
+
+% Iterate until eigenvalues converge 
+interp_pts = [lambda];
+
+while max(abs(lambda-interp_pts)) > eps
+    Arprev = Ar;
+    Brprev = Br;
+    Crprev = Cr;
+    Mrprev = Mr;
+    
+    X = sylvester(A,Ar',-B*Br');
+    Y = sylvester(A',Ar,-M'*X*Mr-C'*Cr);
+
+    %V = orth(X);
+    %W = orth(Y);
+    V = X;
+    W = Y;
+    W = (W'*V)\W';
+
+    Ar = W*A*V;
+    Br = W*B;
+    Cr = C*V;
+    Mr = V'*M*V;
+    
+    [U,V] = eig(Ar);
+    Kr = Mr(:)';
+
+
+    Ar = U^(-1)*Ar*U;
+    Br = U^(-1)*Br;
+    Cr = Cr*U;
+    Kr = Kr*kron(U,U);
+ 
+    Db = diag(Br);
+    Ar = Db^(-1)*Ar*Db;
+    br = Db^(-1)*Br;
+    cr = Cr*Db;
+    Kr = Kr*kron(Db,Db);
+
+    Kr = reshape(Kr,2*r,2*r);
+    interp_pts = eig(Ar);
+end
+
+% while max(abs(lambda-interp_pts)) > eps
+%     lambda = eig(Ar);
+%     % Solve + orthonormalize projection matrices
+%     X = sylvester(A, Ar, -b*br');    Y = sylvester(A', Ar, -(K'*X*Kr + c'*cr));
+%     [Vr,~] = qr(X);     [Wr,~] = qr(Y);
+%     % Compute ROM, check for convergence
+%     Wrt = Wr';  Vrt = Vr';
+%     Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
+%     cr = c*Vr;  Kr = Vrt*K*Vr;
+%     interp_pts = eig(Ar);
+% end
 end
