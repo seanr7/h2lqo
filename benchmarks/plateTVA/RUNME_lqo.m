@@ -47,6 +47,7 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         tic
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
+        print(size(tmp))
         res(ii) = sqrt(tmp' * M_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('finished in %.2f s\n',toc)
     end
@@ -54,6 +55,8 @@ end
 
 f = imag(s)/2/pi;
 mag = 10*log10(abs(res)/1e-9);
+
+save(rms_lqo,"res",'-mat')
 
 figure('name','Transfer function')
 plot(f,mag)
