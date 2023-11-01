@@ -34,8 +34,8 @@ A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
 % No scalar output in this example; only QO
 
-% Our `M' matrix (i.e., the quadratic output matrix) is just the (n_nodes x n_nodes) identity
-M_qo = speye(n_nodes);
+% Our `M' matrix (i.e., the quadratic output matrix) is C' * C
+M_qo = C' * C; % Double check this...
 
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
@@ -47,7 +47,6 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         tic
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        print(size(tmp))
         res(ii) = sqrt(tmp' * M_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('finished in %.2f s\n',toc)
     end
@@ -64,3 +63,42 @@ xlabel('Frequency [Hz]')
 ylabel('Magnitude [dB]')
 
 %% Do via LQO-IRKA
+addpath('~/h2lqo')
+% addpath('~/Desktop/h2lqo')
+
+r = 250; % From Steffen's paper
+poles_prev = -logspace(-2, 4, r)'; % Spread 
+SO_res_prev = eye(r, r); % Try this since M_qo is I?
+[A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka((E_qo\A_qo), (E_qo\B_qo), ...
+    [], M_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
+
+% Compute H2 error
+A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
+A_qo_err(1:2*n, 1:2*n) = A_qo;  
+A_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = A_qo_r;
+% blkdiag(A_qo, A_qo_r);
+B_qo_err = spalloc(2*n + r, 1, nnz(B_qo) + nnz(B_qo_r));
+B_qo_err(1:2*n, 1) = B_qo;  
+B_qo_err(2*n + 1:2*n + r, 1) = B_qo_r;
+% [B_qo; B_qo_r];
+M_qo_err = spalloc(2*n + r, 2*n + r, nnz(M_qo) + nnz(M_qo_r));
+M_qo_err(1:2*n, 1:2*n) = M_qo;  
+M_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = M_qo_r;
+% blkdiag(M_qo, -M_qo_r);
+fprintf('Sanity; is M_qo_r symm?')
+norm(M_qo_r - M_qo_r', 2)
+
+P_qo_err = lyap(A_qo_err, B_qo_err * B_qo_err');
+Q_qo_err = lyap(A_qo_err', M_qo_err * P_qo_err * M_qo_err);
+fprintf('H2 error')
+sqrt(B_qo_err' * Q_qo_err * B_qo_err)
+
+res_r = zeros(1,length(s));
+for ii=1:length(s)
+    fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
+    tic
+    tmp = (s(ii) * speye(r, r) - A_qo_r) \ B_qo_r;
+    res_r(ii) = sqrt(tmp' * M_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+    fprintf('finished in %.2f s\n',toc)
+end
+
