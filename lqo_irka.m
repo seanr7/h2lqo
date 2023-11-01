@@ -113,28 +113,7 @@ while (err(iter) > eps && iter < itermax)
             W_r(:, k) = W_r(:, k) + conj(SOres_prev(i, k))* tmp * rhs;
         end
     end
-
-    for k = 1:r % Fill out columns of V_r, W_r
-        % 1. Construction of Vr enforces r + r^2 interpolation conditions:
-        %   @math: H1(-L_prev(k)) = H1r(-L_prev(k)), k = 1, ..., r
-        %   @math: H2(-L_prev(i), -L_prev(j)) = H2(-L_prev(i), -L_prev(j)), 
-        %           i, j = 1, ..., r
-        V_r(:, k) = (-poles_prev(k) * E - A)\b; 
-        % 2. Construction of W_r enforces r `mixed' Hermite conditions:
-        %   @math: phi_prev(k) * H1^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
-        %          mu_prev(k, j) * H2^(1, 0)(-L_prev(k), -L_prev(j)) = ...
-        %          phi_prev(k) * H1_r^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
-        %          mu_prev(k, j) * H2_r^(1, 0)(-L_prev(k), -L_prev(j)) = ...
-
-        if ~pure_QO % If not purely QO, compute 
-            W_r(:, k) = FOres_prev(k)*((-poles_prev(k) * E' - A')\c');
-        end
-        tmp = (-poles_prev(k) * E' - A')\M; 
-        for i = 1:r
-            W_r(:, k) = W_r(:, k) + SOres_prev(i, k)* tmp * ...
-                            ((-poles_prev(i) * E - A)\b);
-        end
-    end
+    
     % Orthonormalize projection matrices
     [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
     % Compute LQO-ROM via PG-proj and monitor convergence (E_r = eye(r, r))
