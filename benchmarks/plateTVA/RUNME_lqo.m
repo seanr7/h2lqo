@@ -14,7 +14,7 @@ close all
 % outputs. Instead, treat as an LQO model, and compute these evaluations
 % directly
 
-fprint('Loading plateTVA model...')
+fprintf('Loading plateTVA model...')
 load('plateTVA_n201900m1q28278_full')
 n_nodes = full(sum(sum(C)));
 
@@ -38,7 +38,8 @@ B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
 % No scalar output in this example; only QO
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
-M_qo = C' * C; % Double check this...
+M_qo = spalloc(2*n, 2*n, nnz(C' * C));
+M_qo(1:n, 1:n) = C' * C; % Double check this...
 fprintf('FO-LQO realization built in %.2f s\n',toc)
 
 %% Sample H2(s1, s2) (QO-tf)
@@ -65,7 +66,8 @@ f = imag(s)/2/pi;
 mag = 10*log10(abs(res)/1e-9);
 
 fprintf('Saving FO simulation data')
-save(FOsim_data,'res','f','mag','-mat')
+filename = 'FOSIM_data.mat';
+save(filename,'res','f','mag')
 
 % figure('name','Transfer function')
 % plot(f,mag)
@@ -82,8 +84,11 @@ r = 250; % From Steffen's paper
 poles_prev = -logspace(-2, 4, r)'; % Spread 
 tmp = rand(r, r);
 SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?
-[A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka((E_qo\A_qo), (E_qo\B_qo), ...
+[E_qo_r, A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka(E_qo, A_qo, B_qo, ...
     [], M_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
+
+filename = 'plateTVAlqo_r250.m';
+save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'M_qo_r', 'poles', 'SO_res') 
 
 % Compute H2 error
 % A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
@@ -126,4 +131,5 @@ f_ro = imag(s)/2/pi;
 mag_ro = 10*log10(abs(res_ro)/1e-9);
 
 fprintf('Saving RO simulation data')
-save(ROsim_data,'res_ro','f_ro','mag_ro','-mat')
+filename = 'ROsim_data.mat';
+save(filename,'res_ro','f_ro','mag_ro')
