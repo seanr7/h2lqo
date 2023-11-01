@@ -34,6 +34,6 @@ diary solveTimes
 % Start timer
 tic
 solve = (-si * E_qo - A_qo)\B_qo; 
-fprintf('Single linear solve (-si * E_qo - A_qo)\B_qo finished in %.2f s\n',toc)
+fprintf('Single linear solve finished in %.2f s/n', toc)
 
 diary off
