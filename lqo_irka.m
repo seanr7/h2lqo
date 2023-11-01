@@ -77,7 +77,36 @@ while (err(iter) > eps && iter < itermax)
     % Pre-allocate space for right, left PG-proj bases V_r, W_r
     % (Note: Construction requires RO-poles and residues @ each iter)
     V_r = zeros(n, r);     W_r = zeros(n, r);
-    % TODO: Optimize to minimze no. of linear solves
+
+    % First, pre-compute all of V_r (we can re-use these in building W_r)
+    for k = 1:r 
+        % 1. Construction of Vr enforces r + r^2 interpolation conditions:
+        %   @math: H1(-L_prev(k)) = H1r(-L_prev(k)), k = 1, ..., r
+        %   @math: H2(-L_prev(i), -L_prev(j)) = H2(-L_prev(i), -L_prev(j)), 
+        %           i, j = 1, ..., r
+        V_r(:, k) = (-poles_prev(k) * E - A)\b; 
+    end
+    % Now, fill out colummns of W_r
+    for k = 1:r
+        % 2. Construction of W_r enforces r `mixed' Hermite conditions:
+        %   @math: phi_prev(k) * H1^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
+        %          mu_prev(k, j) * H2^(1, 0)(-L_prev(k), -L_prev(j)) = ...
+        %          phi_prev(k) * H1_r^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
+        %          mu_prev(k, j) * H2_r^(1, 0)(-L_prev(k), -L_prev(j)) = ...
+
+        if ~pure_QO % If not purely QO, compute 
+            % TODO: Double check we need to complex conjugates here...
+            W_r(:, k) = conj(FOres_prev(k))*((conj(-poles_prev(k)) * E' - A')\c');
+        end
+        % Pre-compute one linear solve
+        tmp = (-poles_prev(k) * E' - A')\M; 
+        for i = 1:r
+            rhs = V_r(:, i); % Grab (-poles_prev(k) * E - A)\b; 
+            % TODO: Double check we need to complex conjugates here...
+            W_r(:, k) = W_r(:, k) + conj(SOres_prev(i, k))* tmp * rhs;
+        end
+    end
+
     for k = 1:r % Fill out columns of V_r, W_r
         % 1. Construction of Vr enforces r + r^2 interpolation conditions:
         %   @math: H1(-L_prev(k)) = H1r(-L_prev(k)), k = 1, ..., r

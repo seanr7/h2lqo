@@ -27,6 +27,7 @@ load('heat-cont.mat')
 % load('iss1R.mat')
 A = full(A);    B = full(B);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
+E = eye(n, n);
 b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
 M = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 M = M*10e-2;
