@@ -8,13 +8,16 @@ addpath('/Users/seanr/Desktop/h2lqo/benchmarks/')
 load('heat-cont.mat')
 A = full(A);    B = full(B);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
+E = eye(n, n);
 b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
 K = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 
 r = 10; % 
-lambda_prev = -logspace(-2,4,r)';  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
+lambda_prev = -logspace(-2,4,r)';  phi_prev = rand(r,1);   tmp = rand(r,r);
+kappa_prev = (tmp+tmp')/2;
 % lambda_prev = -10*rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
-[Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-8, 1);
+[Er, Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(E, A, b, c, K, ...
+    lambda_prev, phi_prev, kappa_prev, 100, 10e-8, 1);
 
 %% H2 errors
 addpath('/Users/seanr/Documents/MATLAB/Research/QuadBT/code4Sean_Oct10th_2022',...

@@ -1,5 +1,5 @@
-function [A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(A, b, c, M, ...
-    poles_prev, FOres_prev, SOres_prev, itermax, eps, plot_conv)
+function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
+    c, M, poles_prev, FOres_prev, SOres_prev, itermax, eps, plot_conv)
 % Author: Sean Reiter (seanr7@vt.edu)
 
 % Apply the Iterative Rational Krylov Algorithm (IRKA) to Linear Quadratic
@@ -7,11 +7,12 @@ function [A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(A, b, c, M, ...
  
 % Paramters
 % ---------
-% @param (A, b, c, M) \in (Rnn, Rn1, R1n, Rnn):
+% @param (E, A, b, c, M) \in (Rnn, Rnn, Rn1, R1n, Rnn):
 %   State-space description of an n-dimensional LQO model. Assumed to be
 %   asymptotically stable.
 %   M is assumed to be symmetric; M = M'. 
 %   A is assumed to be diagonalizable.
+%   E (mass) is assumed to be nonsingular.
 
 % @param poles_prev:
 %   Initial selection of interpolation points in open left half-plane.
@@ -38,7 +39,7 @@ function [A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(A, b, c, M, ...
 
 % Outputs
 % ---------
-% @param (A_r, b_r, c_r, M_r) \in (Rrr, Rr1, R1r, Rrr):
+% @param (E_r, A_r, b_r, c_r, M_r) \in (Err, Rrr, Rr1, R1r, Rrr):
 %   State-space realization of the locally H2-optimal r-dimensional
 %   LQO-ROM, obtained via Petrov-Galerkin (PG) projection.
 
@@ -51,16 +52,16 @@ function [A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(A, b, c, M, ...
 %% LQO-IRKA
 % Take input data; Compute initial LQO-ROM via PG-proj
 r = length(poles_prev);     [~, n] = size(A); % ROM and FOM dimensions
-I = eye(n, n);
+% I = eye(n, n);
 
 % Check iteration/convergence tolerances; set to defaults if unspecified
-if nargin == 9 % (Default is to not plot convergence of the RO-poles)
+if nargin == 10 % (Default is to not plot convergence of the RO-poles)
     plot_conv = 0;
 end
-if nargin == 8 % (No convergence tolerance set)
+if nargin == 9 % (No convergence tolerance set)
     eps = 10e-8;
 end
-if nargin == 7 % (No max number of iterations set)
+if nargin == 8 % (No max number of iterations set)
     itermax = 100;
 end
 
@@ -82,7 +83,7 @@ while (err(iter) > eps && iter < itermax)
         %   @math: H1(-L_prev(k)) = H1r(-L_prev(k)), k = 1, ..., r
         %   @math: H2(-L_prev(i), -L_prev(j)) = H2(-L_prev(i), -L_prev(j)), 
         %           i, j = 1, ..., r
-        V_r(:, k) = (-poles_prev(k) * I - A)\b; 
+        V_r(:, k) = (-poles_prev(k) * E - A)\b; 
         % 2. Construction of W_r enforces r `mixed' Hermite conditions:
         %   @math: phi_prev(k) * H1^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
         %          mu_prev(k, j) * H2^(1, 0)(-L_prev(k), -L_prev(j)) = ...
@@ -90,29 +91,33 @@ while (err(iter) > eps && iter < itermax)
         %          mu_prev(k, j) * H2_r^(1, 0)(-L_prev(k), -L_prev(j)) = ...
 
         if ~pure_QO % If not purely QO, compute 
-            W_r(:, k) = FOres_prev(k)*((-poles_prev(k) * I - A')\c');
+            W_r(:, k) = FOres_prev(k)*((-poles_prev(k) * E' - A')\c');
         end
-        tmp = (-poles_prev(k) * I - A')\M; 
+        tmp = (-poles_prev(k) * E' - A')\M; 
         for i = 1:r
             W_r(:, k) = W_r(:, k) + SOres_prev(i, k)* tmp * ...
-                            ((-poles_prev(i) * I - A)\b);
+                            ((-poles_prev(i) * E - A)\b);
         end
     end
     % Orthonormalize projection matrices
     [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
     % Compute LQO-ROM via PG-proj and monitor convergence (E_r = eye(r, r))
     W_rt = W_r';  V_rt = V_r';
-    A_r = (W_rt * V_r)\(W_rt * A * V_r);   b_r = (W_rt * V_r)\(W_rt * b);
+    E_r = W_rt * E * V_r;   A_r = W_rt * A * V_r;   b_r = W_rt * b;
+%     E_r = eye(r, r);
+%     A_r = (W_rt * V_r)\(W_rt * A * V_r);   b_r = (W_rt * V_r)\(W_rt * b);
     if ~pure_QO % Compute reduced linear output term
         c_r = c * V_r;  
     end
     M_r = V_rt * M * V_r;
     
     % Diagonalize Ar; Get RO-poles ...
-    [X_r, L_r] = eig(A_r);     poles = diag(L_r);
+    [X_r, L_r] = eig(E_r\A_r);     poles = diag(L_r);
+
+%     [X_r, L_r] = eig(A_r, E_r);     poles = diag(L_r);
     % ... + 1st, 2nd-order residues of H1r, H2r
     if ~pure_QO % Compute FO residues
-        FOres = (c_r * X_r)'.* (X_r\b_r);    
+        FOres = (c_r * X_r)'.* (X_r\(E_r\b_r));    
         FOres_prev = FOres; 
     end
     SOres = X_r' * M_r * X_r;

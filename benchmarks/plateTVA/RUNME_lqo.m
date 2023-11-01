@@ -40,6 +40,9 @@ M_qo = C' * C; % Double check this...
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
+diary([lqo_diary '.log'])
+diary on;
+
 % recompute = true;
 recompute = false;
 if recompute == true
@@ -105,4 +108,4 @@ end
 
 % Save output file
 save(rms_ro_lqo, "res_r", '-mat')
-
+diary off;
