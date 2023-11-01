@@ -40,7 +40,8 @@ M_qo = C' * C; % Double check this...
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
-recompute = true;
+% recompute = true;
+recompute = false;
 if recompute == true
     res = zeros(1,length(s));
     for ii=1:length(s)
@@ -55,7 +56,7 @@ end
 f = imag(s)/2/pi;
 mag = 10*log10(abs(res)/1e-9);
 
-save(rms_lqo,"res",'-mat')
+% save(rms_lqo,"res",'-mat')
 
 figure('name','Transfer function')
 plot(f,mag)
@@ -101,4 +102,7 @@ for ii=1:length(s)
     res_r(ii) = sqrt(tmp' * M_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
     fprintf('finished in %.2f s\n',toc)
 end
+
+% Save output file
+save(rms_ro_lqo, "res_r", '-mat')
 
