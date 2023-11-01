@@ -14,12 +14,15 @@ close all
 % outputs. Instead, treat as an LQO model, and compute these evaluations
 % directly
 
+fprint('Loading plateTVA model...')
 load('plateTVA_n201900m1q28278_full')
 n_nodes = full(sum(sum(C)));
 
 %% Convert plate model to FO (first-order) from SO (second-order)
 % Model is given in SO-form
 % Necessarily, need to conver to FO to do LQO_IRKA for now
+fprintf('Converting SO realization to a FO-LQO system')
+tic
 [n, ~] = size(M);
 
 E_qo = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
@@ -36,76 +39,91 @@ B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
 M_qo = C' * C; % Double check this...
+fprintf('FO-LQO realization built in %.2f s\n',toc)
 
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
-diary([lqo_diary '.log'])
-diary on;
-
-% recompute = true;
-recompute = false;
+recompute = true;
+fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s/n', 250*15.72)
+% recompute = false;
+overall_start = tic;
 if recompute == true
     res = zeros(1,length(s));
     for ii=1:length(s)
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
-        tic
+        current_iter = tic;
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
         res(ii) = sqrt(tmp' * M_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-        fprintf('finished in %.2f s\n',toc)
+        fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
     end
 end
+
+fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
 
 f = imag(s)/2/pi;
 mag = 10*log10(abs(res)/1e-9);
 
-% save(rms_lqo,"res",'-mat')
+fprintf('Saving FO simulation data')
+save(FOsim_data,'res','f','mag','-mat')
 
-figure('name','Transfer function')
-plot(f,mag)
-xlabel('Frequency [Hz]')
-ylabel('Magnitude [dB]')
+% figure('name','Transfer function')
+% plot(f,mag)
+% xlabel('Frequency [Hz]')
+% ylabel('Magnitude [dB]')
 
 %% Do via LQO-IRKA
 addpath('~/h2lqo')
 % addpath('~/Desktop/h2lqo')
 
+fprintf('Beginning construction of the LQO-ROM via LQO-IRKA')
+
 r = 250; % From Steffen's paper
 poles_prev = -logspace(-2, 4, r)'; % Spread 
-SO_res_prev = eye(r, r); % Try this since M_qo is I?
+tmp = rand(r, r);
+SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?
 [A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka((E_qo\A_qo), (E_qo\B_qo), ...
     [], M_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
 
 % Compute H2 error
-A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
-A_qo_err(1:2*n, 1:2*n) = A_qo;  
-A_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = A_qo_r;
-% blkdiag(A_qo, A_qo_r);
-B_qo_err = spalloc(2*n + r, 1, nnz(B_qo) + nnz(B_qo_r));
-B_qo_err(1:2*n, 1) = B_qo;  
-B_qo_err(2*n + 1:2*n + r, 1) = B_qo_r;
-% [B_qo; B_qo_r];
-M_qo_err = spalloc(2*n + r, 2*n + r, nnz(M_qo) + nnz(M_qo_r));
-M_qo_err(1:2*n, 1:2*n) = M_qo;  
-M_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = M_qo_r;
-% blkdiag(M_qo, -M_qo_r);
-fprintf('Sanity; is M_qo_r symm?')
-norm(M_qo_r - M_qo_r', 2)
+% A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
+% A_qo_err(1:2*n, 1:2*n) = A_qo;  
+% A_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = A_qo_r;
+% % blkdiag(A_qo, A_qo_r);
+% B_qo_err = spalloc(2*n + r, 1, nnz(B_qo) + nnz(B_qo_r));
+% B_qo_err(1:2*n, 1) = B_qo;  
+% B_qo_err(2*n + 1:2*n + r, 1) = B_qo_r;
+% % [B_qo; B_qo_r];
+% M_qo_err = spalloc(2*n + r, 2*n + r, nnz(M_qo) + nnz(M_qo_r));
+% M_qo_err(1:2*n, 1:2*n) = M_qo;  
+% M_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = M_qo_r;
+% % blkdiag(M_qo, -M_qo_r);
+% fprintf('Sanity; is M_qo_r symm?')
+% norm(M_qo_r - M_qo_r', 2)
+% 
+% P_qo_err = lyap(A_qo_err, B_qo_err * B_qo_err');
+% Q_qo_err = lyap(A_qo_err', M_qo_err * P_qo_err * M_qo_err);
+% fprintf('H2 error')
+% sqrt(B_qo_err' * Q_qo_err * B_qo_err)
 
-P_qo_err = lyap(A_qo_err, B_qo_err * B_qo_err');
-Q_qo_err = lyap(A_qo_err', M_qo_err * P_qo_err * M_qo_err);
-fprintf('H2 error')
-sqrt(B_qo_err' * Q_qo_err * B_qo_err)
+fprintf('Beginning reduced-order simulation.')
+% recompute = false;
+overall_start = tic;
 
-res_r = zeros(1,length(s));
+res_ro = zeros(1,length(s));
 for ii=1:length(s)
     fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
-    tic
+    current_iter = tic;
     tmp = (s(ii) * speye(r, r) - A_qo_r) \ B_qo_r;
-    res_r(ii) = sqrt(tmp' * M_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-    fprintf('finished in %.2f s\n',toc)
+    res_ro(ii) = sqrt(tmp' * M_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+    fprintf('Iteration of RO-sim finished in %.2f s\n',toc(current_iter))
 end
+fprintf('Reduced-order sim finished; time of completion is %.2f s/n', toc(overall_start))
 
-% Save output file
-save(rms_ro_lqo, "res_r", '-mat')
-diary off;
+% Save output filefprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
+
+f_ro = imag(s)/2/pi;
+mag_ro = 10*log10(abs(res_ro)/1e-9);
+
+fprintf('Saving RO simulation data')
+save(ROsim_data,'res_ro','f_ro','mag_ro','-mat')

@@ -71,6 +71,10 @@ if (isempty(c) || isempty(FOres_prev))
     pure_QO = true;
 end
 
+% Start the clock on the total iteration
+overall_timer_start = tic;
+fprintf('Beginning IRKA iteration')
+
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
 while (err(iter) > eps && iter < itermax)
@@ -78,6 +82,9 @@ while (err(iter) > eps && iter < itermax)
     % (Note: Construction requires RO-poles and residues @ each iter)
     V_r = zeros(n, r);     W_r = zeros(n, r);
 
+    % Start the clock
+    thisiter_timer_start = tic;
+    fprintf('Beginning next IRKA iteration; current iterate is k = %d', iter)
     % First, pre-compute all of V_r (we can re-use these in building W_r)
     for k = 1:r 
         % 1. Construction of Vr enforces r + r^2 interpolation conditions:
@@ -156,7 +163,19 @@ while (err(iter) > eps && iter < itermax)
     iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
     % Overwrite RO-poles + residues
     poles_prev = poles; SOres_prev = SOres;
+
+    % End the clock
+    fprintf('End of current IRKA iterate k = %d', iter)
+    fprintf('Current IRKA iteration finished in %.2f s\n',toc(thisiter_timer_start))
 end
+
+if iter == itermax
+    fprintf('IRKA has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_timer_start))
+else
+    fprintf('IRKA has converged in %d iterations.', iter)
+    fprintf('Total time elapsed is %.2f s\n', toc(overall_timer_start))
+end
+
 % If plotting convergence
 if plot_conv == true
     semilogy(1:iter, err, '-o', LineWidth=1.5)
