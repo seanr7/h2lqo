@@ -67,13 +67,13 @@ end
 
 % If no c term or residues inputted; output is purely quadratic
 pure_QO = false;
-if (isempty(c) || isempty(FOres_prev))
+if isempty(c)
     pure_QO = true;
 end
 
 % Start the clock on the total iteration
 overall_timer_start = tic;
-fprintf('Beginning IRKA iteration')
+fprintf('Beginning IRKA iteration\n')
 
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
@@ -84,7 +84,7 @@ while (err(iter) > eps && iter < itermax)
 
     % Start the clock
     thisiter_timer_start = tic;
-    fprintf('Beginning next IRKA iteration; current iterate is k = %d', iter)
+    fprintf('Beginning next IRKA iteration; current iterate is k = %d\n', iter)
     % First, pre-compute all of V_r (we can re-use these in building W_r)
     for k = 1:r 
         % 1. Construction of Vr enforces r + r^2 interpolation conditions:
@@ -103,24 +103,21 @@ while (err(iter) > eps && iter < itermax)
 
         if ~pure_QO % If not purely QO, compute 
             % TODO: Double check we need to complex conjugates here...
-            W_r(:, k) = conj(FOres_prev(k))*((conj(-poles_prev(k)) * E' - A')\c');
+            W_r(:, k) = conj(FOres_prev(k)) *  ((conj(-poles_prev(k)) * E' - A')\c');
         end
         % Pre-compute one linear solve
-        tmp = (-poles_prev(k) * E' - A')\M; 
+        tmp = (conj(-poles_prev(k)) * E' - A')\M; 
         for i = 1:r
             rhs = V_r(:, i); % Grab (-poles_prev(k) * E - A)\b; 
-            % TODO: Double check we need to complex conjugates here...
-            W_r(:, k) = W_r(:, k) + conj(SOres_prev(i, k))* tmp * rhs;
+            W_r(:, k) = W_r(:, k) + conj(SOres_prev(k, i))* tmp * rhs;
         end
     end
     
     % Orthonormalize projection matrices
     [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
-    % Compute LQO-ROM via PG-proj and monitor convergence (E_r = eye(r, r))
+    % Compute LQO-ROM via PG-proj and new parameters
     W_rt = W_r';  V_rt = V_r';
     E_r = W_rt * E * V_r;   A_r = W_rt * A * V_r;   b_r = W_rt * b;
-%     E_r = eye(r, r);
-%     A_r = (W_rt * V_r)\(W_rt * A * V_r);   b_r = (W_rt * V_r)\(W_rt * b);
     if ~pure_QO % Compute reduced linear output term
         c_r = c * V_r;  
     end
@@ -129,10 +126,9 @@ while (err(iter) > eps && iter < itermax)
     % Diagonalize Ar; Get RO-poles ...
     [X_r, L_r] = eig(E_r\A_r);     poles = diag(L_r);
 
-%     [X_r, L_r] = eig(A_r, E_r);     poles = diag(L_r);
     % ... + 1st, 2nd-order residues of H1r, H2r
     if ~pure_QO % Compute FO residues
-        FOres = (c_r * X_r)'.* (X_r\(E_r\b_r));    
+        FOres = (c_r * X_r)'.* (X_r\(b_r));    
         FOres_prev = FOres; 
     end
     SOres = X_r' * M_r * X_r;
@@ -144,14 +140,14 @@ while (err(iter) > eps && iter < itermax)
     poles_prev = poles; SOres_prev = SOres;
 
     % End the clock
-    fprintf('End of current IRKA iterate k = %d', iter)
+    fprintf('End of current IRKA iterate k = %d\n', iter)
     fprintf('Current IRKA iteration finished in %.2f s\n',toc(thisiter_timer_start))
 end
 
 if iter == itermax
     fprintf('IRKA has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_timer_start))
 else
-    fprintf('IRKA has converged in %d iterations.', iter)
+    fprintf('IRKA has converged in %d iterations\n', iter)
     fprintf('Total time elapsed is %.2f s\n', toc(overall_timer_start))
 end
 
