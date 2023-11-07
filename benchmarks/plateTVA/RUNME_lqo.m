@@ -14,14 +14,14 @@ close all
 % outputs. Instead, treat as an LQO model, and compute these evaluations
 % directly
 
-fprintf('Loading plateTVA model...')
+fprintf('Loading plateTVA model...\n')
 load('plateTVA_n201900m1q28278_full')
 n_nodes = full(sum(sum(C)));
 
 %% Convert plate model to FO (first-order) from SO (second-order)
 % Model is given in SO-form
 % Necessarily, need to conver to FO to do LQO_IRKA for now
-fprintf('Converting SO realization to a FO-LQO system')
+fprintf('Converting SO realization to a FO-LQO system\n')
 tic
 [n, ~] = size(M);
 
@@ -35,12 +35,13 @@ A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
 A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
 B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
+B_qo(n+1:2*n, :) = B;
 % No scalar output in this example; only QO
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
 M_qo = spalloc(2*n, 2*n, nnz(C' * C));
 M_qo(1:n, 1:n) = C' * C; % Double check this...
-fprintf('FO-LQO realization built in %.2f s\n',toc)
+fprintf('FO-LQO realization built in %.2f s/n',toc)
 
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
