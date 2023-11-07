@@ -54,3 +54,10 @@ tic
 mat_vec = solve_mat * solve;
 fin = toc;
 fprintf('Matvec of arising in LQO-IRK finished in %.2f s\n', fin)
+
+tic 
+pre_comp = (-conj(si) * E_qo' - A_qo') \ speye(n);
+fprintf('Pre-compute action of (-conj(si) * E_qo - A_qo)^{-1} against identity, finished in %.2f s\n', toc)
+fprintf('Number of nonzer entries in result %d\n', nnz(pre_comp))
+fprintf('So, result is %f percent sparse', 100 * (n^2 - nnz(pre_comp)) / n^2)
+
