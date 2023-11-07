@@ -22,18 +22,35 @@ A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
 A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
 B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
+B_qo(n+1:2*n, :) = B;
 % No scalar output in this example; only QO
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
-M_qo = C' * C; % Double check this...
+M_qo = spalloc(2*n, 2*n, nnz(C' * C));
+M_qo(1:n, 1:n) = C' * C; % Double check this...
 
 %% Time one sparse linear solve + one IRKA iteration
 si = s(1);
 
-diary solveTimes
 % Start timer
 tic
-solve = (-si * E_qo - A_qo)\B_qo; 
-fprintf('Single linear solve finished in %.2f s/n', toc)
+solve = (-si * E_qo - A_qo) \ B_qo;
+fprintf('Single linear solve finished in %.2f s\n', toc)
 
-diary off
+% How sparse is the original matrix + its resulting solution?
+fprintf('Number of nonzero entries in the resolvent %d \n', nnz(si * E_qo - A_qo))
+fprintf('So, resolvent is %f percent sparse \n', 100 * (n^2 - nnz(si * E_qo - A_qo)) / n^2)
+
+fprintf('Nummber of nonzero entries in the solution is %d \n', nnz(solve))
+fprintf('So, solution is %f percent sparse \n', 100 * (n - nnz(solve)) / n)
+
+tic
+solve_mat = (-conj(si) * E_qo' - A_qo') \ M_qo;
+fprintf('Linear solve against matrix M_qo finished in %.2f s\n', toc)
+fprintf('Number of nonzero entries in solution is %d \n', nnz(solve_mat))
+fprintf('So, solution matrix is %f percent spares \n', 100 * (n^2 - nnz(solve_mat)) / n^2)
+
+tic
+mat_vec = solve_mat * solve;
+fin = toc;
+fprintf('Matvec of arising in LQO-IRK finished in %.2f s\n', fin)
