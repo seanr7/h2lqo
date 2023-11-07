@@ -1,15 +1,124 @@
-% Test lqo-irka
+% Unit tests for LQO IRKA
 clc
 clear all
 close all
 
-%%
+%% 1a. Toy model
+n = 8; 
+% From TSIA paper [GosA19]; scalar + quadratic component
+A = diag(-[1 2 3 4 5 6 7 8]);
+b = [1; 1; 2; 2; 3; 3; 4; 4];     c = [2 2 3 3 4 4 5 5];
+% QO matrix
+M = 10*(diag(2 * ones(1, n)) + diag(-1 * ones(1, n-1), 1) + diag(-1 * ones(1, n - 1), -1));
+
+% To find good interpolation points, look at the poles
+r = 4;
+interp_pts = -2 + 2 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
+SO_res = (tmp + tmp')/2;
+max_iter = 100; tol = 10e-10;   plot = true;
+
+% First, E = I case
+E = eye(n, n);
+
+% Run iteration + plot conv
+[Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
+    interp_pts, FO_res, SO_res, max_iter, tol, plot);
+
+% Check interpolation conditions
+H1 = @(s) c * ((s * E - A)\b); 
+H2 = @(s1, s2) b' * ((s1 * E - A)'\M) * ((s2 * E - A)\b);
+
+H1r = @(s) cr * ((s * Er - Ar)\br); 
+H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br); 
+
+fprintf('1st-order optimality conditions, %d in total', r)
+for i = 1:r
+    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
+end
+
+fprintf('2nd-order optimality conditions, %d^2 in total', r)
+for i = 1:r
+    for j = 1:r
+        H2(-conv_nodes(i), - conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
+    end
+    
+end
+
+% Derivs of H1, H1r
+H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
+H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
+
+% Partial deriv wrt first argument of H2, H2r
+H2_prime = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
+H2r_prime = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+
+fprintf('Mixed linear + quadratic optimality conditions, 2*%d in total', r)
+
+for i = 1:r
+    ro_side = conv_FO_res(i) * H1r_prime(-conv_nodes(i));
+    fo_side = conv_FO_res(i) * H1_prime(-conv_nodes(i));
+    for j = 1:r
+        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + conv_SO_res(i, j) * H2_prime(-conv_nodes(i), -conv_nodes(j));
+    end
+    fo_side - ro_side
+end
+
+%% Now E ~= I, but nonsingular 
+E = inv(diag(-[1 2 3 4 5 6 7 8]));
+
+% Run iteration + plot conv
+[Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
+    interp_pts, FO_res, SO_res, max_iter, tol, plot);
+
+% Check interpolation conditions; redefine functions 
+H1 = @(s) c * ((s * E - A)\b); 
+H2 = @(s1, s2) b' * ((s1 * E - A)'\M) * ((s2 * E - A)\b);
+
+H1r = @(s) cr * ((s * Er - Ar)\br); 
+H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br); 
+
+fprintf('1st-order optimality conditions, %d in total', r)
+for i = 1:r
+    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
+end
+
+fprintf('2nd-order optimality conditions, %d^2 in total', r)
+for i = 1:r
+    for j = 1:r
+        H2(-conv_nodes(i), - conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
+    end
+    
+end
+
+% Derivs of H1, H1r
+H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
+H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
+
+% Partial deriv wrt first argument of H2, H2r
+H2_prime = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
+H2r_prime = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+
+fprintf('Mixed linear + quadratic optimality conditions, 2*%d in total', r)
+
+for i = 1:r
+    ro_side = conv_FO_res(i) * H1r_prime(-conv_nodes(i));
+    fo_side = conv_FO_res(i) * H1_prime(-conv_nodes(i));
+    for j = 1:r
+        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + conv_SO_res(i, j) * H2_prime(-conv_nodes(i), -conv_nodes(j));
+    end
+    fo_side - ro_side
+end
+
+
+%% 
 addpath('/Users/seanr/Desktop/h2lqo/benchmarks/')
 load('heat-cont.mat')
-A = full(A);    B = full(B);    C = full(C);
+A = full(A);    b = full(b);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
 E = eye(n, n);
-b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
+b = b(:, p);  c = C(p, :); % If using ISS model, make SISO
 K = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 
 r = 10; % 
@@ -25,10 +134,10 @@ addpath('/Users/seanr/Documents/MATLAB/Research/QuadBT/code4Sean_Oct10th_2022',.
 
 load('heat-cont.mat')
 % load('iss1R.mat')
-A = full(A);    B = full(B);    C = full(C);
+A = full(A);    b = full(b);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
 E = eye(n, n);
-b = B(:, p);  c = C(p, :); % If using ISS model, make SISO
+b = b(:, p);  c = C(p, :); % If using ISS model, make SISO
 M = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 M = M*10e-2;
 
@@ -103,10 +212,11 @@ K = [20, -10, 0, 0;
     -10, 20, -10, 0;
     0, -10, 20, -10;
     0, 0, -10, 20];
+E = eye(4,4);
 
 n = 4;  r = 2; % 
 lambda_prev = rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
-[Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-16, 1);
+[Er, Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(E, A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-16, 1);
 
 % Are interpolation conditions satisfied?
 I = eye(n,n);   Ir = eye(r,r);
@@ -134,8 +244,8 @@ end
 H1_prime = @(s) -c*((s*I-A)\((s*I-A)\b));
 H1r_prime = @(s) -cr*((s*Ir-Ar)\((s*Ir-Ar)\br));
 
-H2_s1prime = @(s1,s2) -b'*((s1*I-A)'\((s1*I-A)'\K))*((s2*I-A)\b); % Partial deriv w.r.t s1
-H2r_s1prime = @(s1,s2) -br'*((s1*Ir-Ar)'\((s1*Ir-Ar)'\Kr))*((s2*Ir-Ar)\br);   % Partial deriv w.r.t s1
+H2_prime = @(s1,s2) -b'*((s1*I-A)'\((s1*I-A)'\K))*((s2*I-A)\b); % Partial deriv w.r.t s1
+H2r_prime = @(s1,s2) -br'*((s1*Ir-Ar)'\((s1*Ir-Ar)'\Kr))*((s2*Ir-Ar)\br);   % Partial deriv w.r.t s1
 
 H2_s2prime = @(s1,s2) -b'*((s1*I-A)'\K)*((s2*I-A)\((s2*I-A)\b)); % Partial deriv w.r.t s2
 H2r_s2prime = @(s1,s2) -br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\((s2*Ir-Ar)\br)); % Partial deriv w.r.t s2
@@ -149,9 +259,9 @@ for i = 1:r
     ROpart = 2*phi(i)*H1r_prime(-lambda(i));
     FOpart = 2*phi(i)*H1_prime(-(lambda(i)));
     for j = 1:r
-        ROpart = ROpart + kappa(i,j)*H2r_s1prime(-lambda(i),-lambda(j)) + ...
+        ROpart = ROpart + kappa(i,j)*H2r_prime(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2r_s2prime(-lambda(j),-lambda(i));
-        FOpart = FOpart + kappa(i,j)*H2_s1prime(-lambda(i),-lambda(j)) + ...
+        FOpart = FOpart + kappa(i,j)*H2_prime(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2_s2prime(-lambda(j),-lambda(i));
     end
     [FOpart - ROpart]
@@ -176,20 +286,21 @@ r = 4;
 % diagonal matrix at the start, because the code fails if that is not the
 % case...
 
-A = diag(rand(n,1));
+E = eye(n,n);
+A = diag(-rand(n,1));
 b = rand(n,1);  c = rand(1,n);  
 K = rand(n,n);  K = (K+K')/2;
 
 lambda_prev = rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
-[Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-12, 1);
+[Er, Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(E, A, b, c, K, lambda_prev, phi_prev, kappa_prev, 100, 10e-12, 1);
 
 % Are interpolation conditions satisfied?
 I = eye(n,n);   Ir = eye(r,r);
-H1 = @(s) c*((s*I-A)\b); 
-H2 = @(s1, s2) b'*((s1*I-A)'\K)*((s2*I-A)\b);
+H1 = @(s) c*((s*E-A)\b); 
+H2 = @(s1, s2) b'*((s1*E-A)'\K)*((s2*E-A)\b);
 
-H1r = @(s) cr*((s*Ir-Ar)\br); 
-H2r = @(s1, s2) br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\br); 
+H1r = @(s) cr*((s*Er-Ar)\br); 
+H2r = @(s1, s2) br'*((s1*Er-Ar)'\Kr)*((s2*Er-Ar)\br); 
 
 l1 = lambda(1); l2 = lambda(2);
 fprintf('1st-order optimality conditions, 2r in total')
@@ -206,14 +317,14 @@ for i = 1:r
 end
 
 % Derivatives?
-H1_prime = @(s) -c*((s*I-A)\((s*I-A)\b));
-H1r_prime = @(s) -cr*((s*Ir-Ar)\((s*Ir-Ar)\br));
+H1_prime = @(s) -c*((s*E-A)\((s*E-A)\b));
+H1r_prime = @(s) -cr*((s*Er-Ar)\((s*Er-Ar)\br));
 
-H2_s1prime = @(s1,s2) -b'*((s1*I-A)'\((s1*I-A)'\K))*((s2*I-A)\b); % Partial deriv w.r.t s1
-H2r_s1prime = @(s1,s2) -br'*((s1*Ir-Ar)'\((s1*Ir-Ar)'\Kr))*((s2*Ir-Ar)\br);   % Partial deriv w.r.t s1
+H2_prime = @(s1,s2) -b'*((s1*E-A)'\((s1*E-A)'\K))*((s2*E-A)\b); % Partial deriv w.r.t s1
+H2r_prime = @(s1,s2) -br'*((s1*Er-Ar)'\((s1*Er-Ar)'\Kr))*((s2*Er-Ar)\br);   % Partial deriv w.r.t s1
 
-H2_s2prime = @(s1,s2) -b'*((s1*I-A)'\K)*((s2*I-A)\((s2*I-A)\b)); % Partial deriv w.r.t s2
-H2r_s2prime = @(s1,s2) -br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\((s2*Ir-Ar)\br)); % Partial deriv w.r.t s2
+H2_s2prime = @(s1,s2) -b'*((s1*E-A)'\K)*((s2*E-A)\((s2*E-A)\b)); % Partial deriv w.r.t s2
+H2r_s2prime = @(s1,s2) -br'*((s1*Er-Ar)'\Kr)*((s2*Er-Ar)\((s2*Er-Ar)\br)); % Partial deriv w.r.t s2
 
 % So, strictly derivatives are not interpolated... But are the mixed
 % conditions satisfied? 
@@ -224,215 +335,11 @@ for i = 1:r
     ROpart = 2*phi(i)*H1r_prime(-lambda(i));
     FOpart = 2*phi(i)*H1_prime(-(lambda(i)));
     for j = 1:r
-        ROpart = ROpart + kappa(i,j)*H2r_s1prime(-lambda(i),-lambda(j)) + ...
+        ROpart = ROpart + kappa(i,j)*H2r_prime(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2r_s2prime(-lambda(j),-lambda(i));
-        FOpart = FOpart + kappa(i,j)*H2_s1prime(-lambda(i),-lambda(j)) + ...
+        FOpart = FOpart + kappa(i,j)*H2_prime(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2_s2prime(-lambda(j),-lambda(i));
     end
     [FOpart - ROpart]
 end
 
-%% lqo-irka
-
-% function [Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(A, b, c, K, ...
-%     lambda_prev, phi_prev, kappa_prev, itermax, eps, plot_conv)
-% % Author: Sean Reiter
-% % Date Modified: 4-12-23
-% % 
-% % Please report any issues with this code to seanr7@vt.edu
-% %
-% % Function to implement an iterative rational krylov algorithm (IRKA) for
-% % H2-optimal interpolatory MOR of LTI systems with linear quadratic output
-% % (LQO). 
-% %
-% % Inputs:
-% % :param (A, b, c, K): ((n,n), (n,1), (1,n), (n,n)) State-space 
-% %                      realization of the LQO FOM.
-% % :param lambda_prev : Initial interpolation points, (r,1) array
-% % :param phi_prev    : Initial 1st-order residues, (r,1) array
-% % :param kappa_prev  : Initial 2nd-order residues, (r,r) array
-% % :param itermax     : Max no. of iterations to run
-% % :param eps         : Convergence tol
-% % :param plot_conv   : Bool; do you want to plot convergence of the 
-% %                           poles? 
-% % 
-% % Outputs:
-% % :param (Ar, br, cr, Kr): ((r,r), (r,1), (1,r), (r,r)) State-space 
-% %                           realization of the LQO-IRKA ROM.
-% % :param lambda          : Converged interpolation points, (r,1) array
-% % :param phi             : Converged 1st-order residues, (r,1) array
-% % :param kappa           : Converged 2nd-order residues, (r,r) array
-% 
-% %%
-% % Build initial projection bases 
-% r = length(lambda_prev);     [~,n] = size(A);
-% if nargin == 9 % Default is not to plot
-%     plot_conv = 0;
-% end
-% if nargin == 8 % If no tolerance set
-%     eps = 10e-12;
-% end
-% if nargin == 7 % If no max iterations set
-%     itermax = 100;
-% end
-% 
-% I = eye(n,n);
-% iter = 1;   err(iter) = eps + 1; % So while loop initiates
-% 
-% while err(iter) > eps && iter < itermax
-%     % In building Wr/Vr, need reduced poles AND residues
-%     % Fill out left/right projection matrix Wr/Vr
-%     Vr = zeros(n,r);     Wr = zeros(n,r);
-%     % TODO: This part below can be optimized so as to not repeat any linear
-%     % solves 
-%     for k = 1:r
-%         % Right
-%         Vr(:,k) = (-lambda_prev(k)*I-A)\b;     
-%         % Left
-%         Wr(:,k) = phi_prev(k)*((-lambda_prev(k)*I-A')\c');
-%         tmp = (-lambda_prev(k)*I-A')\K';
-%         for i = 1:r
-%             Wr(:,k) = Wr(:,k) + kappa_prev(i,k)*tmp*((-lambda_prev(i)*I-A)\b);
-%         end
-%     end
-%     [Vr,~] = qr(Vr, "econ");     [Wr,~] = qr(Wr, "econ");
-%     % Compute ROM, check for convergence
-%     Wrt = Wr';  Vrt = Vr';
-%     Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
-%     cr = c*Vr;  Kr = Vrt*K*Vr;
-%     % New interpolation points + residues
-%     [Xr, Lr] = eig(Ar);     lambda = diag(Lr);
-%     % 1st-order residues
-%     phi = (cr*Xr)'.*(Xr\br);
-%     % 2nd-order residues
-%     kappa = Xr'*Kr*Xr;
-% 
-%     % Track convergence of poles 
-%     iter = iter + 1; 
-%     err(iter) = max(abs(lambda - lambda_prev));
-%     % Overwrite reduced-order poles/residues from previous iteration
-%     lambda_prev = lambda;   phi_prev = phi;    kappa_prev = kappa;
-% end
-% if plot_conv == true
-%     golden_ratio = (sqrt(5)+1)/2;
-%     axes('position', [.125 .15 .75 golden_ratio-1])
-%     semilogy([1:iter], err, '-o','linewidth',2)
-%     xlim([1,iter])
-%     xlabel('Iteration count','FontSize',14,'Interpreter','latex')
-%     ylabel('Magnitude of change in $\lambda(\mathbf{A})$','FontSize',14, 'Interpreter','latex')
-% end
-% end
-
-%% TSIA
-function [Ar, br, cr, Kr, interp_pts] = twosided_lqo(A, b, c, K, lambda, phi, kappa, eps)
-% Author: Sean Reiter
-% Date Modified: 3-27-23
-% 
-% Please report any issues with this code to seanr7@vt.edu
-%
-% Function to implement two-sided iterative algorithm for MOR of LQO
-% systems in: [Gosea/Antoulas, '19]: `` A two-sided iterative framework for
-% model reduction of linear systems with quadratic output''.
-%
-% Inputs:
-% :param (A, b, c, K): ((n,n), (n,1), (1,n), (n,n)) State-space realization 
-%                      of LQO FOM.
-% :param lambda      : Left interpolation points
-% :param mu          : Right interpolation points
-% :param eps         : Convergence tol
-
-%%
-% Build initial projection bases 
-r = length(lambda);     [~,n] = size(A);
-% if mod(r,2) ~= 0 % For now, assume even no. of interpolation points
-%     error('An even number if interpolation points is assumed')
-% end
-% if r ~= length(mu)
-%     error('Must have an equal number of left/right interpolation points')
-% end
-
-% Vr = zeros(n,r);    Wr = zeros(n,r);
-I = eye(n,n);
-% for k = 1:(r/2)
-%     Vr(:,2*(k-1)+1) = (lambda(2*(k-1)+1)*I-A)\b;     Vr(:,2*k) = (lambda(2*k)*I-A)\b; 
-%     Wr(:,2*(k-1)+1) = (mu(2*(k-1)+1)*I-A')\c';       Wr(:,2*k) = ((mu(2*k)*I-A')\K)*((lambda(2*(k-1)+1)*I-A)\b); 
-% end
-% % Initial projection step 
-% Wrt = Wr';  Vrt = Vr';
-% Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
-% cr = c*Vr;  Kr = Vrt*K*Vr;
-% Initialise
-Vr = zeros(n,r);     Wr = zeros(n,r);
-% TODO: This part below can be optimized so as to not repeat any linear
-% solves 
-for k = 1:r
-    % Right
-    Vr(:,k) = (-lambda(k)*I-A)\b;     
-    % Left
-    Wr(:,k) = phi(k)*((-lambda(k)*I-A')\c');
-    tmp = (-lambda(k)*I-A')\K';
-    for i = 1:r
-        Wr(:,k) = Wr(:,k) + kappa(i,k)*tmp*((-lambda(i)*I-A)\b);
-    end
-end
-[Vr,~] = qr(Vr, "econ");     [Wr,~] = qr(Wr, "econ");
-% Compute ROM, check for convergence
-Wrt = Wr';  Vrt = Vr';
-Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
-cr = c*Vr;  Kr = Vrt*K*Vr;
-lambda = eig(Ar);
-
-% Iterate until eigenvalues converge 
-interp_pts = [lambda];
-
-while max(abs(lambda-interp_pts)) > eps
-    Arprev = Ar;
-    Brprev = Br;
-    Crprev = Cr;
-    Mrprev = Mr;
-    
-    X = sylvester(A,Ar',-B*Br');
-    Y = sylvester(A',Ar,-M'*X*Mr-C'*Cr);
-
-    %V = orth(X);
-    %W = orth(Y);
-    V = X;
-    W = Y;
-    W = (W'*V)\W';
-
-    Ar = W*A*V;
-    Br = W*B;
-    Cr = C*V;
-    Mr = V'*M*V;
-    
-    [U,V] = eig(Ar);
-    Kr = Mr(:)';
-
-
-    Ar = U^(-1)*Ar*U;
-    Br = U^(-1)*Br;
-    Cr = Cr*U;
-    Kr = Kr*kron(U,U);
- 
-    Db = diag(Br);
-    Ar = Db^(-1)*Ar*Db;
-    br = Db^(-1)*Br;
-    cr = Cr*Db;
-    Kr = Kr*kron(Db,Db);
-
-    Kr = reshape(Kr,2*r,2*r);
-    interp_pts = eig(Ar);
-end
-
-% while max(abs(lambda-interp_pts)) > eps
-%     lambda = eig(Ar);
-%     % Solve + orthonormalize projection matrices
-%     X = sylvester(A, Ar, -b*br');    Y = sylvester(A', Ar, -(K'*X*Kr + c'*cr));
-%     [Vr,~] = qr(X);     [Wr,~] = qr(Y);
-%     % Compute ROM, check for convergence
-%     Wrt = Wr';  Vrt = Vr';
-%     Ar = (Wrt*Vr)\(Wrt*A*Vr);   br = (Wrt*Vr)\(Wrt*b);
-%     cr = c*Vr;  Kr = Vrt*K*Vr;
-%     interp_pts = eig(Ar);
-% end
-end

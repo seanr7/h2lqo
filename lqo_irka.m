@@ -109,7 +109,7 @@ while (err(iter) > eps && iter < itermax)
         tmp = (conj(-poles_prev(k)) * E' - A')\M; 
         for i = 1:r
             rhs = V_r(:, i); % Grab (-poles_prev(k) * E - A)\b; 
-            W_r(:, k) = W_r(:, k) + conj(SOres_prev(k, i))* tmp * rhs;
+            W_r(:, k) = W_r(:, k) + conj(SOres_prev(k, i)) * tmp * rhs;
         end
     end
     
