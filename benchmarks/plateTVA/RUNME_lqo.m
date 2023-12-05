@@ -46,8 +46,8 @@ fprintf('FO-LQO realization built in %.2f s/n',toc)
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
-% recompute = true;
-recompute = false;
+recompute = true;
+% recompute = false;
 if recompute == true
     fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s/n', 250*15.72)
     overall_start = tic;
