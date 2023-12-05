@@ -32,19 +32,19 @@ M_qo(1:n, 1:n) = C' * C; % Double check this...
 %% Get idea of spectrum of A
 k = 10;
 tic
-L_small_real = eigs(A, E, 10,'smallestreal');
+L_small_real = eigs(A_qo, E_qo, 10,'smallestreal');
 fprintf('Computation of %d eigenvalues of A, E with smallest real part finished in %.2f s\n', k, toc)
 fprintf('Eig-%d: %.8f\n', 1:k, L_small_real)
 tic
-L_small_abs = eigs(A, E, 10,'smallestabs');
+L_small_abs = eigs(A_qo, E_qo, 10,'smallestabs');
 fprintf('Computation of %d eigenvalues of A, E with smallest magnitude finished in %.2f s\n', k, toc)
 fprintf('Eig-%d: %.8f\n', 1:k, L_small_abs)
 tic
-L_big_real = eigs(A, E, 10,'largestreal');
+L_big_real = eigs(A_qo, E_qo, 10,'largestreal');
 fprintf('Computation of %d eigenvalues of A, E with largest real part finished in %.2f s\n', k, toc)
 fprintf('Eig-%d: %.8f\n', 1:k, L_big_real)
 tic
-L_big_abs = eigs(A, E, 10,'largestabs');
+L_big_abs = eigs(A_qo, E_qo, 10,'largestabs');
 fprintf('Computation of %d eigenvalues of A, E with largest magnitude finished in %.2f s\n', k, toc)
 fprintf('Eig-%d: %.8f\n', 1:k, L_big_abs)
 
