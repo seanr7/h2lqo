@@ -46,11 +46,11 @@ fprintf('FO-LQO realization built in %.2f s/n',toc)
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
-recompute = true;
-fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s/n', 250*15.72)
-% recompute = false;
-overall_start = tic;
+% recompute = true;
+recompute = false;
 if recompute == true
+    fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s/n', 250*15.72)
+    overall_start = tic;
     res = zeros(1,length(s));
     for ii=1:length(s)
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
@@ -59,16 +59,16 @@ if recompute == true
         res(ii) = sqrt(tmp' * M_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
     end
+    fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
+    f = imag(s)/2/pi;
+    mag = 10*log10(abs(res)/1e-9);
+    filename = 'FOSIM_data.mat';
+    save(filename,'res','f','mag')
+
+else
+    fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat')
+    load('FOSIM_data.mat')
 end
-
-fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
-
-f = imag(s)/2/pi;
-mag = 10*log10(abs(res)/1e-9);
-
-fprintf('Saving FO simulation data')
-filename = 'FOSIM_data.mat';
-save(filename,'res','f','mag')
 
 % figure('name','Transfer function')
 % plot(f,mag)
