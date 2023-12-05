@@ -29,93 +29,113 @@ B_qo(n+1:2*n, :) = B;
 M_qo = spalloc(2*n, 2*n, nnz(C' * C));
 M_qo(1:n, 1:n) = C' * C; % Double check this...
 
-%% Time one sparse linear solve + one IRKA iteration
-si = s(1);
-
-% Start timer
+%% Get idea of spectrum of A
+k = 10;
 tic
-solve = (-si * E_qo - A_qo) \ B_qo;
-fprintf('Single linear solve finished in %.2f s\n', toc)
+L_small_real = eigs(A, E, 10,'smallestreal');
+fprintf('Computation of %d eigenvalues of A, E with smallest real part finished in %.2f s\n', k, toc)
+fprintf('Eig-%d: %.8f\n', 1:k, L_small_real)
+tic
+L_small_abs = eigs(A, E, 10,'smallestabs');
+fprintf('Computation of %d eigenvalues of A, E with smallest magnitude finished in %.2f s\n', k, toc)
+fprintf('Eig-%d: %.8f\n', 1:k, L_small_abs)
+tic
+L_big_real = eigs(A, E, 10,'largestreal');
+fprintf('Computation of %d eigenvalues of A, E with largest real part finished in %.2f s\n', k, toc)
+fprintf('Eig-%d: %.8f\n', 1:k, L_big_real)
+tic
+L_big_abs = eigs(A, E, 10,'largestabs');
+fprintf('Computation of %d eigenvalues of A, E with largest magnitude finished in %.2f s\n', k, toc)
+fprintf('Eig-%d: %.8f\n', 1:k, L_big_abs)
 
-% How sparse is the original matrix + its resulting solution?
-fprintf('Number of nonzero entries in the resolvent %d \n', nnz(si * E_qo - A_qo))
-fprintf('So, resolvent is %f percent sparse \n', 100 * (n^2 - nnz(si * E_qo - A_qo)) / n^2)
-
-fprintf('Nummber of nonzero entries in the solution is %d \n', nnz(solve))
-fprintf('So, solution is %f percent sparse \n', 100 * (n - nnz(solve)) / n)
+%% Time one sparse linear solve + one IRKA iteration
+% si = s(1);
+% 
+% % Start timer
+% tic
+% solve = (-si * E_qo - A_qo) \ B_qo;
+% fprintf('Single linear solve finished in %.2f s\n', toc)
+% 
+% % How sparse is the original matrix + its resulting solution?
+% fprintf('Number of nonzero entries in the resolvent %d \n', nnz(si * E_qo - A_qo))
+% fprintf('So, resolvent is %f percent sparse \n', 100 * (n^2 - nnz(si * E_qo - A_qo)) / n^2)
+% 
+% fprintf('Nummber of nonzero entries in the solution is %d \n', nnz(solve))
+% fprintf('So, solution is %f percent sparse \n', 100 * (n - nnz(solve)) / n)
 
 %% Now, let's time an IRKA iteration, roughly
 
-r = 200;
-V_r = sparse(2*n, r);
+% r = 200;
+% V_r = sparse(2*n, r);
+% 
+% % Start the clock
+% overall_time = tic;
+% fprintf('Beginning IRKA iteration')
+% 
+% % First, fill out columns of Vr; used in computing Wr
+% k = 1;
+% while k <= r
+%     % 1. Construction of Vr enforces r + r^2 interpolation conditions:
+%     %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
+%     %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
+%     %           i, j = 1, ..., r
+%     % Save time with spalloc?
+%     this_iter_time = tic;
+%     tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
+%     V_r(:, k) = spalloc(2*n, 1, nnz(tmp));
+%     V_r(:, k) = tmp;
+%     k = k + 1;
+%     fprintf('Current iterate finished in %.2f s\n',toc(this_iter_time))
+% end
+% 
+% tic
+% fprintf('Timing QR pass')
+% [Q_r, ~] = qr(V_r, "econ");   
+% fprintf('QR finished in %.2f s\n', toc)
+% % How sparse is the original matrix + its resulting solution?
+% fprintf('Is Q even sparse? %f \n', issparse(Q_r))
+% fprintf('Number of nonzero entries in orth basis %d \n', nnz(Q_r))
+% 
+% fprintf('Total elapsed time: %.2f s\n',toc(overall_time))
 
-% Start the clock
-overall_time = tic;
-fprintf('Beginning IRKA iteration')
-
-% First, fill out columns of Vr; used in computing Wr
-k = 1;
-while k <= r
-    % 1. Construction of Vr enforces r + r^2 interpolation conditions:
-    %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
-    %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
-    %           i, j = 1, ..., r
-    % Save time with spalloc?
-    this_iter_time = tic;
-    tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
-    V_r(:, k) = spalloc(2*n, 1, nnz(tmp));
-    V_r(:, k) = tmp;
-    k = k + 1;
-    fprintf('Current iterate finished in %.2f s\n',toc(this_iter_time))
-end
-
-tic
-fprintf('Timing QR pass')
-[Q_r, ~] = qr(V_r, "econ");   
-fprintf('QR finished in %.2f s\n', toc)
-% How sparse is the original matrix + its resulting solution?
-fprintf('Is Q even sparse? %f \n', issparse(Q_r))
-fprintf('Number of nonzero entries in orth basis %d \n', nnz(Q_r))
-
-fprintf('Total elapsed time: %.2f s\n',toc(overall_time))
 
 %%
-fprintf('Now, trying iteration with a different sparsity assignment scheme')
-
-r = 200;
-
-% Start the clock
-overall_time = tic;
-fprintf('Beginning IRKA iteration')
-
-% First, fill out columns of Vr; used in computing Wr
-k = 1;
-while k <= r
-    % 1. Construction of Vr enforces r + r^2 interpolation conditions:
-    %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
-    %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
-    %           i, j = 1, ..., r
-    % Save time with spalloc?
-    this_iter_time = tic;
-    tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
-    [i, j, values] = find(tmp); % Get row, col, and values of nz elements of sparse matrix
-    if k == 1
-        V_r_alt = sparse(i, j, values, 2*n, 1);
-    else
-        V_r_alt = [V_r_alt, sparse(i, j, values, 2*n, 1)];
-    end
-    k = k + 1;
-    fprintf('Current iterate finished in %.2f s\n',toc(this_iter_time))
-end
-
-fprintf('Are they the same projection matrices?: %.2f \n', norm(V_r - V_r_alt, 2))
-
-tic
-fprintf('Timing QR pass')
-[Q_r, ~] = qr(V_r_alt, "econ");   
-fprintf('QR finished in %.2f s\n', toc)
-% How sparse is the original matrix + its resulting solution?
-fprintf('Is Q even sparse? %f \n', issparse(Q_r))
-fprintf('Number of nonzero entries in orth basis %d \n', nnz(Q_r))
-
-fprintf('Total elapsed time: %.2f s\n',toc(overall_time))
+% fprintf('Now, trying iteration with a different sparsity assignment scheme')
+% 
+% r = 200;
+% 
+% % Start the clock
+% overall_time = tic;
+% fprintf('Beginning IRKA iteration')
+% 
+% % First, fill out columns of Vr; used in computing Wr
+% k = 1;
+% while k <= r
+%     % 1. Construction of Vr enforces r + r^2 interpolation conditions:
+%     %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
+%     %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
+%     %           i, j = 1, ..., r
+%     % Save time with spalloc?
+%     this_iter_time = tic;
+%     tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
+%     [i, j, values] = find(tmp); % Get row, col, and values of nz elements of sparse matrix
+%     if k == 1
+%         V_r_alt = sparse(i, j, values, 2*n, 1);
+%     else
+%         V_r_alt = [V_r_alt, sparse(i, j, values, 2*n, 1)];
+%     end
+%     k = k + 1;
+%     fprintf('Current iterate finished in %.2f s\n',toc(this_iter_time))
+% end
+% 
+% fprintf('Are they the same projection matrices?: %.2f \n', norm(V_r - V_r_alt, 2))
+% 
+% tic
+% fprintf('Timing QR pass')
+% [Q_r, ~] = qr(V_r_alt, "econ");   
+% fprintf('QR finished in %.2f s\n', toc)
+% % How sparse is the original matrix + its resulting solution?
+% fprintf('Is Q even sparse? %f \n', issparse(Q_r))
+% fprintf('Number of nonzero entries in orth basis %d \n', nnz(Q_r))
+% 
+% fprintf('Total elapsed time: %.2f s\n',toc(overall_time))
