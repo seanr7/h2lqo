@@ -46,9 +46,8 @@ fprintf('So, solution is %f percent sparse \n', 100 * (n - nnz(solve)) / n)
 
 %% Now, let's time an IRKA iteration, roughly
 
-
-V_r = sparse(2*n, r);
 r = 200;
+V_r = sparse(2*n, r);
 
 % Start the clock
 overall_time = tic;
@@ -83,7 +82,6 @@ fprintf('Total elapsed time: %.2f s\n',toc(overall_time))
 %%
 fprintf('Now, trying iteration with a different sparsity assignment scheme')
 
-V_r_alt = sparse(2*n, r);
 r = 200;
 
 % Start the clock
@@ -101,7 +99,11 @@ while k <= r
     tic = this_iter_time;
     tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
     [i, j, values] = find(tmp); % Get row, col, and values of nz elements of sparse matrix
-    V_r_alt(:, k) = sparse(i, j, values, 2*n, 1);
+    if k == 1
+        V_r_alt = sparse(i, j, values, 2*n, 1);
+    else
+        V_r_alt = [V_r_alt, sparse(i, j, values, 2*n, 1)];
+    end
     k = k + 1;
     fprintf('Current iterate finished in %.2f s\n',toc(this_iter_time))
 end
