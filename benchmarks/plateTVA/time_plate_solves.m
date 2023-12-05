@@ -61,7 +61,7 @@ while k <= r
     %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
     %           i, j = 1, ..., r
     % Save time with spalloc?
-    tic = this_iter_time;
+    this_iter_time = tic;
     tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
     V_r(:, k) = spalloc(2*n, 1, nnz(tmp));
     V_r(:, k) = tmp;
@@ -96,7 +96,7 @@ while k <= r
     %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
     %           i, j = 1, ..., r
     % Save time with spalloc?
-    tic = this_iter_time;
+    this_iter_time = tic;
     tmp = (-s(k) * E_qo - A_qo) \ B_qo; 
     [i, j, values] = find(tmp); % Get row, col, and values of nz elements of sparse matrix
     if k == 1
