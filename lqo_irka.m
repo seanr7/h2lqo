@@ -76,7 +76,7 @@ fprintf('Beginning IRKA iteration\n')
 
 % Initialize poles + residues
 poles = poles_prev; FOres = FOres_prev; SOres = SOres_prev; 
-poles = poles - 2 * real(poles); % Mirror images
+poles = poles - 2 * real(poles); % Mirror images; 
 
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 

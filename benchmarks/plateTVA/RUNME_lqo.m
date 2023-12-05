@@ -46,10 +46,10 @@ fprintf('FO-LQO realization built in %.2f s/n',toc)
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
 
-recompute = true;
-% recompute = false;
+% recompute = true;
+recompute = false;
 if recompute == true
-    fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s/n', 250*15.72)
+    fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s\n', 250*15.72)
     overall_start = tic;
     res = zeros(1,length(s));
     for ii=1:length(s)
@@ -79,10 +79,10 @@ end
 addpath('~/h2lqo')
 % addpath('~/Desktop/h2lqo')
 
-fprintf('Beginning construction of the LQO-ROM via LQO-IRKA')
+fprintf('Beginning construction of the LQO-ROM via LQO-IRKA\n')
 
 r = 10; % r = in Steffen's; but lets see if we can run this for now..
-poles_prev = -logspace(-2, 4, r)'; % Spread 
+poles_prev = -logspace(-1, 3, r)'; % Spread 
 tmp = rand(r, r);
 SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?
 [E_qo_r, A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka(E_qo, A_qo, B_qo, ...
@@ -112,7 +112,7 @@ save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'M_qo_r', 'poles', 'SO_res')
 % fprintf('H2 error')
 % sqrt(B_qo_err' * Q_qo_err * B_qo_err)
 
-fprintf('Beginning reduced-order simulation.')
+fprintf('Beginning reduced-order simulation\n')
 % recompute = false;
 overall_start = tic;
 
