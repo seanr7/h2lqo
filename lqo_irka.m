@@ -52,7 +52,6 @@ function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
 %% LQO-IRKA
 % Take input data; Compute initial LQO-ROM via PG-proj
 r = length(poles_prev);     [~, n] = size(A); % ROM and FOM dimensions
-% I = eye(n, n);
 
 % Check iteration/convergence tolerances; set to defaults if unspecified
 if nargin == 10 % (Default is to not plot convergence of the RO-poles)
@@ -75,9 +74,13 @@ end
 overall_timer_start = tic;
 fprintf('Beginning IRKA iteration\n')
 
+% Initialize poles + residues
+poles = poles_prev; FOres = FOres_prev; SOres = SOres_prev; 
+poles = poles - 2 * real(poles); % Mirror images
+
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
-while (err(iter) > eps && iter < itermax)
+while (err(iter) > eps && iter <= itermax)
     % Pre-allocate space for right, left PG-proj bases V_r, W_r
     % (Note: Construction requires RO-poles and residues @ each iter)
     V_r = zeros(n, r);     W_r = zeros(n, r);
@@ -85,32 +88,45 @@ while (err(iter) > eps && iter < itermax)
     % Start the clock
     thisiter_timer_start = tic;
     fprintf('Beginning next IRKA iteration; current iterate is k = %d\n', iter)
-    % First, pre-compute all of V_r (we can re-use these in building W_r)
-    for k = 1:r 
-        % 1. Construction of Vr enforces r + r^2 interpolation conditions:
-        %   @math: H1(-L_prev(k)) = H1r(-L_prev(k)), k = 1, ..., r
-        %   @math: H2(-L_prev(i), -L_prev(j)) = H2(-L_prev(i), -L_prev(j)), 
-        %           i, j = 1, ..., r
-        V_r(:, k) = (-poles_prev(k) * E - A)\b; 
-    end
-    % Now, fill out colummns of W_r
-    for k = 1:r
-        % 2. Construction of W_r enforces r `mixed' Hermite conditions:
-        %   @math: phi_prev(k) * H1^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
-        %          mu_prev(k, j) * H2^(1, 0)(-L_prev(k), -L_prev(j)) = ...
-        %          phi_prev(k) * H1_r^(1)(-L_prev(k)) + \sum_{j = 1}^{r} ...
-        %          mu_prev(k, j) * H2_r^(1, 0)(-L_prev(k), -L_prev(j)) = ...
 
+    % First, fill out columns of Vr; used in computing Wr
+    k = 1;
+    while k <= r
+        % 1. Construction of Vr enforces r + r^2 interpolation conditions:
+        %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
+        %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
+        %           i, j = 1, ..., r
+        % TODO: Need conj here?
+        V_r(:, k) = ((poles(k)) * E - A)\b; 
+        k = k + 1;
+    end
+
+    % Now, fill out colummns of W_r
+    k = 1; 
+    while k <= r
+        % 2. Construction of W_r enforces r `mixed' Hermite conditions:
+        %   @math: FOres(k) * H1^(1)(poles(k)) + \sum_{j = 1}^{r} ...
+        %          SOres(k, j) * H2^(1, 0)(-poles(k), -poles(j)) = ...
+        %          FOres(k) * H1_r^(1)(poles(k)) + \sum_{j = 1}^{r} ...
+        %          SOres(k, j) * H2_r^(1, 0)(poles(k), poles(j)) = ...
+        tmp = zeros(n, 1); 
+        i = 1;
+        while i <= r
+            % Compute sum over i of mu_i,k * (poles(i) * E - A)\b
+            % TODO: Need conj of residue here?
+            tmp = tmp + (conj(SOres(i, k)) * V_r(:, i)); 
+            i = i + 1;
+        end
+        % Apply action of M
+        tmp = M * tmp; 
         if ~pure_QO % If not purely QO, compute 
-            % TODO: Double check we need to complex conjugates here...
-            W_r(:, k) = conj(FOres_prev(k)) *  ((conj(-poles_prev(k)) * E' - A')\c');
+            % TODO: Need conj of residue here?
+            tmp = tmp + conj(FOres(k)) *  c';
         end
-        % Pre-compute one linear solve
-        tmp = (conj(-poles_prev(k)) * E' - A')\M; 
-        for i = 1:r
-            rhs = V_r(:, i); % Grab (-poles_prev(k) * E - A)\b; 
-            W_r(:, k) = W_r(:, k) + conj(SOres_prev(k, i)) * tmp * rhs;
-        end
+        % Now, only one final linear solve required; apply to the sum
+        % TODO: Need conj of pole here?
+        W_r(:, k) = ((conj(poles(k)) * E' - A')\tmp);
+        k = k + 1;
     end
     
     % Orthonormalize projection matrices
@@ -122,29 +138,39 @@ while (err(iter) > eps && iter < itermax)
         c_r = c * V_r;  
     end
     M_r = V_rt * M * V_r;
+
+    % Save params from prev iteration
+    poles_prev = poles; SOres_prev = SOres;
     
     % Diagonalize Ar; Get RO-poles ...
     [X_r, L_r] = eig(E_r\A_r);     poles = diag(L_r);
+    poles = poles - 2 * real(poles); % Mirror images
 
     % ... + 1st, 2nd-order residues of H1r, H2r
+    X_rinv = X_r\eye(r, r); mod_b_r = E_r\b_r;
     if ~pure_QO % Compute FO residues
-        FOres = (c_r * X_r)'.* (X_r\(b_r));    
         FOres_prev = FOres; 
+        FOres = (c_r * X_r)' .* (X_rinv * (mod_b_r));    
     end
-    SOres = X_r' * M_r * X_r;
+    SOres = ((X_rinv * (mod_b_r))' .* ((X_r' * M_r * X_r))) .* (X_rinv * (mod_b_r));
 
     % Track convergence of poles; Update iter count + compute max deviation 
     % between poles across iterations
     iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
-    % Overwrite RO-poles + residues
-    poles_prev = poles; SOres_prev = SOres;
 
     % End the clock
     fprintf('End of current IRKA iterate k = %d\n', iter)
     fprintf('Current IRKA iteration finished in %.2f s\n',toc(thisiter_timer_start))
 end
 
-if iter == itermax
+% If broken, interpolation occurs using poles + residues from previous iter
+% Return appropriate poles + residues
+poles = poles_prev; SOres = SOres_prev;
+if ~pure_QO
+    FOres = FOres_prev;
+end
+
+if iter == (itermax + 1)
     fprintf('IRKA has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_timer_start))
 else
     fprintf('IRKA has converged in %d iterations\n', iter)

@@ -81,7 +81,7 @@ addpath('~/h2lqo')
 
 fprintf('Beginning construction of the LQO-ROM via LQO-IRKA')
 
-r = 250; % From Steffen's paper
+r = 10; % r = in Steffen's; but lets see if we can run this for now..
 poles_prev = -logspace(-2, 4, r)'; % Spread 
 tmp = rand(r, r);
 SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?

@@ -5,15 +5,17 @@ close all
 
 %% 1a. Toy model
 n = 8; 
-% From TSIA paper [GosA19]; scalar + quadratic component
-A = diag(-[1 2 3 4 5 6 7 8]);
-b = [1; 1; 2; 2; 3; 3; 4; 4];     c = [2 2 3 3 4 4 5 5];
+% Random scalar + QO component
+A = -10 * diag(rand(n, 1));
+% A = [-1 + 1i, 0; 0, -1 - 1i];
+% A = diag([-1 + 1i, -1 - 1i, -2 + 1i, -2 - 1i]);
+b = rand(n, 1);     c = rand(1, n);
 % QO matrix
 M = 10*(diag(2 * ones(1, n)) + diag(-1 * ones(1, n-1), 1) + diag(-1 * ones(1, n - 1), -1));
 
 % To find good interpolation points, look at the poles
-r = 4;
-interp_pts = -2 + 2 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
+r = 2;
+interp_pts = -10 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
 SO_res = (tmp + tmp')/2;
 max_iter = 100; tol = 10e-10;   plot = true;
 
@@ -33,13 +35,13 @@ H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br);
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
+    H1(conv_nodes(i)) - H1r(conv_nodes(i))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(-conv_nodes(i), - conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
+        H2(conv_nodes(i),  conv_nodes(j)) - H2r(conv_nodes(i), conv_nodes(j))
     end
     
 end
@@ -49,24 +51,31 @@ H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
 H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
 
 % Partial deriv wrt first argument of H2, H2r
-H2_prime = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
-H2r_prime = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2_prime_s1 = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
+H2_prime_s2 = @(s1, s2) -b' * ((s1 * E - A)'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er - Ar)'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
 
-fprintf('Mixed linear + quadratic optimality conditions, 2*%d in total', r)
 
+fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
+%%
 for i = 1:r
-    ro_side = conv_FO_res(i) * H1r_prime(-conv_nodes(i));
-    fo_side = conv_FO_res(i) * H1_prime(-conv_nodes(i));
+    ro_side = 2 * conv_FO_res(i) * H1r_prime(conv_nodes(i));
+    fo_side = 2 * conv_FO_res(i) * H1_prime(conv_nodes(i));
     for j = 1:r
-        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime(-conv_nodes(i), -conv_nodes(j));
-        fo_side = fo_side + conv_SO_res(i, j) * H2_prime(-conv_nodes(i), -conv_nodes(j));
+        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
+                    conv_SO_res(j, i) * H2r_prime_s2(conv_nodes(j), conv_nodes(i));
+        fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
+                    conv_SO_res(j, i) * H2_prime_s2(conv_nodes(j), conv_nodes(i));
     end
     fo_side - ro_side
 end
 
+% conv_nodes
 %% Now E ~= I, but nonsingular 
-E = inv(diag(-[1 2 3 4 5 6 7 8]));
-
+E = diag(rand(n, 1));
+% x = -2 + 1i*[1, 2, 3, 4];
+% A = diag([x, conj(x)]);
 % Run iteration + plot conv
 [Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
     interp_pts, FO_res, SO_res, max_iter, tol, plot);
@@ -80,53 +89,59 @@ H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br);
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
+    H1(conv_nodes(i)) - H1r(conv_nodes(i))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(-conv_nodes(i), - conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
+        H2(conv_nodes(i), conv_nodes(j)) - H2r(conv_nodes(i), conv_nodes(j))
     end
     
 end
 
+%%
 % Derivs of H1, H1r
 H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
 H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
 
-% Partial deriv wrt first argument of H2, H2r
-H2_prime = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
-H2r_prime = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2_prime_s1 = @(s1, s2) -b' * (((s1 * E' - A')\E') * ((s1 * E' - A')\M)) * ((s2 * E - A)\b); 
+H2_prime_s2 = @(s1, s2) -b' * ((s1 * E' - A')\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er' - Ar')\Er') * ((s1 * Er' - Ar')\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er' - Ar')\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+
+
 
 fprintf('Mixed linear + quadratic optimality conditions, 2*%d in total', r)
 
+
 for i = 1:r
-    ro_side = conv_FO_res(i) * H1r_prime(-conv_nodes(i));
-    fo_side = conv_FO_res(i) * H1_prime(-conv_nodes(i));
+    ro_side = conv_FO_res(i) * H1r_prime(conv_nodes(i));
+    fo_side = conv_FO_res(i) * H1_prime(conv_nodes(i));
     for j = 1:r
-        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime(-conv_nodes(i), -conv_nodes(j));
-        fo_side = fo_side + conv_SO_res(i, j) * H2_prime(-conv_nodes(i), -conv_nodes(j));
+        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
+                    conv_SO_res(j, i) * H2r_prime_s2(conv_nodes(j), conv_nodes(i));
+        fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
+                    conv_SO_res(j, i) * H2_prime_s2(conv_nodes(j), conv_nodes(i));
     end
     fo_side - ro_side
 end
 
-
+% eig(Er\Ar)
 %% 
 addpath('/Users/seanr/Desktop/h2lqo/benchmarks/')
 load('heat-cont.mat')
-A = full(A);    b = full(b);    C = full(C);
+A = full(A);    b = full(B);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
 E = eye(n, n);
 b = b(:, p);  c = C(p, :); % If using ISS model, make SISO
-K = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
+M = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 
 r = 10; % 
-lambda_prev = -logspace(-2,4,r)';  phi_prev = rand(r,1);   tmp = rand(r,r);
-kappa_prev = (tmp+tmp')/2;
-% lambda_prev = -10*rand(r,1);  phi_prev = rand(r,1);   kappa_prev = rand(r,r);
-[Er, Ar, br, cr, Kr, lambda, phi, kappa] = lqo_irka(E, A, b, c, K, ...
-    lambda_prev, phi_prev, kappa_prev, 100, 10e-8, 1);
+interp_pts = -logspace(-3,5,r)';  FO_res = rand(r,1);   tmp = rand(r,r);
+SO_res = (tmp+tmp')/2;
+[Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
+    interp_pts, FO_res, SO_res, max_iter, tol, plot);
 
 %% H2 errors
 addpath('/Users/seanr/Documents/MATLAB/Research/QuadBT/code4Sean_Oct10th_2022',...
@@ -134,7 +149,7 @@ addpath('/Users/seanr/Documents/MATLAB/Research/QuadBT/code4Sean_Oct10th_2022',.
 
 load('heat-cont.mat')
 % load('iss1R.mat')
-A = full(A);    b = full(b);    C = full(C);
+A = full(A);    b = full(B);    C = full(C);
 [n,~] = size(A);    p = 1; % relevant dimensions
 E = eye(n, n);
 b = b(:, p);  c = C(p, :); % If using ISS model, make SISO
@@ -142,13 +157,13 @@ M = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
 M = M*10e-2;
 
 testcases = 10;
-lambda_init = -10*rand(testcases,1);  phi_init = rand(testcases,1); 
-tmp = rand(testcases,testcases);
-kappa_init = (tmp+tmp')/2;
 count = 1;
+max_iter = 100; tol = 10e-8;    plot = 0;
 for r = 2:2:testcases
-    figure 
-    [Ar, br, cr, Mr, lambda, phi, kappa] = lqo_irka(A, b, c, M, lambda_init(1:r), phi_init(1:r), kappa_init(1:r,1:r), 100, 10e-8, 1);
+    interp_pts = -logspace(-3,5,r)';  FO_res = rand(r,1);   tmp = rand(r,r);
+    SO_res = (tmp+tmp')/2;
+    [Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
+    interp_pts, FO_res, SO_res, max_iter, tol, plot);
     % Compute H2 error
     Aerr_irka = blkdiag(A, Ar);
     berr_irka = [b; br];
@@ -244,8 +259,8 @@ end
 H1_prime = @(s) -c*((s*I-A)\((s*I-A)\b));
 H1r_prime = @(s) -cr*((s*Ir-Ar)\((s*Ir-Ar)\br));
 
-H2_prime = @(s1,s2) -b'*((s1*I-A)'\((s1*I-A)'\K))*((s2*I-A)\b); % Partial deriv w.r.t s1
-H2r_prime = @(s1,s2) -br'*((s1*Ir-Ar)'\((s1*Ir-Ar)'\Kr))*((s2*Ir-Ar)\br);   % Partial deriv w.r.t s1
+H2_prime_s1 = @(s1,s2) -b'*((s1*I-A)'\((s1*I-A)'\K))*((s2*I-A)\b); % Partial deriv w.r.t s1
+H2r_prime_s1 = @(s1,s2) -br'*((s1*Ir-Ar)'\((s1*Ir-Ar)'\Kr))*((s2*Ir-Ar)\br);   % Partial deriv w.r.t s1
 
 H2_s2prime = @(s1,s2) -b'*((s1*I-A)'\K)*((s2*I-A)\((s2*I-A)\b)); % Partial deriv w.r.t s2
 H2r_s2prime = @(s1,s2) -br'*((s1*Ir-Ar)'\Kr)*((s2*Ir-Ar)\((s2*Ir-Ar)\br)); % Partial deriv w.r.t s2
@@ -259,9 +274,9 @@ for i = 1:r
     ROpart = 2*phi(i)*H1r_prime(-lambda(i));
     FOpart = 2*phi(i)*H1_prime(-(lambda(i)));
     for j = 1:r
-        ROpart = ROpart + kappa(i,j)*H2r_prime(-lambda(i),-lambda(j)) + ...
+        ROpart = ROpart + kappa(i,j)*H2r_prime_s1(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2r_s2prime(-lambda(j),-lambda(i));
-        FOpart = FOpart + kappa(i,j)*H2_prime(-lambda(i),-lambda(j)) + ...
+        FOpart = FOpart + kappa(i,j)*H2_prime_s1(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2_s2prime(-lambda(j),-lambda(i));
     end
     [FOpart - ROpart]
@@ -320,8 +335,8 @@ end
 H1_prime = @(s) -c*((s*E-A)\((s*E-A)\b));
 H1r_prime = @(s) -cr*((s*Er-Ar)\((s*Er-Ar)\br));
 
-H2_prime = @(s1,s2) -b'*((s1*E-A)'\((s1*E-A)'\K))*((s2*E-A)\b); % Partial deriv w.r.t s1
-H2r_prime = @(s1,s2) -br'*((s1*Er-Ar)'\((s1*Er-Ar)'\Kr))*((s2*Er-Ar)\br);   % Partial deriv w.r.t s1
+H2_prime_s1 = @(s1,s2) -b'*((s1*E-A)'\((s1*E-A)'\K))*((s2*E-A)\b); % Partial deriv w.r.t s1
+H2r_prime_s1 = @(s1,s2) -br'*((s1*Er-Ar)'\((s1*Er-Ar)'\Kr))*((s2*Er-Ar)\br);   % Partial deriv w.r.t s1
 
 H2_s2prime = @(s1,s2) -b'*((s1*E-A)'\K)*((s2*E-A)\((s2*E-A)\b)); % Partial deriv w.r.t s2
 H2r_s2prime = @(s1,s2) -br'*((s1*Er-Ar)'\Kr)*((s2*Er-Ar)\((s2*Er-Ar)\br)); % Partial deriv w.r.t s2
@@ -335,9 +350,9 @@ for i = 1:r
     ROpart = 2*phi(i)*H1r_prime(-lambda(i));
     FOpart = 2*phi(i)*H1_prime(-(lambda(i)));
     for j = 1:r
-        ROpart = ROpart + kappa(i,j)*H2r_prime(-lambda(i),-lambda(j)) + ...
+        ROpart = ROpart + kappa(i,j)*H2r_prime_s1(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2r_s2prime(-lambda(j),-lambda(i));
-        FOpart = FOpart + kappa(i,j)*H2_prime(-lambda(i),-lambda(j)) + ...
+        FOpart = FOpart + kappa(i,j)*H2_prime_s1(-lambda(i),-lambda(j)) + ...
             kappa(j,i)*H2_s2prime(-lambda(j),-lambda(i));
     end
     [FOpart - ROpart]
