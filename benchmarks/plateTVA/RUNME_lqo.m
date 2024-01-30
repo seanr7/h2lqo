@@ -27,7 +27,7 @@ tic
 
 E_qo = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
 E_qo(1:n, 1:n) = speye(n); % (1, 1) block
-E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is mass matrix
+E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is (sparse) mass matrix
 
 A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
 A_qo(1:n, 1:n) = speye(n); % (1, 1) block of A_qo
@@ -81,7 +81,7 @@ addpath('~/h2lqo')
 
 fprintf('Beginning construction of the LQO-ROM via LQO-IRKA\n')
 
-r = 10; % r = in Steffen's; but lets see if we can run this for now..
+r = 50; % r = Higher in Steffen's; but lets see if we can run this for now..
 poles_prev = -logspace(-1, 3, r)'; % Spread 
 tmp = rand(r, r);
 SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?

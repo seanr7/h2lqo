@@ -4,7 +4,7 @@ function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
 
 % Apply the Iterative Rational Krylov Algorithm (IRKA) to Linear Quadratic
 % Output (LQO) systems.
- 
+  
 % Paramters
 % ---------
 % @param (E, A, b, c, M) \in (Rnn, Rnn, Rn1, R1n, Rnn):
@@ -15,26 +15,26 @@ function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
 %   E (mass) is assumed to be nonsingular.
 
 % @param poles_prev:
-%   Initial selection of interpolation points in open left half-plane.
+%   Initial selection of poles in open left half-plane.
 %   Stored as an (r x 1) array.
 %   Note: These are the `reduced-order poles' at initialization; 
 %   i.e., Ar = diag(L_prev).
 
 % @param FOres_prev, SOres_prev:
-%   Initial selection of 1st and 2nd-order (complex) residues.
+%   Initial selection of 1st and 2nd-order (assumed real) residues.
 %   Stored as (r x 1) and (r x r) arrays, respectively. 
-%   Note: In the basis of Ar's eigenvectors, these are the linear and
+%   Note: In the basis of A_r's eigenvectors, these are the linear and
 %   quadratic output matrices; i.e., c_r = FOres_prev, M_r = SOres_prev.
 
 % @param itermax:
 %   Max no. of iterations for LQO-IRKA to run. (Default itermax = 100)
 
 % @param eps:
-%   Convergence tol; if (max(eig(A_r) - L_prev) < eps), converged. 
+%   Convergence tol; if (max(eig(E_r, A_r) - L_prev) < eps), converged. 
 %   (Default eps = 10e-8)
 
 % @param plot_conv:
-%   Bool; do we plot the convergence of the reduced-order poles eig(A_r)?
+%   Bool; do we plot the convergence of the reduced-order poles eig(E_r, A_r)?
 %   (Default plot_conv = False)
 
 % Outputs
@@ -76,7 +76,6 @@ fprintf('Beginning IRKA iteration\n')
 
 % Initialize poles + residues
 poles = poles_prev; FOres = FOres_prev; SOres = SOres_prev; 
-poles = poles - 2 * real(poles); % Mirror images; 
 
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
@@ -96,8 +95,8 @@ while (err(iter) > eps && iter <= itermax)
         %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
         %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
         %           i, j = 1, ..., r
-        % TODO: Need conj here?
-        V_r(:, k) = ((poles(k)) * E - A)\b; 
+        % TODO: Need conj here?... I think so, from gradient conditions
+        V_r(:, k) = ((-conj(poles(k))) * E - A)\b; 
         k = k + 1;
     end
 
@@ -105,27 +104,27 @@ while (err(iter) > eps && iter <= itermax)
     k = 1; 
     while k <= r
         % 2. Construction of W_r enforces r `mixed' Hermite conditions:
-        %   @math: FOres(k) * H1^(1)(poles(k)) + \sum_{j = 1}^{r} ...
+        %   @math: FOres(k) * H1^(1)(poles(k)) + 2 * \sum_{j = 1}^{r} ...
         %          SOres(k, j) * H2^(1, 0)(-poles(k), -poles(j)) = ...
-        %          FOres(k) * H1_r^(1)(poles(k)) + \sum_{j = 1}^{r} ...
+        %          FOres(k) * H1_r^(1)(poles(k)) + 2 * \sum_{j = 1}^{r} ...
         %          SOres(k, j) * H2_r^(1, 0)(poles(k), poles(j)) = ...
         tmp = zeros(n, 1); 
         i = 1;
         while i <= r
             % Compute sum over i of mu_i,k * (poles(i) * E - A)\b
-            % TODO: Need conj of residue here?
-            tmp = tmp + (conj(SOres(i, k)) * V_r(:, i)); 
+            % TODO: Need conj of residue here? I don't think so
+            tmp = tmp + ((SOres(i, k)) * V_r(:, i)); 
             i = i + 1;
         end
-        % Apply action of M
-        tmp = M * tmp; 
+        % Multiply by - 2 * M
+        tmp = - 2 * M * tmp; 
         if ~pure_QO % If not purely QO, compute 
-            % TODO: Need conj of residue here?
-            tmp = tmp + conj(FOres(k)) *  c';
+            % TODO: Need conj of residue here? Yes
+            tmp = tmp - conj(FOres(k)) *  c';
         end
         % Now, only one final linear solve required; apply to the sum
-        % TODO: Need conj of pole here?
-        W_r(:, k) = ((conj(poles(k)) * E' - A')\tmp);
+        % TODO: Need conj of pole here? I don't think so, just the negative
+        W_r(:, k) = ((-poles(k) * E' - A')\tmp);
         k = k + 1;
     end
     
@@ -144,7 +143,6 @@ while (err(iter) > eps && iter <= itermax)
     
     % Diagonalize Ar; Get RO-poles ...
     [X_r, L_r] = eig(E_r\A_r);     poles = diag(L_r);
-    poles = poles - 2 * real(poles); % Mirror images
 
     % ... + 1st, 2nd-order residues of H1r, H2r
     X_rinv = X_r\eye(r, r); mod_b_r = E_r\b_r;

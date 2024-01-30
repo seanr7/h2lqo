@@ -14,7 +14,7 @@ b = rand(n, 1);     c = rand(1, n);
 M = 10*(diag(2 * ones(1, n)) + diag(-1 * ones(1, n-1), 1) + diag(-1 * ones(1, n - 1), -1));
 
 % To find good interpolation points, look at the poles
-r = 2;
+r = 4;
 interp_pts = -10 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
 SO_res = (tmp + tmp')/2;
 max_iter = 100; tol = 10e-10;   plot = true;
@@ -35,13 +35,13 @@ H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br);
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(conv_nodes(i)) - H1r(conv_nodes(i))
+    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(conv_nodes(i),  conv_nodes(j)) - H2r(conv_nodes(i), conv_nodes(j))
+        H2(-conv_nodes(i),  -conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
     end
     
 end
@@ -58,19 +58,23 @@ H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er - Ar)'\Mr) * (((s2 * Er - Ar)\Er) * ((
 
 
 fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
-%%
+
 for i = 1:r
-    ro_side = 2 * conv_FO_res(i) * H1r_prime(conv_nodes(i));
-    fo_side = 2 * conv_FO_res(i) * H1_prime(conv_nodes(i));
+    ro_side = conv_FO_res(i) * H1r_prime(-conj(conv_nodes(i)));
+    fo_side = conv_FO_res(i) * H1_prime(-conj(conv_nodes(i)));
     for j = 1:r
-        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
-                    conv_SO_res(j, i) * H2r_prime_s2(conv_nodes(j), conv_nodes(i));
-        fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
-                    conv_SO_res(j, i) * H2_prime_s2(conv_nodes(j), conv_nodes(i));
+        ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+         
+        % ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        % fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
     end
     fo_side - ro_side
 end
 
+% If everything stays real, the above works... - SR (1-30-24)
 % conv_nodes
 %% Now E ~= I, but nonsingular 
 E = diag(rand(n, 1));
@@ -89,43 +93,45 @@ H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br);
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(conv_nodes(i)) - H1r(conv_nodes(i))
+    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(conv_nodes(i), conv_nodes(j)) - H2r(conv_nodes(i), conv_nodes(j))
+        H2(-conv_nodes(i),  -conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
     end
     
 end
 
-%%
 % Derivs of H1, H1r
 H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
 H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
 
-H2_prime_s1 = @(s1, s2) -b' * (((s1 * E' - A')\E') * ((s1 * E' - A')\M)) * ((s2 * E - A)\b); 
-H2_prime_s2 = @(s1, s2) -b' * ((s1 * E' - A')\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
-H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er' - Ar')\Er') * ((s1 * Er' - Ar')\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
-H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er' - Ar')\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+% Partial deriv wrt first argument of H2, H2r
+H2_prime_s1 = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
+H2_prime_s2 = @(s1, s2) -b' * ((s1 * E - A)'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er - Ar)'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
 
 
-
-fprintf('Mixed linear + quadratic optimality conditions, 2*%d in total', r)
-
+fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
 
 for i = 1:r
-    ro_side = conv_FO_res(i) * H1r_prime(conv_nodes(i));
-    fo_side = conv_FO_res(i) * H1_prime(conv_nodes(i));
+    ro_side = conv_FO_res(i) * H1r_prime(-conj(conv_nodes(i)));
+    fo_side = conv_FO_res(i) * H1_prime(-conj(conv_nodes(i)));
     for j = 1:r
-        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
-                    conv_SO_res(j, i) * H2r_prime_s2(conv_nodes(j), conv_nodes(i));
-        fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(conv_nodes(i), conv_nodes(j)) + ...
-                    conv_SO_res(j, i) * H2_prime_s2(conv_nodes(j), conv_nodes(i));
+        ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+         
+        % ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        % fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
     end
     fo_side - ro_side
 end
+
 
 % eig(Er\Ar)
 %% 
