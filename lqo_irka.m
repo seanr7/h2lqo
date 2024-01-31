@@ -68,6 +68,7 @@ end
 pure_QO = false;
 if isempty(c)
     pure_QO = true;
+    c_r = [];   FOres = []; % Dummy arrays
 end
 
 % Start the clock on the total iteration
@@ -142,7 +143,7 @@ while (err(iter) > eps && iter <= itermax)
     poles_prev = poles; SOres_prev = SOres;
     
     % Diagonalize Ar; Get RO-poles ...
-    [X_r, L_r] = eig(E_r\A_r);     poles = diag(L_r);
+    [X_r, L_r] = eig(A_r, E_r);     poles = diag(L_r);
 
     % ... + 1st, 2nd-order residues of H1r, H2r
     X_rinv = X_r\eye(r, r); mod_b_r = E_r\b_r;

@@ -41,7 +41,7 @@ B_qo(n+1:2*n, :) = B;
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
 M_qo = spalloc(2*n, 2*n, nnz(C' * C));
 M_qo(1:n, 1:n) = C' * C; % Double check this...
-fprintf('FO-LQO realization built in %.2f s/n',toc)
+fprintf('FO-LQO realization built in %.2f s\n',toc)
 
 %% Sample H2(s1, s2) (QO-tf)
 % frequencies to sample at (s) are given in '*.mat' file 
@@ -67,7 +67,7 @@ if recompute == true
 
 else
     fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat')
-    load('FOSIM_data.mat')
+    % load('FOSIM_data.mat')
 end
 
 % figure('name','Transfer function')
