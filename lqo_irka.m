@@ -153,13 +153,13 @@ while (err(iter) > eps && iter <= itermax)
     end
     SOres = ((X_rinv * (mod_b_r))' .* ((X_r' * M_r * X_r))) .* (X_rinv * (mod_b_r));
 
-    % Track convergence of poles; Update iter count + compute max deviation 
-    % between poles across iterations
-    iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
-
     % End the clock
     fprintf('End of current IRKA iterate k = %d\n', iter)
     fprintf('Current IRKA iteration finished in %.2f s\n',toc(thisiter_timer_start))
+
+    % Track convergence of poles; Update iter count + compute max deviation 
+    % between poles across iterations
+    iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
 end
 
 % If broken, interpolation occurs using poles + residues from previous iter
