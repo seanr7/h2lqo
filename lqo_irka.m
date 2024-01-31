@@ -96,7 +96,7 @@ while (err(iter) > eps && iter <= itermax)
         %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
         %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
         %           i, j = 1, ..., r
-        % TODO: Need conj here?... I think so, from gradient conditions
+        % TODO: Need conj here?... 
         V_r(:, k) = ((-conj(poles(k))) * E - A)\b; 
         k = k + 1;
     end
@@ -111,7 +111,7 @@ while (err(iter) > eps && iter <= itermax)
         %          SOres(k, j) * H2_r^(1, 0)(poles(k), poles(j)) = ...
         tmp = zeros(n, 1); 
         i = 1;
-        while i <= r
+        while i <= r 
             % Compute sum over i of mu_i,k * (poles(i) * E - A)\b
             % TODO: Need conj of residue here? I don't think so
             tmp = tmp + ((SOres(i, k)) * V_r(:, i)); 

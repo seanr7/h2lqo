@@ -93,13 +93,13 @@ H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br);
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(-conv_nodes(i)) - H1r(-conv_nodes(i))
+    H1(-conj(conv_nodes(i))) - H1r(-conj(conv_nodes(i)))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(-conv_nodes(i),  -conv_nodes(j)) - H2r(-conv_nodes(i), -conv_nodes(j))
+        H2(-conj(conv_nodes(i)),  -conj(conv_nodes(j))) - H2r(-conj(conv_nodes(i)), -conj(conv_nodes(j)))
     end
     
 end
@@ -115,19 +115,20 @@ H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) *
 H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er - Ar)'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
 
 
+
 fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
 
 for i = 1:r
-    ro_side = conv_FO_res(i) * H1r_prime(-conj(conv_nodes(i)));
-    fo_side = conv_FO_res(i) * H1_prime(-conj(conv_nodes(i)));
+    ro_side = conv_FO_res(i) * H1r_prime(-(conv_nodes(i)));
+    fo_side = conv_FO_res(i) * H1_prime(-(conv_nodes(i)));
     for j = 1:r
-        ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
-        fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
-         
-        % ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
-        % fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        % Commented out code works if real-valued matrices
+        % ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        % fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) ...
+            + conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) ...
+            + conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
     end
     fo_side - ro_side
 end
