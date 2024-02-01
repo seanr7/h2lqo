@@ -3,6 +3,85 @@ clc
 clear all
 close all
 
+%% 2nd-order -> 1st-order test probel
+n1 = 10; alpha=.002; beta=alpha; v = 5;
+
+[M, D, K]=triplechain_MSD(n1, alpha, beta, v);
+
+O = zeros(size(K,1),1);
+Cv = O';
+Cp = ones(1,size(K,1));
+B = ones(size(K,1),1);
+C = [Cp, Cv];
+
+[n, ~] = size(M);
+
+E_qo = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
+E_qo(1:n, 1:n) = speye(n); % (1, 1) block
+E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is (sparse) mass matrix
+
+A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(D) + n);  % A_qo = [0, I; -K, -D]
+A_qo(1:n, n+1:2*n) = speye(n); 
+A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
+A_qo(n+1:2*n, n+1:2*n) = -D; % (2, 2) block is -stiffness matrix
+
+B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
+B_qo(n+1:2*n, :) = B;
+% No scalar output in this example; only QO
+
+C_qo = zeros(1, 2*n);
+% Our QO (Quadratic-output) matrix Q
+Q_qo = blkdiag(eye(n), zeros(n));
+
+%%
+
+r = 4;
+interp_pts = -10 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
+SO_res = (tmp + tmp')/2;
+max_iter = 100; tol = 10e-8;   plot = true;
+
+% Run iteration + plot conv
+[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, conv_nodes, conv_FO_res, conv_SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, [], Q_qo, ...
+    interp_pts, FO_res, SO_res, max_iter, tol, plot);
+
+% Check interpolation conditions
+H2 = @(s1, s2) B_qo.' * (((s1 * E_qo - A_qo).')\Q_qo) * ((s2 * E_qo - A_qo)\B_qo);
+H2r = @(s1, s2) B_qo_r.' * (((s1 * E_qo_r - A_qo_r).')\Q_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r);
+
+fprintf('2nd-order optimality conditions, %d^2 in total', r)
+for i = 1:r
+    for j = 1:r
+        H2(-(conv_nodes(i)),  -(conv_nodes(j))) - H2r(-(conv_nodes(i)), -(conv_nodes(j)))
+    end
+    
+end
+
+% Partial deriv wrt first argument of H2, H2r
+H2_prime_s1 = @(s1, s2) -b.' * (((s1 * E - A).'\E.') * ((s1 * E - A).'\M)) * ((s2 * E - A)\b); 
+H2_prime_s2 = @(s1, s2) -b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+H2r_prime_s1 = @(s1, s2) -br.' * (((s1 * Er - Ar).'\Er.') * ((s1 * Er - Ar).'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2r_prime_s2 = @(s1, s2) -br.' * ((s1 * Er - Ar).'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+
+fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
+
+for i = 1:r
+    ro_side = 0;
+    fo_side = 0;
+    for j = 1:r
+        % ro_side = ro_side + 2 * conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
+        % fo_side = fo_side + 2 * conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
+
+        ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+
+        % ro_side = ro_side - conv_SO_res(i, j) * H2r_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2r_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
+        % fo_side = fo_side - conv_SO_res(i, j) * H2_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
+        %             conv_SO_res(j, i) * H2_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
+    end
+    fo_side - ro_side
+end
+
 %% 1a. Toy model
 n = 8; 
 % Random scalar + QO component
@@ -23,15 +102,16 @@ max_iter = 100; tol = 10e-10;   plot = true;
 E = eye(n, n);
 
 % Run iteration + plot conv
-[Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res] = lqo_irka(E, A, b, c, M, ...
+[Er, Ar, br, cr, Mr, conv_nodes, conv_FO_res, conv_SO_res, V_r] = lqo_irka(E, A, b, c, M, ...
     interp_pts, FO_res, SO_res, max_iter, tol, plot);
+
 
 % Check interpolation conditions
 H1 = @(s) c * ((s * E - A)\b); 
-H2 = @(s1, s2) b' * ((s1 * E - A)'\M) * ((s2 * E - A)\b);
+H2 = @(s1, s2) b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\b);
 
 H1r = @(s) cr * ((s * Er - Ar)\br); 
-H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br); 
+H2r = @(s1, s2) br.' * ((s1 * Er - Ar).'\Mr) * ((s2 * Er - Ar)\br); 
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
@@ -51,25 +131,25 @@ H1_prime = @(s) -c * (((s * E - A)\E) * ((s * E - A)\b));
 H1r_prime = @(s) -cr * (((s * Er - Ar)\Er) * ((s * Er - Ar)\br));
 
 % Partial deriv wrt first argument of H2, H2r
-H2_prime_s1 = @(s1, s2) -b' * (((s1 * E - A)'\E') * ((s1 * E - A)'\M)) * ((s2 * E - A)\b); 
-H2_prime_s2 = @(s1, s2) -b' * ((s1 * E - A)'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
-H2r_prime_s1 = @(s1, s2) -br' * (((s1 * Er - Ar)'\Er') * ((s1 * Er - Ar)'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
-H2r_prime_s2 = @(s1, s2) -br' * ((s1 * Er - Ar)'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+H2_prime_s1 = @(s1, s2) -b.' * (((s1 * E - A).'\E.') * ((s1 * E - A).'\M)) * ((s2 * E - A)\b); 
+H2_prime_s2 = @(s1, s2) -b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+H2r_prime_s1 = @(s1, s2) -br.' * (((s1 * Er - Ar).'\Er.') * ((s1 * Er - Ar).'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+H2r_prime_s2 = @(s1, s2) -br.' * ((s1 * Er - Ar).'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
 
 
 fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
 
 for i = 1:r
-    ro_side = conv_FO_res(i) * H1r_prime(-conj(conv_nodes(i)));
-    fo_side = conv_FO_res(i) * H1_prime(-conj(conv_nodes(i)));
+    ro_side = conv_FO_res(i) * H1r_prime(-(conv_nodes(i)));
+    fo_side = conv_FO_res(i) * H1_prime(-(conv_nodes(i)));
     for j = 1:r
         ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
         fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
-         
-        % ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
-        % fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        % % 
+        % % ro_side = ro_side + conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        % %             conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(j), -conv_nodes(i));
+        % % fo_side = fo_side + conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j)) + ...
+        % %             conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(j), -conv_nodes(i));
     end
     fo_side - ro_side
 end
@@ -86,20 +166,20 @@ E = diag(rand(n, 1));
 
 % Check interpolation conditions; redefine functions 
 H1 = @(s) c * ((s * E - A)\b); 
-H2 = @(s1, s2) b' * ((s1 * E - A)'\M) * ((s2 * E - A)\b);
+H2 = @(s1, s2) b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\b);
 
 H1r = @(s) cr * ((s * Er - Ar)\br); 
-H2r = @(s1, s2) br' * ((s1 * Er - Ar)'\Mr) * ((s2 * Er - Ar)\br); 
+H2r = @(s1, s2) br.' * ((s1 * Er - Ar).'\Mr) * ((s2 * Er - Ar)\br); 
 
 fprintf('1st-order optimality conditions, %d in total', r)
 for i = 1:r
-    H1(-conj(conv_nodes(i))) - H1r(-conj(conv_nodes(i)))
+    H1(-(conv_nodes(i))) - H1r(-(conv_nodes(i)))
 end
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
     for j = 1:r
-        H2(-conj(conv_nodes(i)),  -conj(conv_nodes(j))) - H2r(-conj(conv_nodes(i)), -conj(conv_nodes(j)))
+        H2(-(conv_nodes(i)),  -(conv_nodes(j))) - H2r(-(conv_nodes(i)), -(conv_nodes(j)))
     end
     
 end

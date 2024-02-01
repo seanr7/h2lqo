@@ -1,5 +1,5 @@
-function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
-    c, M, poles_prev, FOres_prev, SOres_prev, itermax, eps, plot_conv)
+function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres, pole_history] = lqo_irka(...
+    E, A, b, c, M, poles_prev, FOres_prev, SOres_prev, itermax, eps, plot_conv)
 % Author: Sean Reiter (seanr7@vt.edu)
 
 % Apply the Iterative Rational Krylov Algorithm (IRKA) to Linear Quadratic
@@ -43,8 +43,8 @@ function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres] = lqo_irka(E, A, b, ...
 %   State-space realization of the locally H2-optimal r-dimensional
 %   LQO-ROM, obtained via Petrov-Galerkin (PG) projection.
 
-% @param poles:
-%   Converged interpolation points, as an (r x 1) array.
+% @param pole_history:
+%   History of interpolation points, as an (r x iter) array.
 
 % @param FOres, SOres:
 %   Converged 1st and 2nd-order residues, as (r x 1) and (r x r) arrays.
@@ -68,7 +68,7 @@ end
 pure_QO = false;
 if isempty(c)
     pure_QO = true;
-    c_r = [];   FOres = []; % Dummy arrays
+    c_r = [];   FOres = []; % Dummy arrays so error not thrown
 end
 
 % Start the clock on the total iteration
@@ -77,6 +77,7 @@ fprintf('Beginning IRKA iteration\n')
 
 % Initialize poles + residues
 poles = poles_prev; FOres = FOres_prev; SOres = SOres_prev; 
+pole_history(:, 1) = poles;
 
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
@@ -95,9 +96,8 @@ while (err(iter) > eps && iter <= itermax)
         % 1. Construction of Vr enforces r + r^2 interpolation conditions:
         %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
         %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
-        %           i, j = 1, ..., r
-        % TODO: Need conj here?... 
-        V_r(:, k) = ((-conj(poles(k))) * E - A)\b; 
+        %           i, j = 1, ..., r 
+        V_r(:, k) = ((-poles(k)) * E - A)\b; 
         k = k + 1;
     end
 
@@ -113,15 +113,13 @@ while (err(iter) > eps && iter <= itermax)
         i = 1;
         while i <= r 
             % Compute sum over i of mu_i,k * (poles(i) * E - A)\b
-            % TODO: Need conj of residue here? I don't think so
-            tmp = tmp + ((SOres(i, k)) * V_r(:, i)); 
+            tmp = tmp + (SOres(i, k) * V_r(:, i)); 
             i = i + 1;
         end
         % Multiply by - 2 * M
         tmp = - 2 * M * tmp; 
         if ~pure_QO % If not purely QO, compute 
-            % TODO: Need conj of residue here? Yes
-            tmp = tmp - conj(FOres(k)) *  c';
+            tmp = tmp - FOres(k) *  c';
         end
         % Now, only one final linear solve required; apply to the sum
         % TODO: Need conj of pole here? I don't think so, just the negative
@@ -132,7 +130,8 @@ while (err(iter) > eps && iter <= itermax)
     % Orthonormalize projection matrices
     [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
     % Compute LQO-ROM via PG-proj and new parameters
-    W_rt = W_r';  V_rt = V_r';
+    % (1-31-24) Change to real transpose instead of Hermitian; may need to put back! - SR
+    W_rt = W_r.';  V_rt = V_r.';
     E_r = W_rt * E * V_r;   A_r = W_rt * A * V_r;   b_r = W_rt * b;
     if ~pure_QO % Compute reduced linear output term
         c_r = c * V_r;  
@@ -144,6 +143,12 @@ while (err(iter) > eps && iter <= itermax)
     
     % Diagonalize Ar; Get RO-poles ...
     [X_r, L_r] = eig(A_r, E_r);     poles = diag(L_r);
+    try
+        poles = cplxpair(poles, 10e-3); % Sort in complex conj pairs
+    catch
+        warning('Warning! Reduced-model has become overtly complex; cannot sort eigenvalues into complex conjugate pairs. Returning unsorted poles')
+    end
+    pole_history(:,iter+1) = poles;
 
     % ... + 1st, 2nd-order residues of H1r, H2r
     X_rinv = X_r\eye(r, r); mod_b_r = E_r\b_r;
