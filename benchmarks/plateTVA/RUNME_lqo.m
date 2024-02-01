@@ -30,7 +30,7 @@ E_qo(1:n, 1:n) = speye(n); % (1, 1) block
 E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is (sparse) mass matrix
 
 A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
-A_qo(1:n, 1:n) = speye(n); % (1, 1) block of A_qo
+A_qo(1:n, n+1:2*n) = speye(n); % (1, 2) block of A_qo
 A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
 A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
@@ -39,8 +39,8 @@ B_qo(n+1:2*n, :) = B;
 % No scalar output in this example; only QO
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
-M_qo = spalloc(2*n, 2*n, nnz(C' * C));
-M_qo(1:n, 1:n) = C' * C; % Double check this...
+Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
+Q_qo(1:n, 1:n) = C' * C; % Double check this...
 fprintf('FO-LQO realization built in %.2f s\n',toc)
 
 %% Sample H2(s1, s2) (QO-tf)
@@ -56,7 +56,7 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         current_iter = tic;
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt(tmp' * M_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+        res(ii) = sqrt(tmp' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
     end
     fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
@@ -85,11 +85,11 @@ r = 10; % r = Higher in Steffen's; but lets see if we can run this for now..
 poles_prev = -logspace(1, 3, r)'; % Spread 
 tmp = 10 *  rand(r, r);
 SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?
-[E_qo_r, A_qo_r, B_qo_r, ~, M_qo_r, poles, ~, SO_res] = lqo_irka(E_qo, A_qo, B_qo, ...
-    [], M_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
+[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, poles, ~, SO_res] = lqo_irka(E_qo, A_qo, B_qo, ...
+    [], Q_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
 
-filename = 'plateTVAlqo_r250.m';
-save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'M_qo_r', 'poles', 'SO_res') 
+filename = 'plateTVAlqo_r_10.mat';
+save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SO_res') 
 
 % Compute H2 error
 % A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
@@ -121,7 +121,7 @@ for ii=1:length(s)
     fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
     current_iter = tic;
     tmp = (s(ii) * speye(r, r) - A_qo_r) \ B_qo_r;
-    res_ro(ii) = sqrt(tmp' * M_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+    res_ro(ii) = sqrt(tmp.' * Q_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
     fprintf('Iteration of RO-sim finished in %.2f s\n',toc(current_iter))
 end
 fprintf('Reduced-order sim finished; time of completion is %.2f s/n', toc(overall_start))
@@ -132,5 +132,5 @@ f_ro = imag(s)/2/pi;
 mag_ro = 10*log10(abs(res_ro)/1e-9);
 
 fprintf('Saving RO simulation data')
-filename = 'ROsim_data.mat';
+filename = 'ROsim_data_r_10.mat';
 save(filename,'res_ro','f_ro','mag_ro')
