@@ -17,7 +17,7 @@ E_qo(1:n, 1:n) = speye(n); % (1, 1) block
 E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is mass matrix
 
 A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
-A_qo(1:n, 1:n) = speye(n); % (1, 1) block of A_qo
+A_qo(1:n, n+1:2*n) = speye(n); % (1, 2) block of A_qo
 A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
 A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
@@ -29,24 +29,50 @@ B_qo(n+1:2*n, :) = B;
 M_qo = spalloc(2*n, 2*n, nnz(C' * C));
 M_qo(1:n, 1:n) = C' * C; % Double check this...
 
+%% Time sparse-dense Sylvester solve
+
+% Make it dense, to handle the `worst-case'
+r = 250;
+tmp = rand(r, r);
+A_qo_r = (tmp\(-1*diag(logspace(0, 3, r))*tmp));
+M_qo_r = eye(r, r);
+B_qo_r = ones(r, 1);
+E_qo_r = eye(r, r);
+
+tic
+fprintf('Beginning sparse-dense Sylvester solve for X\n')
+[X, ~, ~, ~, ~] = mess_sylvester_sparse_dense(A_qo, 'N', A_qo_r, 'T', -B_qo*B_qo_r', E_qo, E_qo_r);
+fprintf('Sparse-dense Sylvester solve of left projection matrix, X, finished in %.2f s\n', toc)
+% And, Z \in \Rnr satisfies 
+%   @math: A'*Z*Er + E'*Z*Ar - 2*M*X*Mr - C*Cr' = 0
+rhs = -2*M_qo*X*M_qo_r';
+
+fprintf('Beginning sparse-dense Sylvester solve for Z')
+[Z, ~, ~, ~, ~] = mess_sylvester_sparse_dense(A_qo, 'T', A_qo_r, 'N', rhs, E_qo, E_qo_r);
+fprintf('Sparse-dense Sylvester solve of right projection matrix, Z, finished in %.2f s\n', toc)
+
+% Orthonormalize projection matrices
+
+[Vr, ~] = qr(X, "econ");    
+
 %% Get idea of spectrum of A
-k = 10;
-tic
-L_small_real = eigs(A_qo, E_qo, 10,'smallestreal');
-fprintf('Computation of %d eigenvalues of A, E with smallest real part finished in %.2f s\n', k, toc)
-fprintf('Eig-%d: %.8f\n', 1:k, L_small_real)
-tic
-L_small_abs = eigs(A_qo, E_qo, 10,'smallestabs');
-fprintf('Computation of %d eigenvalues of A, E with smallest magnitude finished in %.2f s\n', k, toc)
-fprintf('Eig-%d: %.8f\n', 1:k, L_small_abs)
-tic
-L_big_real = eigs(A_qo, E_qo, 10,'largestreal');
-fprintf('Computation of %d eigenvalues of A, E with largest real part finished in %.2f s\n', k, toc)
-fprintf('Eig-%d: %.8f\n', 1:k, L_big_real)
-tic
-L_big_abs = eigs(A_qo, E_qo, 10,'largestabs');
-fprintf('Computation of %d eigenvalues of A, E with largest magnitude finished in %.2f s\n', k, toc)
-fprintf('Eig-%d: %.8f\n', 1:k, L_big_abs)
+% k = 10;
+% tic
+% L_small_real = eigs(A_qo, E_qo, 10,'smallestreal');
+% fprintf('Computation of %d eigenvalues of A, E with smallest real part finished in %.2f s\n', k, toc)
+% fprintf('Eig-%d: %.8f\n', 1:k, L_small_real)
+% tic
+% L_small_abs = eigs(A_qo, E_qo, 10,'smallestabs');
+% fprintf('Computation of %d eigenvalues of A, E with smallest magnitude finished in %.2f s\n', k, toc)
+% fprintf('Eig-%d: %.8f\n', 1:k, L_small_abs)
+% tic
+% L_big_real = eigs(A_qo, E_qo, 10,'largestreal');
+% fprintf('Computation of %d eigenvalues of A, E with largest real part finished in %.2f s\n', k, toc)
+% fprintf('Eig-%d: %.8f\n', 1:k, L_big_real)
+% tic
+% L_big_abs = eigs(A_qo, E_qo, 10,'largestabs');
+% fprintf('Computation of %d eigenvalues of A, E with largest magnitude finished in %.2f s\n', k, toc)
+% fprintf('Eig-%d: %.8f\n', 1:k, L_big_abs)
 
 %% Time one sparse linear solve + one IRKA iteration
 % si = s(1);

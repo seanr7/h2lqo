@@ -14,7 +14,7 @@ clear all
 %   @param a, b; proportional damping coeffs., D = a * M + b * K
 %   @param viscosity of added dampers
 
-n0 = 50; a = .002; b = a; v = 5;
+n0 = 10; a = .002; b = a; v = 5;
 [M, D, K] = triplechain_MSD(n0, a, b, v);
 
 n = 3 * n0 + 1;
@@ -115,7 +115,7 @@ H2_r_prime_s2 = @(s1, s2) -B_qo_r' * ((s1 * E_qo_r' - A_qo_r')\Q_qo_r) * ...
     ((s2 * E_qo_r - A_qo_r)\E_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r); 
 
 
-%%
+
 fprintf('Checking Hermite optimality conditions, %d in total', r)
 for i = 1:r
     if ~QO_only
