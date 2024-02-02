@@ -1,5 +1,5 @@
 function [Er, Ar, Br, Cr, Mr, pole_history, FOres_history, SOres_history] = ...
-    lqo_tsia(E, A, B, C, M, Er, Ar, Br, Cr, Mr, itermax, eps, plot_conv)
+    lqo_tsia(E, A, B, C, M, Er, Ar, Br, Cr, Mr, itermax, eps, plot_conv, compute_res)
 % Author: Sean Reiter (seanr7@vt.edu)
 
 % Apply the Two-sided Iteration Algorithm (TSIA) to Linear Quadratic
@@ -32,6 +32,10 @@ function [Er, Ar, Br, Cr, Mr, pole_history, FOres_history, SOres_history] = ...
 %   Bool; do we plot the convergence of the reduced-order poles eig(A_r)?
 %   (Default plot_conv = False)
 
+% @param compute_res
+%   Bool; do we compute the 1st and 2nd-order residues of the LQO-ROM?
+%   (Default compute_res = False)
+
 % Outputs
 % ---------
 % @param (Er, Ar, br, cr, Mr) \in (Err, Rrr, Rr1, R1r, Rrr):
@@ -48,13 +52,16 @@ function [Er, Ar, Br, Cr, Mr, pole_history, FOres_history, SOres_history] = ...
 
 %%
 % Check iteration/convergence tolerances; set to defaults if unspecified
-if nargin == 10 % (Default is to not plot convergence of the RO-poles)
+if nargin == 13 % (Default is to not plot convergence of the RO-poles)
+    compute_res = 0;
+end
+if nargin == 12 % (Default is to not plot convergence of the RO-poles)
     plot_conv = 0;
 end
-if nargin == 9 % (No convergence tolerance set)
+if nargin == 11 % (No convergence tolerance set)
     eps = 10e-8;
 end
-if nargin == 8 % (No max number of iterations set)
+if nargin == 10 % (No max number of iterations set)
     itermax = 100;
 end
 
@@ -74,16 +81,20 @@ fprintf('Beginning LQO-TSIA\n')
 % Counter + tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
 
-% Compute initial poles + residues
-[Xr, Lr] = eig(Er\Ar); 
+[Xr, Lr] = eig(Ar, Er); 
 pole_history(:, iter) = diag(Lr); % Save initial poles
-% Now, compute and save residues for the sake of checking interpolation
-if ~pure_QO % Compute FO residues
-    FOres = (Cr' * Xr) * diag(Xr\(Er\Br));
-    FOres_history(:, iter) = FOres.';
+% Compute initial poles + residues
+if ~compute_res
+    FOres_history = [];     SOres_history = [];
+else
+    % Now, compute and save residues for the sake of checking interpolation
+    if ~pure_QO % Compute FO residues
+        FOres = (Cr' * Xr) * diag(Xr\(Er\Br));
+        FOres_history(:, iter) = FOres.';
+    end
+    SOres = diag(Xr\(Er\Br)).' * (Xr.' * Mr * Xr) * diag(Xr\(Er\Br));
+    SOres_history(:, :, iter) = SOres;
 end
-SOres = diag(Xr\(Er\Br)).' * (Xr.' * Mr * Xr) * diag(Xr\(Er\Br));
-SOres_history(:, :, iter) = SOres;
 
 while (err(iter) > eps && iter <= itermax)
     % Start the clock
@@ -121,14 +132,17 @@ while (err(iter) > eps && iter <= itermax)
     [Xr, Lr] = eig(Er\Ar); 
     pole_history(:, iter) = diag(Lr);
     err(iter) = max(abs(pole_history(:, iter) - pole_history(:, iter - 1)));
-
-    % Now, compute and save residues for the sake of checking interpolation
-    if ~pure_QO % Compute FO residues
-        FOres = (Cr' * Xr) * diag(Xr\(Er\Br));
-        FOres_history(:, iter) = FOres.';
+    
+    % Compute residues
+    if compute_res
+        % Now, compute and save residues for the sake of checking interpolation
+        if ~pure_QO % Compute FO residues
+            FOres = (Cr' * Xr) * diag(Xr\(Er\Br));
+            FOres_history(:, iter) = FOres.';
+        end
+        SOres = diag(Xr\(Er\Br)).' * (Xr.' * Mr * Xr) * diag(Xr\(Er\Br));
+        SOres_history(:, :, iter) = SOres;
     end
-    SOres = diag(Xr\(Er\Br)).' * (Xr.' * Mr * Xr) * diag(Xr\(Er\Br));
-    SOres_history(:, :, iter) = SOres;
 end
 
 if iter == (itermax + 1)
