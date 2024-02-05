@@ -81,7 +81,7 @@ addpath('~/h2lqo')
 
 fprintf('Beginning construction of the LQO-ROM via LQO-IRKA\n')
 
-r = 100; % r = Higher in Steffen's; but lets see if we can run this for now..
+r = 50; % r = Higher in Steffen's; but lets see if we can run this for now..
 tmp = rand(r, r);
 A_qo_init = -diag(logspace(0, 3, r));
 Q_qo_init = eye(r, r);
@@ -89,7 +89,7 @@ B_qo_init = ones(r, 1);
 E_qo_init = eye(r, r);
 
 [E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, pole_history, FOres_history, SOres_history]  ...
-    = lqo_tsia(E_qo, A_qo, B_qo, C_qo, Q_qo, E_qo_init, A_qo_init, B_qo_init, [], Q_qo_init, 100, 10e-10, 1, 1);
+    = lqo_tsia(E_qo, A_qo, B_qo, [], Q_qo, E_qo_init, A_qo_init, B_qo_init, [], Q_qo_init, 50, 10e-8, 1, 1);
 
 filename = 'plateTVAlqo_tsia_order100.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'pole_history', 'FOres_history', 'SOres_history') 

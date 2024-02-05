@@ -132,7 +132,8 @@ while (err(iter) > eps && iter <= itermax)
     [Xr, Lr] = eig(Er\Ar); 
     pole_history(:, iter) = diag(Lr);
     err(iter) = max(abs(pole_history(:, iter) - pole_history(:, iter - 1)));
-    
+    fprintf('Largest magnitude change in interpolation points is %.2f \n', err(iter))
+
     % Compute residues
     if compute_res
         % Now, compute and save residues for the sake of checking interpolation
