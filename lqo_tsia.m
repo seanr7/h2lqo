@@ -129,7 +129,8 @@ while (err(iter) > eps && iter <= itermax)
 
     iter = iter + 1;    
     % Get poles (interpolation points) from previous iteration
-    [Xr, Lr] = eig(Er\Ar); 
+    [Xr, Lr] = eig(Ar, Er); 
+    % [Xr, Lr] = eig(Er\Ar); 
     pole_history(:, iter) = diag(Lr);
     err(iter) = max(abs(pole_history(:, iter) - pole_history(:, iter - 1)));
     fprintf('Largest magnitude change in interpolation points is %.2f \n', err(iter))
