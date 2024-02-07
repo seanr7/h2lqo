@@ -56,7 +56,7 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         current_iter = tic;
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt(tmp' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+        res(ii) = sqrt(tmp.' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
     end
     fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
@@ -75,11 +75,11 @@ end
 % xlabel('Frequency [Hz]')
 % ylabel('Magnitude [dB]')
 
-%% Do via LQO-IRKA
+%% Do via LQO-TSIA
 addpath('~/h2lqo')
 % addpath('~/Desktop/h2lqo')
 
-fprintf('Beginning construction of the LQO-ROM via LQO-IRKA\n')
+fprintf('Beginning construction of the LQO-ROM via LQO-TSIA\n')
 
 r = 50; % r = Higher in Steffen's; but lets see if we can run this for now..
 tmp = rand(r, r);
@@ -91,7 +91,7 @@ E_qo_init = eye(r, r);
 [E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, pole_history, FOres_history, SOres_history]  ...
     = lqo_tsia(E_qo, A_qo, B_qo, [], Q_qo, E_qo_init, A_qo_init, B_qo_init, [], Q_qo_init, 50, 10e-8, 1, 1);
 
-filename = 'plateTVAlqo_tsia_order100.mat';
+filename = 'plateTVAlqo_tsia_order50.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'pole_history', 'FOres_history', 'SOres_history') 
 
 % Compute H2 error
@@ -135,5 +135,5 @@ f_ro = imag(s)/2/pi;
 mag_ro = 10*log10(abs(res_ro)/1e-9);
 
 fprintf('Saving RO simulation data')
-filename = 'ROsim_data_lqo_tsia_order100.mat';
+filename = 'ROsim_data_lqo_tsia_order50.mat';
 save(filename,'res_ro','f_ro','mag_ro')

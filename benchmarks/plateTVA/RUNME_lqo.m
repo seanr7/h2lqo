@@ -47,7 +47,7 @@ fprintf('FO-LQO realization built in %.2f s\n',toc)
 % frequencies to sample at (s) are given in '*.mat' file 
 
 % recompute = true;
-recompute = false;
+recompute = true;
 if recompute == true
     fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s\n', 250*15.72)
     overall_start = tic;
@@ -56,7 +56,7 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         current_iter = tic;
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt(tmp' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+        res(ii) = sqrt(tmp.' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
         fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
     end
     fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
