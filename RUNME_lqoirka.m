@@ -77,7 +77,7 @@ if recompute == true
     movefile FOsim_data.mat data/FOsim_data.mat
 
 else
-    fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat')
+    fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat\n')
     % load('FOSIM_data.mat')
 end
 
