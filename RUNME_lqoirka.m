@@ -17,13 +17,14 @@ close all
 addpath('drivers/')
 addpath('data/')
 fprintf('Loading plateTVA model...\n')
-load('plateTVA_n201900m1q28278_full')
+load('data/plateTVA_n201900m1q28278_fo')
 n_nodes = full(sum(sum(C)));
 
-%% Convert plate model to FO (first-order) from SO (second-order)
+%% 
+% Convert plate model to FO (first-order) from SO (second-order)
 % Model is given in SO-form
 % Necessarily, need to conver to FO to do LQO_IRKA for now
-fprintf('Converting SO realization to a FO-LQO system\n')
+fprintf('Converting 2nd-order LTI system to a 1st-order LQO system\n')
 tic
 [n, ~] = size(M);
 
@@ -42,14 +43,18 @@ B_qo(n+1:2*n, :) = B;
 
 % Our `M' matrix (i.e., the quadratic output matrix) is C' * C
 Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
-Q_qo(1:n, 1:n) = C' * C; % Double check this...
-fprintf('FO-LQO realization built in %.2f s\n',toc)
+Q_qo(1:n, 1:n) = C' * C; 
+fprintf('1st-order LQO realization built in %.2f s\n',toc)
 
-%% Sample H2(s1, s2) (QO-tf)
-% frequencies to sample at (s) are given in '*.mat' file 
+%% 
+% Simulate full-order model 
+% 250 frequencies to sample at from 0hz - 250hz (s) are given in '*.mat' file 
+% Instead, use 500 frequences from 0hz - 500hz
+
+s = 1i*linspace(0,2*pi*500, 501);% Comment out to keep original freq range
 
 % recompute = true;
-recompute = true;
+recompute = false;
 if recompute == true
     fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s\n', 250*15.72)
     overall_start = tic;
@@ -58,14 +63,18 @@ if recompute == true
         fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
         current_iter = tic;
         tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt(tmp' * Q_qo * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-        fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
+        % res(ii) is H2(s(ii), s(ii)) = sqrt(((s(ii) * E_qo - A_qo)') \ Q_qo ((s(ii) * E_qo - A_qo) \ eye(n, n)))
+        % i.e., sqrt() of quadratic-output transfer function
+        res(ii) = sqrt((tmp' * Q_qo * tmp) / n_nodes); % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
+        fprintf('Iteration of full-order simulation finished in %.2f s\n',toc(current_iter))
     end
-    fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
+    fprintf('Full-order simulation finished; total time of completion is %.2f s\n', toc(overall_start))
     f = imag(s)/2/pi;
     mag = 10*log10(abs(res)/1e-9);
-    filename = 'FOSIM_data.mat';
+    frpintf('Saving full-order simulation data\n')
+    filename = 'FOsim_data.mat';
     save(filename,'res','f','mag')
+    movefile FOsim_data.mat data/FOsim_data.mat
 
 else
     fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat')
@@ -77,45 +86,33 @@ end
 % xlabel('Frequency [Hz]')
 % ylabel('Magnitude [dB]')
 
-%% Do via LQO-IRKA
-addpath('~/h2lqo')
-% addpath('~/Desktop/h2lqo')
+%% 
+% Now, compute LQO-ROM via 
+%   - LQO-IRKA
+%   - More to come ...
 
-fprintf('Beginning construction of the LQO-ROM via LQO-IRKA\n')
 
-r = 10; % r = Higher in Steffen's; but lets see if we can run this for now..
+r = 50; % Order
+% Initialization parameters
 poles_prev = -logspace(1, 3, r)'; % Spread 
 tmp = 10 *  rand(r, r);
-SO_res_prev = (tmp+tmp')/2; % Try this since M_qo is I?
-[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, poles, ~, SO_res] = lqo_irka(E_qo, A_qo, B_qo, ...
-    [], Q_qo, poles_prev, [], SO_res_prev, 100, 10e-8, 1);
+SO_res_prev = (tmp+tmp')/2; 
+itermax = 50;
+tol = 10e-4;
+
+fprintf('Beginning construction of order %d the LQO-ROM via LQO-IRKA\n', r)
+
+[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, poles, ~, SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, ...
+    [], Q_qo, poles_prev, [], SO_res_prev, itermax, tol, 1);
 
 filename = 'plateTVAlqo_r_10.mat';
-save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SO_res') 
+save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'pole_history', 'SO_res') 
+movefile plateTVA_r50_lqoirka.mat data/plateTVA_r50_lqoirka.mat
 
-% Compute H2 error
-% A_qo_err = spalloc(2*n + r, 2*n + r, nnz(A_qo) + nnz(A_qo_r));
-% A_qo_err(1:2*n, 1:2*n) = A_qo;  
-% A_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = A_qo_r;
-% % blkdiag(A_qo, A_qo_r);
-% B_qo_err = spalloc(2*n + r, 1, nnz(B_qo) + nnz(B_qo_r));
-% B_qo_err(1:2*n, 1) = B_qo;  
-% B_qo_err(2*n + 1:2*n + r, 1) = B_qo_r;
-% % [B_qo; B_qo_r];
-% M_qo_err = spalloc(2*n + r, 2*n + r, nnz(M_qo) + nnz(M_qo_r));
-% M_qo_err(1:2*n, 1:2*n) = M_qo;  
-% M_qo_err(2*n + 1:2*n + r, 2*n + 1:2*n + r) = M_qo_r;
-% % blkdiag(M_qo, -M_qo_r);
-% fprintf('Sanity; is M_qo_r symm?')
-% norm(M_qo_r - M_qo_r', 2)
-% 
-% P_qo_err = lyap(A_qo_err, B_qo_err * B_qo_err');
-% Q_qo_err = lyap(A_qo_err', M_qo_err * P_qo_err * M_qo_err);
-% fprintf('H2 error')
-% sqrt(B_qo_err' * Q_qo_err * B_qo_err)
+%%
+% Now, do reduced-order simulations
 
 fprintf('Beginning reduced-order simulation\n')
-% recompute = false;
 overall_start = tic;
 
 res_ro = zeros(1,length(s));
@@ -124,15 +121,14 @@ for ii=1:length(s)
     current_iter = tic;
     tmp = (s(ii) * E_qo_r - A_qo_r) \ B_qo_r;
     res_ro(ii) = sqrt(tmp' * Q_qo_r * tmp) / n_nodes; % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-    fprintf('Iteration of RO-sim finished in %.2f s\n',toc(current_iter))
+    fprintf('Iteration of reduced-order simulation finished in %.2f s\n',toc(current_iter))
 end
-fprintf('Reduced-order sim finished; time of completion is %.2f s/n', toc(overall_start))
-
-% Save output filefprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
+fprintf('Reduced-order simulation finished; time of completion is %.2f s/n', toc(overall_start))
 
 f_ro = imag(s)/2/pi;
 mag_ro = 10*log10(abs(res_ro)/1e-9);
 
-fprintf('Saving RO simulation data')
-filename = 'ROsim_data_r_10.mat';
+fprintf('Saving reduced-order simulation data')
+filename = 'ROsim_plateTVA_r50_lqoirka.mat';
+movefile ROsim_plateTVA_r50_lqoirka.mat data/ROsim_plateTVA_r50_lqoirka.mat
 save(filename,'res_ro','f_ro','mag_ro')

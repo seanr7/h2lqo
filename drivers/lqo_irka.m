@@ -165,6 +165,7 @@ while (err(iter) > eps && iter <= itermax)
     % Track convergence of poles; Update iter count + compute max deviation 
     % between poles across iterations
     iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
+    fprintf('Largest magnitude change in interpolation points from previous iteration is %.2f \n', err(iter))
 end
 
 % If broken, interpolation occurs using poles + residues from previous iter
