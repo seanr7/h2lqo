@@ -97,7 +97,7 @@ r = 25; % Order
 poles_prev = -logspace(1, 3, r)'; % Spread 
 tmp = 10 *  rand(r, r);
 SO_res_prev = (tmp+tmp')/2; 
-itermax = 50;
+itermax = 25;
 tol = 10e-4;
 
 fprintf('Beginning construction of order %d the LQO-ROM via LQO-IRKA\n', r)
