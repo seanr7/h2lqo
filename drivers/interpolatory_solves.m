@@ -72,19 +72,25 @@ Vprim = zeros(n, q);   Wprim = zeros(n, q);
 % Compute primitive bases
 if strcmp(opts.proj, 'g')
     % Primitive bases are identical as in Galerkin projection
+    linear_solves = tic;
+    fprintf('Computing model reduction bases via Galerkin projection \n')
     for k = 1:q
         tmp = (shifts(k) * E - A)\B;
         Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
     end
+    fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
 end
 if strcmp(opts.proj, 'pg')
     % Primitive bases are different as in Petrov-Galerkin projection
     % Left projection matrix encodes QO matrix
+    linear_solves = tic;
+    fprintf('Computing model reduction bases via Petrov-Galerkin projection \n')
     for k = 1:q
         tmp = (shifts(k) * E - A)\B;
         Vprim(:, k) = tmp;
         Wprim(:, k) = ((shifts(k) * E - A)' \ (Q * tmp));
     end
+    fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
 end
 
 % Next, compute H at shifts; use precomputed solves
@@ -94,11 +100,16 @@ for k = 1:q
 end
 
 if strcmp(opts.compression, 'avg')
+    compression = tic;
+    fprintf('Compressing projection bases via pivoted-QR \n')
     [Vorth, ~, pV] = qr(Vprim, 'vector');   [Worth, ~, pW] = qr(Wprim, 'vector');
     % Grab r `leading' columns of primitive bases according to pivoted QR
     Vorth = Vorth(:, 1:r);   Worth = Worth(:, 1:r); % Double check this
+    fprintf('Vr and Wr orthonormalized in %.2f s\n', toc(compression))
 end
 if strcmp(opts.compression, 'Linfty')
+    overall_compression = tic;
+    fprintf('Compressing projection bases via greedy Linfty search \n')
     % Choose r columns greedily where error is maximized
     p = zeros(r, 1); % Space for indices chosen via greedy search
     % First index is just max magnitude tf value, since `LQO-ROM' is zero
@@ -107,6 +118,8 @@ if strcmp(opts.compression, 'Linfty')
     Er = Wprim(:, p1)' * E * Vprim(:, p1);  Ar = Wprim(:, p1)' * A * Vprim(:, p1); 
     Qr = Vprim(:, p1)' * Q * Vprim(:, p1);  Br = Wprim(:, p1)' * B;
     for k = 1:r-1
+        iter_compression = tic;
+        fprintf('Starting k = %d iteration of greedy Linfty search \n', k)
         % Eval. LQO-ROM and compute error (order is k at each iter)
         Hr_shifts = zeros(q, 1); % Eval at q shifts
         for j = 1:q
@@ -126,9 +139,12 @@ if strcmp(opts.compression, 'Linfty')
         % Next Proj LQO-ROM; grab columns stored in P
         Er = Worth' * E * Vorth;  Ar = Worth' * A * Vorth; 
         Qr = Vorth' * Q * Vorth;  Br = Worth' * B;
+        fprintf('Search iteration done in %.2f s\n', toc(iter_compression))
     end
     % Worth = Wprim(:, p(1:k+1));    Vorth = Vprim(:, p(1:k+1));
     pW = p; pV = p; % Save indices
+    fprintf('Vr and Wr orthonormalized in %.2f s\n', toc(overall_compression))
 end
+fprintf('Outputting\n')
 end
 
