@@ -123,7 +123,8 @@ while (err(iter) > eps && iter <= itermax)
         end
         % Now, only one final linear solve required; apply to the sum
         % TODO: Need conj of pole here? I don't think so, just the negative
-        W_r(:, k) = ((-poles(k) * E' - A')\tmp);
+        % W_r(:, k) = ((-poles(k) * E' - A')\tmp);
+        W_r(:, k) = ((-poles(k) * E - A)'\tmp);
         k = k + 1;
     end
     
@@ -131,7 +132,8 @@ while (err(iter) > eps && iter <= itermax)
     [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
     % Compute LQO-ROM via PG-proj and new parameters
     % (1-31-24) Change to real transpose instead of Hermitian; may need to put back! - SR
-    W_rt = W_r.';  V_rt = V_r.';
+    % W_rt = W_r.';  V_rt = V_r.';
+    W_rt = W_r';  V_rt = V_r';
     E_r = W_rt * E * V_r;   A_r = W_rt * A * V_r;   b_r = W_rt * b;
     if ~pure_QO % Compute reduced linear output term
         c_r = c * V_r;  

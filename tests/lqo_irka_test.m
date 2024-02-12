@@ -55,32 +55,32 @@ for i = 1:r
     end
     
 end
-
-% Partial deriv wrt first argument of H2, H2r
-H2_prime_s1 = @(s1, s2) -b.' * (((s1 * E - A).'\E.') * ((s1 * E - A).'\M)) * ((s2 * E - A)\b); 
-H2_prime_s2 = @(s1, s2) -b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
-H2r_prime_s1 = @(s1, s2) -br.' * (((s1 * Er - Ar).'\Er.') * ((s1 * Er - Ar).'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
-H2r_prime_s2 = @(s1, s2) -br.' * ((s1 * Er - Ar).'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
-
-fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
-
-for i = 1:r
-    ro_side = 0;
-    fo_side = 0;
-    for j = 1:r
-        % ro_side = ro_side + 2 * conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
-        % fo_side = fo_side + 2 * conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
-
-        ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
-        fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
-
-        % ro_side = ro_side - conv_SO_res(i, j) * H2r_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2r_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
-        % fo_side = fo_side - conv_SO_res(i, j) * H2_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
-        %             conv_SO_res(j, i) * H2_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
-    end
-    fo_side - ro_side
-end
+% 
+% % Partial deriv wrt first argument of H2, H2r
+% H2_prime_s1 = @(s1, s2) -b.' * (((s1 * E - A).'\E.') * ((s1 * E - A).'\M)) * ((s2 * E - A)\b); 
+% H2_prime_s2 = @(s1, s2) -b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
+% H2r_prime_s1 = @(s1, s2) -br.' * (((s1 * Er - Ar).'\Er.') * ((s1 * Er - Ar).'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
+% H2r_prime_s2 = @(s1, s2) -br.' * ((s1 * Er - Ar).'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+% 
+% fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
+% 
+% for i = 1:r
+%     ro_side = 0;
+%     fo_side = 0;
+%     for j = 1:r
+%         % ro_side = ro_side + 2 * conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
+%         % fo_side = fo_side + 2 * conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
+% 
+%         ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+%         fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+% 
+%         % ro_side = ro_side - conv_SO_res(i, j) * H2r_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
+%         %             conv_SO_res(j, i) * H2r_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
+%         % fo_side = fo_side - conv_SO_res(i, j) * H2_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
+%         %             conv_SO_res(j, i) * H2_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
+%     end
+%     fo_side - ro_side
+% end
 
 %% 1a. Toy model
 n = 8; 

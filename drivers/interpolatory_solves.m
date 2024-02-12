@@ -1,4 +1,4 @@
-function [Wprim, Vprim, Worth, Vorth, H_shifts, opts] = interpolatory_solves(E, A, B, Q, shifts, r, opts)
+function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E, A, B, Q, shifts, r, opts)
 % Author: Sean Reiter (seanr7@vt.edu)
 
 % Function to compute linear solves for interpolatory model-order reduction
@@ -22,6 +22,8 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, opts] = interpolatory_solves(E, 
 %                  according to opts.compression
 % @param H_shifts: The quadratic-output transfer function evaluated at the
 %                  inputted shifts
+% @param: pV, pW:  Indices of shifts included in projection subspaces;
+%                  outputted for the sake of checking interpolatory cons
 
 % Opts:
 % @param compression:   How to compute Wroth, Vrorth, from Wrprim, Vrprim
@@ -65,14 +67,16 @@ else
 end
 
 q =  max(size(shifts));
-Vprim = zeros(q, 1);   Wprim = zeros(q, 1);
+[n, ~] = size(A);
+Vprim = zeros(n, q);   Wprim = zeros(n, q);
 % Compute primitive bases
-if strcmp(opts.proj, 'p')
+if strcmp(opts.proj, 'g')
     % Primitive bases are identical as in Galerkin projection
     for k = 1:q
         tmp = (shifts(k) * E - A)\B;
         Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
     end
+end
 if strcmp(opts.proj, 'pg')
     % Primitive bases are different as in Petrov-Galerkin projection
     % Left projection matrix encodes QO matrix
@@ -81,9 +85,6 @@ if strcmp(opts.proj, 'pg')
         Vprim(:, k) = tmp;
         Wprim(:, k) = ((shifts(k) * E - A)' \ (Q * tmp));
     end
-else
-    error('NotImplementedError')
-end
 end
 
 % Next, compute H at shifts; use precomputed solves
@@ -96,35 +97,38 @@ if strcmp(opts.compression, 'avg')
     [Vorth, ~, pV] = qr(Vprim, 'vector');   [Worth, ~, pW] = qr(Wprim, 'vector');
     % Grab r `leading' columns of primitive bases according to pivoted QR
     Vorth = Vorth(:, 1:r);   Worth = Worth(:, 1:r); % Double check this
+end
 if strcmp(opts.compression, 'Linfty')
     % Choose r columns greedily where error is maximized
-    p = zeros(k, 1); % Space for indices chosen via greedy search
+    p = zeros(r, 1); % Space for indices chosen via greedy search
     % First index is just max magnitude tf value, since `LQO-ROM' is zero
     [~, p1] = max(abs(H_shifts));    p(1) = p1;
     % Project down
     Er = Wprim(:, p1)' * E * Vprim(:, p1);  Ar = Wprim(:, p1)' * A * Vprim(:, p1); 
     Qr = Vprim(:, p1)' * Q * Vprim(:, p1);  Br = Wprim(:, p1)' * B;
-    for k = 1:r 
+    for k = 1:r-1
         % Eval. LQO-ROM and compute error (order is k at each iter)
         Hr_shifts = zeros(q, 1); % Eval at q shifts
         for j = 1:q
             tmpr = (shifts(j) * Er - Ar)\Br;
-            Hr_shifts(j) = (((shifts(j) * Er - Ar)') \ (Qr * tmpr)); 
+            Hr_shifts(j) = Br'* (((shifts(j) * Er - Ar)') \ (Qr * tmpr)); 
         end
-        Linfty_error = abs(Hshifts - Hr_shifts); % Compute Linfty_error
+        Linfty_error = abs(H_shifts - Hr_shifts); % Compute Linfty_error
         % Choose next index based on where error is biggest 
-        [pk, ~] = mamx(Linfty_error);
-        p(k) = pk;
+        % Hacky, but set previously chosen indices to 0
+        for i = 1:k
+            Linfty_error(p(i)) = 0;
+        end
+        [~, pk] = max(Linfty_error);
+        p(k+1) = pk;
+        % QR compressed basis to avoid ill conditioning
+        [Worth, ~] = qr(Wprim(:, p(1:k+1)));    [Vorth, ~] = qr(Vprim(:, p(1:k+1)));
         % Next Proj LQO-ROM; grab columns stored in P
-        Er = Wprim(:, p)' * E * Vprim(:, p);  Ar = Wprim(:, p)' * A * Vprim(:, p); 
-        Qr = Vprim(:, p)' * Q * Vprim(:, p);  Br = Wprim(:, p)' * B;
+        Er = Worth' * E * Vorth;  Ar = Worth' * A * Vorth; 
+        Qr = Vorth' * Q * Vorth;  Br = Worth' * B;
     end
-    % Now, grab compressed basis
-    Worth = Wprim(:, p);    Vorth = Vprim(:, p);
-else
-    error('NotImplementedError')
+    % Worth = Wprim(:, p(1:k+1));    Vorth = Vprim(:, p(1:k+1));
+    pW = p; pV = p; % Save indices
 end
-end
-
 end
 
