@@ -150,7 +150,7 @@ shifts = 1i*linspace(1,2*pi*251, 250);% Comment out to keep original freq rang
 r = 25; % Order
 fprintf('4. Computing LQO-ROM via avg (pivoted QR) sampling and Petrov-Galerkin projection\n')
 opts.compression = 'avg';
-opts.proj = 'g';
+opts.proj = 'pg';
 [Wprim, Vprim, Worth, Vorth, Hshifts_r25_avg_pg, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_avg_pg = Worth'*E_qo*Vorth; A_qo_r25_avg_pg = Worth'*A_qo*Vorth; 
