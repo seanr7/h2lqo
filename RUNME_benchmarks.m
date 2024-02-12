@@ -99,6 +99,12 @@ r = 25; % Order
 fprintf('1. Computing LQO-ROM via Linfty sampling and Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'g';
+% Compute primitive bases and tf values at first pass
+opts.recomp_bases = 1;
+opts.recomp_tf = 1;
+opts.Vprim = [];
+opts.Wprim = [];
+opts.H_shifts = [];
 [Wprim, Vprim, Worth, Vorth, Hshifts_r25_Linfty_g, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_Linfty_g = Worth'*E_qo*Vorth; A_qo_r25_Linfty_g = Worth'*A_qo*Vorth; 
@@ -112,11 +118,15 @@ movefile plateTVAlqo_r25_Linfty_g.mat data/plateTVAlqo_r25_Linfty_g.mat
 
 
 %%
-shifts = 1i*linspace(1,2*pi*251, 250);% Comment out to keep original freq rang
-r = 25; % Order
 fprintf('2. Computing LQO-ROM via Linfty sampling and Petrov-Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'pg';
+% Grab primitive bases and tf values from previous iteration
+opts.recomp_bases = 0;
+opts.recomp_tf = 0;
+opts.Vprim = Vprim;
+opts.Wprim = Wprim;
+opts.H_shifts = H_shifts;
 [Wprim, Vprim, Worth, Vorth, Hshifts_r25_Linfty_pg, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r25_Linfty_pg = Worth'*A_qo*Vorth; 
@@ -129,11 +139,15 @@ save(filename, 'E_qo_r25_Linfty_pg', 'A_qo_r25_Linfty_pg', 'B_qo_r25_Linfty_pg',
 movefile plateTVAlqo_r25_Linfty_pg.mat data/plateTVAlqo_r25_Linfty_pg.mat
 
 %%
-shifts = 1i*linspace(1,2*pi*251, 250);% Comment out to keep original freq rang
-r = 25; % Order
 fprintf('3. Computing LQO-ROM via avg (pivoted QR) sampling and Galerkin projection\n')
 opts.compression = 'avg';
 opts.proj = 'g';
+% Grab primitive bases and tf values from previous iteration
+opts.recomp_bases = 0;
+opts.recomp_tf = 0;
+opts.Vprim = Vprim;
+opts.Wprim = Wprim;
+opts.H_shifts = H_shifts;
 [Wprim, Vprim, Worth, Vorth, Hshifts_r25_avg_g, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_avg_g = Worth'*E_qo*Vorth; A_qo_r25_avg_g = Worth'*A_qo*Vorth; 
@@ -146,11 +160,15 @@ save(filename, 'E_qo_r25_avg_g', 'A_qo_r25_avg_g', 'B_qo_r25_avg_g', 'Q_qo_r25_a
 movefile plateTVAlqo_r25_avg_g.mat data/plateTVAlqo_r25_avg_g.mat
 
 %%
-shifts = 1i*linspace(1,2*pi*251, 250);% Comment out to keep original freq rang
-r = 25; % Order
 fprintf('4. Computing LQO-ROM via avg (pivoted QR) sampling and Petrov-Galerkin projection\n')
 opts.compression = 'avg';
 opts.proj = 'pg';
+% Grab primitive bases and tf values from previous iteration
+opts.recomp_bases = 0;
+opts.recomp_tf = 0;
+opts.Vprim = Vprim;
+opts.Wprim = Wprim;
+opts.H_shifts = H_shifts;
 [Wprim, Vprim, Worth, Vorth, Hshifts_r25_avg_pg, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_avg_pg = Worth'*E_qo*Vorth; A_qo_r25_avg_pg = Worth'*A_qo*Vorth; 

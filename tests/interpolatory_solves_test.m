@@ -41,6 +41,10 @@ shifts = 2*pi*1i*linspace(1,251, 251); % 1 - 251 Hz
 fprintf('1. Linfty and Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'g';
+opts.recomp_bases = 1;
+opts.recomp_tf = 1;
+opts.Vprim = [];
+opts.Wprim = [];
 [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r = Worth'*E_qo*Vorth; A_qo_r = Worth'*A_qo*Vorth; 
@@ -68,6 +72,10 @@ end
 fprintf('2. Linfty and Petrov-Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'pg';
+opts.recomp_bases = 1;
+opts.recomp_tf = 1;
+opts.Vprim = [];
+opts.Wprim = [];
 [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r = Worth'*E_qo*Vorth; A_qo_r = Worth'*A_qo*Vorth; 
@@ -95,6 +103,10 @@ end
 fprintf('3. avg and Galerkin projection\n')
 opts.compression = 'avg';
 opts.proj = 'g';
+opts.recomp_bases = 1;
+opts.recomp_tf = 1;
+opts.Vprim = [];
+opts.Wprim = [];
 [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r = Worth'*E_qo*Vorth; A_qo_r = Worth'*A_qo*Vorth; 
@@ -122,6 +134,10 @@ end
 fprintf('4. avg and Petrov-Galerkin projection\n')
 opts.compression = 'avg';
 opts.proj = 'g';
+opts.recomp_bases = 1;
+opts.recomp_tf = 1;
+opts.Vprim = [];
+opts.Wprim = [];
 [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r = Worth'*E_qo*Vorth; A_qo_r = Worth'*A_qo*Vorth; 
@@ -144,3 +160,36 @@ for i = 1:r
         H2(shifts(pW(i)),  shifts(pW(j))) - H2r(shifts(pW(i)), shifts(pW(j)))
     end
 end
+
+%% 
+% Finally, just check the recomp functionality
+opts.compression = 'Linfty';
+opts.proj = 'g';
+opts.recomp_bases = 0;
+opts.recomp_tf = 0;
+% Grabbed from previous test
+opts.Vprim = Vprim;
+opts.Wprim = Wprim;
+opts.H_shifts = H_shifts;
+[Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+% Compute LQO-ROM
+E_qo_r = Worth'*E_qo*Vorth; A_qo_r = Worth'*A_qo*Vorth; 
+Q_qo_r = Vorth'*Q_qo*Vorth; B_qo_r = Worth'*B_qo;
+% Check interpolation conditions
+H2 = @(s1, s2) B_qo' * ((s1 * E_qo - A_qo)'\Q_qo) * ((s2 * E_qo - A_qo)\B_qo);
+
+H2r = @(s1, s2) B_qo_r' * ((s1 * E_qo_r - A_qo_r)'\Q_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r);
+
+% fprintf(', %d^2 Interpolation conditions', r)
+% for i = 1:r
+%     for j = 1:r
+%         fprintf('Due to V')
+%         H2(shifts(pV(i)),  shifts(pV(j))) - H2r(shifts(pV(i)), shifts(pV(j)))
+%     end
+% end
+% for i = 1:r
+%     for j = 1:r
+%         fprintf('Due to W')
+%         H2(shifts(pW(i)),  shifts(pW(j))) - H2r(shifts(pW(i)), shifts(pW(j)))
+%     end
+% end

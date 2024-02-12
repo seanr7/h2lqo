@@ -43,60 +43,87 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_so
 %                           'pg':     Primitive bases are computed
 %                                     differently; Wrprim encodes
 %                                     information of QO matrix Q
-
+% @param recomp_bases:  Bool; do we need to recompute primitive bases, or
+%                       are they passed as an arg?
+% @param recomp_tf:     Bool; do we need to recompute tf values, or
+%                       are they passed as an arg?
+% @param Vprim, Wprim:  Precommputed primitive bases
+% @param H_shifts:      Precommputed tf values
 %%
-if isempty(fieldnames(opts))
-    % Default opts
+% Default opts
+if ~isfield(opts, 'proj')
+    fprintf('Setting default value for opts.proj = g\n')
     opts.proj = 'g'; % Galerkin projection
+end
+if ~isfield(opts, 'compression')
+    fprintf('Setting default value for opts.compression = avg\n')
     opts.compression = 'avg'; % Orth via Pivoted QR
 end
-if length(fields(opts)) > 2
-    error('Too many fields in input opts; only 2 allowed')
-else
-    if length(fields(opts)) == 1
-        if isfield(opts, 'proj')
-            opts.compression = 'avg';
-        else % isfield(opts, 'compression')
-            if isfield(opts, 'compression')
-                opts.proj = 'g';
-            else
-                error('Unrecognized field in input opts')
-            end
-        end
-    end
+if ~isfield(opts, 'recomp_bases')
+    fprintf('Setting default value for opts.recomp_bases = 0\n')
+    opts.recomp_bases = 0; % False; recomp primitive bases
+end
+if ~isfield(opts, 'recomp_tf')
+    fprintf('Setting default value for opts.recomp_tf = 0\n')
+    opts.recomp_tf = 0; % False; recomp primitive bases
+end
+if ~isfield(opts, 'Vprim')
+    fprintf('Setting default value for opts.Vprim = []\n')
+    opts.Vprim = []; % No pre-computed bases
+end
+if ~isfield(opts, 'Wprim')
+    fprintf('Setting default value for opts.Wprim = []\n')
+    opts.Wprim = [];
+end
+if ~isfield(opts, 'H_shifts')
+    fprintf('Setting default value for opts.H_shifts = []\n')
+    opts.H_shifts = [];
 end
 
 q =  max(size(shifts));
 [n, ~] = size(A);
-Vprim = zeros(n, q);   Wprim = zeros(n, q);
-% Compute primitive bases
-if strcmp(opts.proj, 'g')
-    % Primitive bases are identical as in Galerkin projection
-    linear_solves = tic;
-    fprintf('Computing model reduction bases via Galerkin projection \n')
-    for k = 1:q
-        tmp = (shifts(k) * E - A)\B;
-        Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
+if opts.recomp_bases % If we do compute the primitive bases
+    Vprim = zeros(n, q);   Wprim = zeros(n, q);
+    % Compute primitive bases
+    if strcmp(opts.proj, 'g')
+        % Primitive bases are identical as in Galerkin projection
+        linear_solves = tic;
+        fprintf('Computing model reduction bases via Galerkin projection \n')
+        for k = 1:q
+            tmp = (shifts(k) * E - A)\B;
+            Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
+        end
+        fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
     end
-    fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
-end
-if strcmp(opts.proj, 'pg')
-    % Primitive bases are different as in Petrov-Galerkin projection
-    % Left projection matrix encodes QO matrix
-    linear_solves = tic;
-    fprintf('Computing model reduction bases via Petrov-Galerkin projection \n')
-    for k = 1:q
-        tmp = (shifts(k) * E - A)\B;
-        Vprim(:, k) = tmp;
-        Wprim(:, k) = ((shifts(k) * E - A)' \ (Q * tmp));
+    if strcmp(opts.proj, 'pg')
+        % Primitive bases are different as in Petrov-Galerkin projection
+        % Left projection matrix encodes QO matrix
+        linear_solves = tic;
+        fprintf('Computing model reduction bases via Petrov-Galerkin projection \n')
+        for k = 1:q
+            tmp = (shifts(k) * E - A)\B;
+            Vprim(:, k) = tmp;
+            Wprim(:, k) = ((shifts(k) * E - A)' \ (Q * tmp));
+        end
+        fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
     end
-    fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
+else % Bases are given in opts
+    fprintf('Primitive bases passed as args; not recomputing \n')
+    Vprim = opts.Vprim; Wprim = opts.Wprim;
 end
 
-% Next, compute H at shifts; use precomputed solves
-H_shifts = zeros(q, 1);
-for k = 1:q
-    H_shifts(k) = Vprim(:, k)' * Q * Vprim(:, k);
+if opts.recomp_tf
+    % Next, compute H at shifts; use precomputed solves
+    compute_tf = tic;
+    fprintf('Computing transfer function values at given shifts')
+    H_shifts = zeros(q, 1);
+    for k = 1:q
+        H_shifts(k) = Vprim(:, k)' * Q * Vprim(:, k);
+    end
+    fprintf('H_shifts computed in %.2f s\n', toc(compute_tf))
+else % Tf values given in opts
+    fprintf('Tf values passed as args; not recomputing \n')
+    H_shifts = opts.H_shifts;
 end
 
 if strcmp(opts.compression, 'avg')
