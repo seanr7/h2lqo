@@ -107,6 +107,10 @@ if opts.recomp_bases % If we do compute the primitive bases
         end
         fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
     end
+    % Just to be safe ...
+    fprintf('Saving your bases!\n')
+    filename = prim_bases;
+    save(filename, 'Vprim', 'Wprim');
 else % Bases are given in opts
     fprintf('Primitive bases passed as args; not recomputing \n')
     Vprim = opts.Vprim; Wprim = opts.Wprim;
