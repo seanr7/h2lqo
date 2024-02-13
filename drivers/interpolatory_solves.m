@@ -115,7 +115,7 @@ end
 if opts.recomp_tf
     % Next, compute H at shifts; use precomputed solves
     compute_tf = tic;
-    fprintf('Computing transfer function values at given shifts')
+    fprintf('Computing transfer function values at given shifts \n')
     H_shifts = zeros(q, 1);
     for k = 1:q
         H_shifts(k) = Vprim(:, k)' * Q * Vprim(:, k);
@@ -129,7 +129,7 @@ end
 if strcmp(opts.compression, 'avg')
     compression = tic;
     fprintf('Compressing projection bases via pivoted-QR \n')
-    [Vorth, ~, pV] = qr(Vprim, 'vector');   [Worth, ~, pW] = qr(Wprim, 'vector');
+    [Vorth, ~, pV] = qr(Vprim, 'vector', 'econ');   [Worth, ~, pW] = qr(Wprim, 'vector', 'econ');
     % Grab r `leading' columns of primitive bases according to pivoted QR
     Vorth = Vorth(:, 1:r);   Worth = Worth(:, 1:r); % Double check this
     fprintf('Vr and Wr orthonormalized in %.2f s\n', toc(compression))
