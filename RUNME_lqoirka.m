@@ -92,12 +92,12 @@ end
 %   - More to come ...
 
 
-r = 25; % Order
+r = 100; % Order
 % Initialization parameters
 poles_prev = -logspace(1, 3, r)'; % Spread 
 tmp = 10 *  rand(r, r);
 SO_res_prev = (tmp+tmp')/2; 
-itermax = 25;
+itermax = 15;
 tol = 10e-4;
 
 fprintf('Beginning construction of order %d the LQO-ROM via LQO-IRKA\n', r)
@@ -105,9 +105,9 @@ fprintf('Beginning construction of order %d the LQO-ROM via LQO-IRKA\n', r)
 [E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, poles, ~, SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, ...
     [], Q_qo, poles_prev, [], SO_res_prev, itermax, tol, 1);
 
-filename = 'plateTVAlqo_r25_lqoirka.mat';
+filename = 'plateTVAlqo_r100_lqoirka.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'pole_history', 'SO_res') 
-movefile plateTVA_r25_lqoirka.mat data/plateTVA_r25_lqoirka.mat
+movefile plateTVA_r100_lqoirka.mat ~/data/plateTVA_r100_lqoirka.mat
 
 %%
 % Now, do reduced-order simulations
@@ -129,6 +129,6 @@ f_ro = imag(s)/2/pi;
 mag_ro = 10*log10(abs(res_ro)/1e-9);
 
 fprintf('Saving reduced-order simulation data')
-filename = 'ROsim_plateTVA_r25_lqoirka.mat';
-movefile ROsim_plateTVA_r25_lqoirka.mat data/ROsim_plateTVA_r25_lqoirka.mat
+filename = 'ROsim_plateTVA_r100_lqoirka.mat';
+movefile ROsim_plateTVA_r100_lqoirka.mat data/ROsim_plateTVA_r100_lqoirka.mat
 save(filename,'res_ro','f_ro','mag_ro')
