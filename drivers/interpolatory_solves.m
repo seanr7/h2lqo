@@ -109,7 +109,7 @@ if opts.recomp_bases % If we do compute the primitive bases
     end
     % Just to be safe ...
     fprintf('Saving your bases!\n')
-    filename = prim_bases;
+    filename = 'prim_bases.mat';
     save(filename, 'Vprim', 'Wprim');
 else % Bases are given in opts
     fprintf('Primitive bases passed as args; not recomputing \n')

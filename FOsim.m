@@ -15,7 +15,7 @@ close all
 % directly
 
 fprintf('Loading plateTVA model...\n')
-load('plateTVA_n201900m1q28278_full')
+load('data/plateTVA_n201900m1q28278_fo')
 n_nodes = full(sum(sum(C)));
 
 %% Convert plate model to FO (first-order) from SO (second-order)
