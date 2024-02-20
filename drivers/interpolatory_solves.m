@@ -166,7 +166,7 @@ if strcmp(opts.compression, 'Linfty')
         [~, pk] = max(Linfty_error);
         p(k+1) = pk;
         % QR compressed basis to avoid ill conditioning
-        [Worth, ~] = qr(Wprim(:, p(1:k+1)));    [Vorth, ~] = qr(Vprim(:, p(1:k+1)));
+        [Worth, ~] = qr(Wprim(:, p(1:k+1)), 'econ');    [Vorth, ~] = qr(Vprim(:, p(1:k+1)), 'econ');
         % Next Proj LQO-ROM; grab columns stored in P
         Er = Worth' * E * Vorth;  Ar = Worth' * A * Vorth; 
         Qr = Vorth' * Q * Vorth;  Br = Worth' * B;

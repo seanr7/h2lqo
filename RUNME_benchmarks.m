@@ -99,20 +99,21 @@ r = 25; % Order
 fprintf('1. Computing LQO-ROM via Linfty sampling and Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'g';
-% Compute primitive bases and tf values at first pass
-opts.recomp_bases = 1;
+% Load bases and tf values
+load('prim_bases') % Saved on remote server
+opts.recomp_bases = 0;
 opts.recomp_tf = 1;
-opts.Vprim = [];
-opts.Wprim = [];
+opts.Vprim = Vprim;
+opts.Wprim = Wprim;
 opts.H_shifts = [];
-[Wprim, Vprim, Worth, Vorth, Hshifts_r25_Linfty_g, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+[~, ~, Worth, Vorth, Hshifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_Linfty_g = Worth'*E_qo*Vorth; A_qo_r25_Linfty_g = Worth'*A_qo*Vorth; 
 Q_qo_r25_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r25_Linfty_g = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_Linfty_g.mat';
-save(filename, 'E_qo_r25_Linfty_g', 'A_qo_r25_Linfty_g', 'B_qo_r25_Linfty_g', 'Q_qo_r25_Linfty_g', 'Hshifts_r25_Linfty_g', 'opts', ...
+save(filename, 'E_qo_r25_Linfty_g', 'A_qo_r25_Linfty_g', 'B_qo_r25_Linfty_g', 'Q_qo_r25_Linfty_g', 'Hshifts', 'opts', ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_Linfty_g.mat data/plateTVAlqo_r25_Linfty_g.mat
 
@@ -127,14 +128,14 @@ opts.recomp_tf = 0;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
-[Wprim, Vprim, Worth, Vorth, Hshifts_r25_Linfty_pg, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+[~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r25_Linfty_pg = Worth'*A_qo*Vorth; 
 Q_qo_r25_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r25_Linfty_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_Linfty_pg.mat';
-save(filename, 'E_qo_r25_Linfty_pg', 'A_qo_r25_Linfty_pg', 'B_qo_r25_Linfty_pg', 'Q_qo_r25_Linfty_pg', 'Hshifts_r25_Linfty_pg', 'opts', ...
+save(filename, 'E_qo_r25_Linfty_pg', 'A_qo_r25_Linfty_pg', 'B_qo_r25_Linfty_pg', 'Q_qo_r25_Linfty_pg', 'Hshifts', 'opts', ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_Linfty_pg.mat data/plateTVAlqo_r25_Linfty_pg.mat
 
@@ -148,14 +149,14 @@ opts.recomp_tf = 0;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
-[Wprim, Vprim, Worth, Vorth, Hshifts_r25_avg_g, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+[~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_avg_g = Worth'*E_qo*Vorth; A_qo_r25_avg_g = Worth'*A_qo*Vorth; 
 Q_qo_r25_avg_g = Vorth'*Q_qo*Vorth; B_qo_r25_avg_g = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_g.mat';
-save(filename, 'E_qo_r25_avg_g', 'A_qo_r25_avg_g', 'B_qo_r25_avg_g', 'Q_qo_r25_avg_g', 'Hshifts_r25_avg_g', 'opts', ...
+save(filename, 'E_qo_r25_avg_g', 'A_qo_r25_avg_g', 'B_qo_r25_avg_g', 'Q_qo_r25_avg_g', 'Hshifts', 'opts', ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim')  
 movefile plateTVAlqo_r25_avg_g.mat data/plateTVAlqo_r25_avg_g.mat
 
@@ -169,14 +170,14 @@ opts.recomp_tf = 0;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
-[Wprim, Vprim, Worth, Vorth, Hshifts_r25_avg_pg, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+[~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_avg_pg = Worth'*E_qo*Vorth; A_qo_r25_avg_pg = Worth'*A_qo*Vorth; 
 Q_qo_r25_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r25_avg_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_pg.mat';
-save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'Hshifts_r25_avg_pg', 'opts', ...
+save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'Hshift', 'opts', ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_avg_pg.mat data/plateTVAlqo_r25_avg_pg.mat
 
