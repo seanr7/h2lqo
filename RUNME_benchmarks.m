@@ -106,14 +106,14 @@ opts.recomp_tf = 1;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = [];
-[~, ~, Worth, Vorth, Hshifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
+[~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
 E_qo_r25_Linfty_g = Worth'*E_qo*Vorth; A_qo_r25_Linfty_g = Worth'*A_qo*Vorth; 
 Q_qo_r25_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r25_Linfty_g = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_Linfty_g.mat';
-save(filename, 'E_qo_r25_Linfty_g', 'A_qo_r25_Linfty_g', 'B_qo_r25_Linfty_g', 'Q_qo_r25_Linfty_g', 'Hshifts', 'opts', ...
+save(filename, 'E_qo_r25_Linfty_g', 'A_qo_r25_Linfty_g', 'B_qo_r25_Linfty_g', 'Q_qo_r25_Linfty_g', 'H_shifts',  ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_Linfty_g.mat data/plateTVAlqo_r25_Linfty_g.mat
 
@@ -135,7 +135,7 @@ Q_qo_r25_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r25_Linfty_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_Linfty_pg.mat';
-save(filename, 'E_qo_r25_Linfty_pg', 'A_qo_r25_Linfty_pg', 'B_qo_r25_Linfty_pg', 'Q_qo_r25_Linfty_pg', 'Hshifts', 'opts', ...
+save(filename, 'E_qo_r25_Linfty_pg', 'A_qo_r25_Linfty_pg', 'B_qo_r25_Linfty_pg', 'Q_qo_r25_Linfty_pg', 'H_shifts',  ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_Linfty_pg.mat data/plateTVAlqo_r25_Linfty_pg.mat
 
@@ -156,7 +156,7 @@ Q_qo_r25_avg_g = Vorth'*Q_qo*Vorth; B_qo_r25_avg_g = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_g.mat';
-save(filename, 'E_qo_r25_avg_g', 'A_qo_r25_avg_g', 'B_qo_r25_avg_g', 'Q_qo_r25_avg_g', 'Hshifts', 'opts', ...
+save(filename, 'E_qo_r25_avg_g', 'A_qo_r25_avg_g', 'B_qo_r25_avg_g', 'Q_qo_r25_avg_g', 'H_shifts',  ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim')  
 movefile plateTVAlqo_r25_avg_g.mat data/plateTVAlqo_r25_avg_g.mat
 
@@ -177,7 +177,7 @@ Q_qo_r25_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r25_avg_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_pg.mat';
-save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'Hshift', 'opts', ...
+save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'Hshift',  ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_avg_pg.mat data/plateTVAlqo_r25_avg_pg.mat
 
