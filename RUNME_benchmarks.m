@@ -184,7 +184,7 @@ Q_qo_r25_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r25_avg_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_pg.mat';
-save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg' ...
+save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', ...
     'pW', 'pV') 
 movefile plateTVAlqo_r25_avg_pg.mat data/plateTVAlqo_r25_avg_pg.mat
 
