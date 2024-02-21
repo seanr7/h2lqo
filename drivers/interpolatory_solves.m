@@ -94,6 +94,10 @@ if opts.recomp_bases % If we do compute the primitive bases
             Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
         end
         fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
+        % Just to be safe ...
+        fprintf('Saving your g-bases!\n')
+        filename = 'prim_bases_g.mat';
+        save(filename, 'Vprim', 'Wprim');
     end
     if strcmp(opts.proj, 'pg')
         % Primitive bases are different as in Petrov-Galerkin projection
@@ -106,11 +110,11 @@ if opts.recomp_bases % If we do compute the primitive bases
             Wprim(:, k) = ((shifts(k) * E - A)' \ (Q * tmp));
         end
         fprintf('Vr and Wr computed in %.2f s\n', toc(linear_solves))
+        % Just to be safe ...
+        fprintf('Saving your pg-bases!\n')
+        filename = 'prim_bases_pg.mat';
+        save(filename, 'Vprim', 'Wprim');
     end
-    % Just to be safe ...
-    fprintf('Saving your bases!\n')
-    filename = 'prim_bases.mat';
-    save(filename, 'Vprim', 'Wprim');
 else % Bases are given in opts
     fprintf('Primitive bases passed as args; not recomputing \n')
     Vprim = opts.Vprim; Wprim = opts.Wprim;

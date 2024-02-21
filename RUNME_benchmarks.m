@@ -100,7 +100,7 @@ fprintf('1. Computing LQO-ROM via Linfty sampling and Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'g';
 % Load bases and tf values
-load('prim_bases') % Saved on remote server
+load('prim_bases_g') % Saved on remote server
 opts.recomp_bases = 0;
 opts.recomp_tf = 1;
 opts.Vprim = Vprim;
@@ -111,6 +111,8 @@ opts.H_shifts = [];
 E_qo_r25_Linfty_g = Worth'*E_qo*Vorth; A_qo_r25_Linfty_g = Worth'*A_qo*Vorth; 
 Q_qo_r25_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r25_Linfty_g = Worth'*B_qo;
 
+% Save shifts 
+save('H_shifts.mat', 'H_shifts');
 
 filename = 'plateTVAlqo_r25_Linfty_g.mat';
 save(filename, 'E_qo_r25_Linfty_g', 'A_qo_r25_Linfty_g', 'B_qo_r25_Linfty_g', 'Q_qo_r25_Linfty_g', 'H_shifts',  ...
@@ -122,11 +124,12 @@ movefile plateTVAlqo_r25_Linfty_g.mat data/plateTVAlqo_r25_Linfty_g.mat
 fprintf('2. Computing LQO-ROM via Linfty sampling and Petrov-Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'pg';
-% Grab primitive bases and tf values from previous iteration
-opts.recomp_bases = 0;
+% Recomp bases because PG projection
+opts.recomp_bases = 1; 
 opts.recomp_tf = 0;
-opts.Vprim = Vprim;
-opts.Wprim = Wprim;
+opts.Vprim = [];
+opts.Wprim = [];
+load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
@@ -144,10 +147,12 @@ fprintf('3. Computing LQO-ROM via avg (pivoted QR) sampling and Galerkin project
 opts.compression = 'avg';
 opts.proj = 'g';
 % Grab primitive bases and tf values from previous iteration
+load('prim_bases_g') % Saved on remote server
 opts.recomp_bases = 0;
 opts.recomp_tf = 0;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
+load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
@@ -165,10 +170,12 @@ fprintf('4. Computing LQO-ROM via avg (pivoted QR) sampling and Petrov-Galerkin 
 opts.compression = 'avg';
 opts.proj = 'pg';
 % Grab primitive bases and tf values from previous iteration
+load('prim_bases_pg') % Saved on remote server
 opts.recomp_bases = 0;
 opts.recomp_tf = 0;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
+load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
@@ -177,7 +184,7 @@ Q_qo_r25_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r25_avg_pg = Worth'*B_qo;
 
 
 filename = 'plateTVAlqo_r25_avg_pg.mat';
-save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'Hshift',  ...
+save(filename, 'E_qo_r25_avg_pg', 'A_qo_r25_avg_pg', 'B_qo_r25_avg_pg', 'Q_qo_r25_avg_pg', 'H_shifts',  ...
     'pW', 'pV', 'Worth', 'Vorth', 'Wprim', 'Vprim') 
 movefile plateTVAlqo_r25_avg_pg.mat data/plateTVAlqo_r25_avg_pg.mat
 
