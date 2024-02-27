@@ -95,7 +95,7 @@ end
 
 
 shifts = 1i*linspace(1,2*pi*251, 250);% Comment out to keep original freq rang
-r = 100; % Order
+r = 50; % Order
 fprintf('1. Computing LQO-ROM via Linfty sampling and Galerkin projection\n')
 opts.compression = 'Linfty';
 opts.proj = 'g';
@@ -109,16 +109,16 @@ opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
-E_qo_r100_Linfty_g = Worth'*E_qo*Vorth; A_qo_r100_Linfty_g = Worth'*A_qo*Vorth; 
-Q_qo_r100_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_g = Worth'*B_qo;
+E_qo_r50_Linfty_g = Worth'*E_qo*Vorth; A_qo_r50_Linfty_g = Worth'*A_qo*Vorth; 
+Q_qo_r50_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_g = Worth'*B_qo;
 
 % Save shifts 
 % save('H_shifts.mat', 'H_shifts');
 
-filename = 'plateTVAlqo_r100_Linfty_g.mat';
-save(filename, 'E_qo_r100_Linfty_g', 'A_qo_r100_Linfty_g', 'B_qo_r100_Linfty_g', 'Q_qo_r100_Linfty_g', ...
+filename = 'plateTVAlqo_r50_Linfty_g.mat';
+save(filename, 'E_qo_r50_Linfty_g', 'A_qo_r50_Linfty_g', 'B_qo_r50_Linfty_g', 'Q_qo_r50_Linfty_g', ...
     'pW', 'pV') 
-movefile plateTVAlqo_r100_Linfty_g.mat data/plateTVAlqo_r100_Linfty_g.mat
+movefile plateTVAlqo_r50_Linfty_g.mat data/plateTVAlqo_r50_Linfty_g.mat
 
 
 %%
@@ -135,14 +135,14 @@ load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
-E_qo_r100_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r100_Linfty_pg = Worth'*A_qo*Vorth; 
-Q_qo_r100_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_pg = Worth'*B_qo;
+E_qo_r50_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r50_Linfty_pg = Worth'*A_qo*Vorth; 
+Q_qo_r50_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_pg = Worth'*B_qo;
 
 
-filename = 'plateTVAlqo_r100_Linfty_pg.mat';
-save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_pg', 'Q_qo_r100_Linfty_pg', ...
+filename = 'plateTVAlqo_r50_Linfty_pg.mat';
+save(filename, 'E_qo_r50_Linfty_pg', 'A_qo_r50_Linfty_pg', 'B_qo_r50_Linfty_pg', 'Q_qo_r50_Linfty_pg', ...
     'pW', 'pV') 
-movefile plateTVAlqo_r100_Linfty_pg.mat data/plateTVAlqo_r100_Linfty_pg.mat
+movefile plateTVAlqo_r50_Linfty_pg.mat data/plateTVAlqo_r50_Linfty_pg.mat
 
 %%
 fprintf('3. Computing LQO-ROM via avg (pivoted QR) sampling and Galerkin projection\n')
@@ -158,14 +158,14 @@ load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
-E_qo_r100_avg_g = Worth'*E_qo*Vorth; A_qo_r100_avg_g = Worth'*A_qo*Vorth; 
-Q_qo_r100_avg_g = Vorth'*Q_qo*Vorth; B_qo_r100_avg_g = Worth'*B_qo;
+E_qo_r50_avg_g = Worth'*E_qo*Vorth; A_qo_r50_avg_g = Worth'*A_qo*Vorth; 
+Q_qo_r50_avg_g = Vorth'*Q_qo*Vorth; B_qo_r50_avg_g = Worth'*B_qo;
 
 
-filename = 'plateTVAlqo_r100_avg_g.mat';
-save(filename, 'E_qo_r100_avg_g', 'A_qo_r100_avg_g', 'B_qo_r100_avg_g', 'Q_qo_r100_avg_g',  ...
+filename = 'plateTVAlqo_r50_avg_g.mat';
+save(filename, 'E_qo_r50_avg_g', 'A_qo_r50_avg_g', 'B_qo_r50_avg_g', 'Q_qo_r50_avg_g',  ...
     'pW', 'pV')  
-movefile plateTVAlqo_r100_avg_g.mat data/plateTVAlqo_r100_avg_g.mat
+movefile plateTVAlqo_r50_avg_g.mat data/plateTVAlqo_r50_avg_g.mat
 
 %%
 fprintf('4. Computing LQO-ROM via avg (pivoted QR) sampling and Petrov-Galerkin projection\n')
@@ -181,14 +181,14 @@ load('H_shifts') % Just to be safe
 opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, ~, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, B_qo, Q_qo, shifts, r, opts);
 % Compute LQO-ROM
-E_qo_r100_avg_pg = Worth'*E_qo*Vorth; A_qo_r100_avg_pg = Worth'*A_qo*Vorth; 
-Q_qo_r100_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r100_avg_pg = Worth'*B_qo;
+E_qo_r50_avg_pg = Worth'*E_qo*Vorth; A_qo_r50_avg_pg = Worth'*A_qo*Vorth; 
+Q_qo_r50_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r50_avg_pg = Worth'*B_qo;
 
 
-filename = 'plateTVAlqo_r100_avg_pg.mat';
-save(filename, 'E_qo_r100_avg_pg', 'A_qo_r100_avg_pg', 'B_qo_r100_avg_pg', 'Q_qo_r100_avg_pg', ...
+filename = 'plateTVAlqo_r50_avg_pg.mat';
+save(filename, 'E_qo_r50_avg_pg', 'A_qo_r50_avg_pg', 'B_qo_r50_avg_pg', 'Q_qo_r50_avg_pg', ...
     'pW', 'pV') 
-movefile plateTVAlqo_r100_avg_pg.mat data/plateTVAlqo_r100_avg_pg.mat
+movefile plateTVAlqo_r50_avg_pg.mat data/plateTVAlqo_r50_avg_pg.mat
 
 
 % %%
@@ -211,6 +211,6 @@ movefile plateTVAlqo_r100_avg_pg.mat data/plateTVAlqo_r100_avg_pg.mat
 % mag_ro = 10*log10(abs(res_ro)/1e-9);
 % 
 % fprintf('Saving reduced-order simulation data')
-% filename = 'ROsim_plateTVA_r100_lqoirka.mat';
-% movefile ROsim_plateTVA_r100_lqoirka.mat data/ROsim_plateTVA_r100_lqoirka.mat
+% filename = 'ROsim_plateTVA_r50_lqoirka.mat';
+% movefile ROsim_plateTVA_r50_lqoirka.mat data/ROsim_plateTVA_r50_lqoirka.mat
 % save(filename,'res_ro','f_ro','mag_ro')
