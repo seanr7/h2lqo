@@ -148,7 +148,12 @@ if strcmp(opts.compression, 'Linfty')
     % Choose r columns greedily where error is maximized
     p = zeros(r, 1); % Space for indices chosen via greedy search
     % First index is just max magnitude tf value, since `LQO-ROM' is zero
-    [~, p1] = max(abs(H_shifts));    p(1) = p1;
+    size(abs(H_shifts))
+    fprintf('size(abs(H_shifts))\n')
+    [~, p1] = max(abs(H_shifts));   
+    size(p1) 
+    fprintf('p1\n')
+    p(1) = p1;
     % Project down
     Er = Wprim(:, p1)' * E * Vprim(:, p1);  Ar = Wprim(:, p1)' * A * Vprim(:, p1); 
     Qr = Vprim(:, p1)' * Q * Vprim(:, p1);  Br = Wprim(:, p1)' * B;
