@@ -52,16 +52,16 @@ function [Er, Ar, Br, Cr, Mr, pole_history, FOres_history, SOres_history] = ...
 
 %%
 % Check iteration/convergence tolerances; set to defaults if unspecified
-if nargin == 13 % (Default is to not plot convergence of the RO-poles)
+if nargin <= 13 % (Default is to not plot convergence of the RO-poles)
     compute_res = 0;
 end
-if nargin == 12 % (Default is to not plot convergence of the RO-poles)
-    plot_conv = 0;
+if nargin <= 12 % (Default is to not plot convergence of the RO-poles)
+    plot_conv = 1;
 end
-if nargin == 11 % (No convergence tolerance set)
+if nargin <= 11 % (No convergence tolerance set)
     eps = 10e-8;
 end
-if nargin == 10 % (No max number of iterations set)
+if nargin <= 10 % (No max number of iterations set)
     itermax = 100;
 end
 

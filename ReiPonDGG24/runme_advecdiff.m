@@ -14,7 +14,8 @@ close all;
 % Get and set all paths
 % [rootpath, name, ~] = fileparts(mfilename('fullpath'));
 [rootpath, filename, ~] = fileparts( ...
-    '/Users/seanr/Desktop/h2lqo/ReiPonDGG24/runme_advecdiff.m');
+    '/Users/16316/Desktop/h2lqo/ReiPonDGG24/runme_advecdiff.m');
+    % '/Users/seanr/Desktop/h2lqo/ReiPonDGG24/runme_advecdiff.m');SS
 loadname            = [rootpath filesep() ...
     'data' filesep() filename(7:end)];
 savename            = [rootpath filesep() ...
@@ -22,6 +23,7 @@ savename            = [rootpath filesep() ...
 
 % Add path to drivers
 addpath([rootpath, '/drivers'])
+addpath([rootpath, '/QBDynamicsQBOutput_MATLAB'])
 
 % Write .log file
 if exist([savename '.log'], 'file')
