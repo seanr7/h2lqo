@@ -147,8 +147,9 @@ ColMat(6,:) = [1 0.4 0.6];
 %%
 figure
 golden_ratio = (sqrt(5)+1)/2;
+axes('position', [.125 .15 .75 golden_ratio-1])
 
-plot(s_hz, mag,'-o','color',ColMat(1,:),'markersize',10,LineWidth=1);hold on;
+plot(s_hz, mag,'--o','color',ColMat(1,:),'markersize',4,LineWidth=1);hold on;
 plot(s_hz, mag_r25_irka, '-.','color',ColMat(2,:),LineWidth=1);
 plot(s_hz, mag_r25_Linfty_g,'--','color', ColMat(3,:),LineWidth=1);
 plot(s_hz, mag_r25_Linfty_pg,'--.','color', ColMat(4,:),LineWidth=1);
@@ -163,6 +164,7 @@ legend('Full-order', 'r=25, IRKA', 'r=25 Linfty-g', 'r=25 Linfty-pg', 'r=25 avg-
 % f.Position = [476 445 700 280];
 % Make aspect ration `golden'
 figure
+axes('position', [.125 .15 .75 golden_ratio-1])
 
 semilogy(s_hz, abs(mag-mag_r25_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
 semilogy(s_hz, abs(mag-mag_r25_Linfty_g)./abs(mag),'--','color', ColMat(3,:),LineWidth=1);
