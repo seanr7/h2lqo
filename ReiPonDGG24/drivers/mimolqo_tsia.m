@@ -131,7 +131,7 @@ iter = 1;   err(iter) = eps + 1;
 while (err(iter) > opts.tol && iter <= opts.maxiter)
     iter_start = tic; % Start timer on this iteration
     fprintf(1, 'Current iterate is k = %d\n', iter)
-    fprintf(1, '---------------------------------------\n');
+    fprintf(1, '---------------------------------------\n')
     % Solve equation (1) for n x r right projection matrix X
     [X, ~, ~, ~, ~] = mess_sylvester_sparse_dense(A, 'N', Ar, 'T', B*Br', ...
         E, Er);
@@ -152,22 +152,22 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     % End the clock
     fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
     fprintf(1, 'End of current iterate k = %d\n', iter)
-    fprintf(1, '---------------------------------------\n');
+    fprintf(1, '---------------------------------------\n')
 
     iter = iter + 1;    
     % Get eigenvalues of matrix pencil (s*Er-Ar) (reduced system poles)
     [~, Lr] = eig(Ar, Er);     poles(:, iter) = diag(Lr);
     err(iter) = max(abs(poles(:, iter) - poles(:, iter - 1)));
     fprintf('Change in poles is is %.2f \n', err(iter))
-    fprintf(1, '---------------------------------------\n');
+    fprintf(1, '---------------------------------------\n')
 end
 
 if iter == (opts.maxiter + 1)
     fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_start))
-    fprintf(1, '---------------------------------------\n');
+    fprintf(1, '---------------------------------------\n')
 else
     fprintf('Algorithm has converged in %d iterations\n', iter)
     fprintf('Total time elapsed is %.2f s\n', toc(overall_start))
-    fprintf(1, '---------------------------------------\n');
+    fprintf(1, '---------------------------------------\n')
 end
 end

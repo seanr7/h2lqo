@@ -66,14 +66,14 @@ function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Er    - reduced descriptor matrix with dimensions n x n in (1),
-%   Ar    - reduced state matrix with dimensions r x r in (1)
-%   br    - reduced descriptor matrix with dimensions r x 1 in (1)
-%   cr    - reduced linear output matrix with dimensions r x 1 in (2)
+%   Er   - reduced descriptor matrix with dimensions n x n in (1),
+%   Ar   - reduced state matrix with dimensions r x r in (1)
+%   br   - reduced descriptor matrix with dimensions r x 1 in (1)
+%   cr   - reduced linear output matrix with dimensions r x 1 in (2)
 %           If c is zero then cr is zeros(1, r)
-%   Mr    - reduced symmetric quadratic output matrix with dimensions r x r 
+%   Mr   - reduced symmetric quadratic output matrix with dimensions r x r 
 %           in (2)
-%   info  - structure, containing the following optional entries:
+%   info - structure, containing the following optional entries:
 %   +-----------------+---------------------------------------------------+
 %   |    PARAMETER    |                     MEANING                       |
 %   +-----------------+---------------------------------------------------+
@@ -186,7 +186,7 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     % Save poles and residues from last iteration
     poles_prev = poles; sores_prev = sores;
     
-    % Solve r x r generalized eigenvalue problem s*Er - Ar to get new \
+    % Solve r x r generalized eigenvalue problem s*Er - Ar to get new 
     % reduced-order poles and residues
     [Xr, Lr] = eig(Ar, Er);     poles = diag(Lr);
     try % Attempt to sort poles into complex conjugate pairs
@@ -199,7 +199,7 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
 
     Xrinv = Xr\eye(r, r); mod_br = Er\br;
     if ~pureqo % Compute FO residues
-        FOres_prev = fores; 
+        fores_prev = fores; 
         fores = (cr * Xr)'.*(Xrinv * (mod_br));    
     end
     sores = ((Xrinv * (mod_br))'.*((Xr' * Mr * Xr))).*(Xrinv * (mod_br));
