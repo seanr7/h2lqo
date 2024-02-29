@@ -1,4 +1,4 @@
-function [Er, Ar, Br, Cr, Mr, poles] = lqomimo_tsia(E, A, B, C, M, r, opts)
+function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 % LQOMIMO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 
