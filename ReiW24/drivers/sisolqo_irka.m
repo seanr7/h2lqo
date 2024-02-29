@@ -1,191 +1,243 @@
-function [E_r, A_r, b_r, c_r, M_r, poles, FOres, SOres, pole_history] = sisolqo_irka(...
-    E, A, b, c, M, poles_prev, FOres_prev, SOres_prev, itermax, eps, plot_conv)
-% Author: Sean Reiter (seanr7@vt.edu)
+function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
+% SISOLQO_IRKA Iterative rational Krylov algorithm for model-order
+% reudction of linear systems with a single quadratic output and single
+% input
 
-% Apply the Iterative Rational Krylov Algorithm (IRKA) to Linear Quadratic
-% Output (LQO) systems.
-  
-% Paramters
-% ---------
-% @param (E, A, b, c, M) \in (Rnn, Rnn, Rn1, R1n, Rnn):
-%   State-space description of an n-dimensional LQO model. Assumed to be
-%   asymptotically stable.
-%   M is assumed to be symmetric; M = M'. 
-%   A is assumed to be diagonalizable.
-%   E (mass) is assumed to be nonsingular.
+% Copyright (c) 2024 Sean Reiter
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
 
-% @param poles_prev:
-%   Initial selection of poles in open left half-plane.
-%   Stored as an (r x 1) array.
-%   Note: These are the `reduced-order poles' at initialization; 
-%   i.e., Ar = diag(L_prev).
+% Virginia Tech, Department of Mathematics
+% Last editied: 2/29/2024
 
-% @param FOres_prev, SOres_prev:
-%   Initial selection of 1st and 2nd-order (assumed real) residues.
-%   Stored as (r x 1) and (r x r) arrays, respectively. 
-%   Note: In the basis of A_r's eigenvectors, these are the linear and
-%   quadratic output matrices; i.e., c_r = FOres_prev, M_r = SOres_prev.
+% DESCRIPTION:
+%   Computes a linear quadratic output reduced model (Er, Ar, br, cr, Mr)
+%   via the iterative rational Krylov algorithm implemented in 
+%   "Interpolatory model order reduction of large-scale dynamical systems
+%   with root mean squared error measures"
+%   At each iteration, construct n x r Petrov-Galerkin projection matrices
+%   accroding to 
+%
+%       Vr(:, k) = ((-poles(k))*E - A)\b;                               (1)
+%       Wr(:, k) = -fores(k)*((-poles(k))*E' - A')*c - sum_{j=1}^r 
+%           sores(k, i)*(((-poles(k))*E' - A'))*M*((-poles(k))*E - A)\b (2)
+%
+%   Are solved, and a linear quadratic output reduced model is obtained via
+%   projeciton. 
+%   It is assumed that the eigenvalues of (s*E-A) lie in the open left
+%   half-plane.
 
-% @param itermax:
-%   Max no. of iterations for LQO-IRKA to run. (Default itermax = 100)
+% INPUTS:
+%   E    - invertible descriptor matrix with dimensions n x n in (1),
+%          if empty set to eye(n, n)
+%   A    - state matrix with dimensions n x n in (1)
+%   b    - input matrix with dimensions n x 1 in (1)
+%   c    - linear output matrix with dimensions n x 1 in (2)
+%          if empty set to zeros(n, 1)
+%   M    - symmetric quadratic output matrices with n x n in (2)
+%   r    - order of reduction
+%   opts - structure, containing the following optional entries:
+%   +-----------------+---------------------------------------------------+
+%   |    PARAMETER    |                     MEANING                       |
+%   +-----------------+---------------------------------------------------+
+%   | tol             | nonnegative scalar, tolerance for convergence     |
+%   |                 | based on the poles of the reduced model           |
+%   |                 | (default 10e-6)                                   |
+%   +-----------------+---------------------------------------------------+
+%   | maxiter         | positive integer, maximum number of iteration     |
+%   |                 | steps                                             |
+%   |                 | (default 100)                                     |
+%   +-----------------+---------------------------------------------------+
+%   | plotconv        | bool, do we plot convergence of poles?            |
+%   |                 | (default 1)                                       |
+%   +-----------------+---------------------------------------------------+
+%   | poles           | Initial pole selection, r x 1 matrix              |
+%   |                 | (default -(logspace(-1, 2, r)')                   |
+%   +-----------------+---------------------------------------------------+
+%   | fores           | Initial first-order residue selection, r x 1      |
+%   |                 | matrix                                            |
+%   |                 | (default if ~isempty(c) 10*rand(r,1)              |
+%   |                 |          else zeros(r,1)                          |
+%   +-----------------+---------------------------------------------------+
+%   | sores           | Initial second-order residue selection, r x r     |
+%   |                 | matrix                                            |
+%   |                 | (default tmp = 10*rand(r, r);                     |
+%   |                 |        sores = (tmp + tmp')/2)                    |
+%   +-----------------+---------------------------------------------------+
+%
+% OUTPUTS:
+%   Er    - reduced descriptor matrix with dimensions n x n in (1),
+%   Ar    - reduced state matrix with dimensions r x r in (1)
+%   br    - reduced descriptor matrix with dimensions r x 1 in (1)
+%   cr    - reduced linear output matrix with dimensions r x 1 in (2)
+%           If c is zero then cr is zeros(1, r)
+%   Mr    - reduced symmetric quadratic output matrix with dimensions r x r 
+%           in (2)
+%   info  - structure, containing the following optional entries:
+%   +-----------------+---------------------------------------------------+
+%   |    PARAMETER    |                     MEANING                       |
+%   +-----------------+---------------------------------------------------+
+%   | pole_hist       | Convergence history of reduced-order poles        |
+%   +-----------------+---------------------------------------------------+
+%   | fores           | Final first-order residues                        |
+%   +-----------------+---------------------------------------------------+
+%   | sores           | Final second-order residues                       |
+%   +-----------------+---------------------------------------------------+
 
-% @param eps:
-%   Convergence tol; if (max(eig(E_r, A_r) - L_prev) < eps), converged. 
-%   (Default eps = 10e-8)
+%%
+% Grab state, input, output dimensions
+% Check input matrices.
+n = size(A, 1);
 
-% @param plot_conv:
-%   Bool; do we plot the convergence of the reduced-order poles eig(E_r, A_r)?
-%   (Default plot_conv = False)
-
-% Outputs
-% ---------
-% @param (E_r, A_r, b_r, c_r, M_r) \in (Err, Rrr, Rr1, R1r, Rrr):
-%   State-space realization of the locally H2-optimal r-dimensional
-%   LQO-ROM, obtained via Petrov-Galerkin (PG) projection.
-
-% @param pole_history:
-%   History of interpolation points, as an (r x iter) array.
-
-% @param FOres, SOres:
-%   Converged 1st and 2nd-order residues, as (r x 1) and (r x r) arrays.
-
-%% LQO-IRKA
-% Take input data; Compute initial LQO-ROM via PG-proj
-r = length(poles_prev);     [~, n] = size(A); % ROM and FOM dimensions
-
-% Check iteration/convergence tolerances; set to defaults if unspecified
-if nargin == 10 % (Default is to not plot convergence of the RO-poles)
-    plot_conv = 0;
+% Check and set inputs
+if (nargin < 7) 
+    opts = struct(); % Empty struct 
 end
-if nargin == 9 % (No convergence tolerance set)
-    eps = 10e-8;
+if ~isfield(opts, 'tol')
+    opts.tol = 10e-6;
 end
-if nargin == 8 % (No max number of iterations set)
-    itermax = 100;
+if ~isfield(opts, 'maxiter')
+    opts.maxiter = 100;
+end
+if ~isfield(opts, 'plotconv')
+    opts.plotconv = 1;
+end
+if ~isfield(opts, 'poles')
+    opts.poles = -(logspace(-1, 2, r)'); 
+end
+if ~isfield(opts, 'fores')
+    if isempty(c)
+        opts.fores = zeros(r, 1);
+    else
+        opts.fores = 10*rand(r, 1);  
+    end
+end 
+if~isfield(opts, 'sores')
+    tmp = 10*rand(r, r);
+    opts.sores = (tmp + tmp')/2;
 end
 
-% If no c term or residues inputted; output is purely quadratic
-pure_QO = false;
+if isempty(E)
+    E = eye(n, n);
+end
+pureqo = 0;
 if isempty(c)
-    pure_QO = true;
-    c_r = [];   FOres = []; % Dummy arrays so error not thrown
+    % Set bool for output being purely quadratic
+    pureqo = 1;
+    cr = zeros(r, 1);   
+    % Safety check, enforce zero resides
+    opts.fores = zeros(r, 1);
 end
+%% Begin algorithm.
+overall_start = tic;
+fprintf(1, 'Initializing algorithm\n')
+fprintf(1, '----------------------\n');
+poles = opts.poles;   fores = opts.fores;   sores = opts.sores;  
+pole_hist(:, 1) = poles;
 
-% Start the clock on the total iteration
-overall_timer_start = tic;
-fprintf('Beginning IRKA iteration\n')
+% Set counter and tolerance to enter while
+iter = 1;   err(iter) = opts.tol + 1; 
+while (err(iter) > opts.tol && iter <= opts.maxiter)
+    iter_start = tic; % Start timer on this iteration
+    fprintf(1, 'Current iterate is k = %d\n', iter)
+    fprintf(1, '---------------------------------------\n');
+    % Space allocation for left and right projection matrices
+    Vr = zeros(n, r);     Wr = zeros(n, r);
 
-% Initialize poles + residues
-poles = poles_prev; FOres = FOres_prev; SOres = SOres_prev; 
-pole_history(:, 1) = poles;
-
-% Counter + tolerance to enter while
-iter = 1;   err(iter) = eps + 1; 
-while (err(iter) > eps && iter <= itermax)
-    % Pre-allocate space for right, left PG-proj bases V_r, W_r
-    % (Note: Construction requires RO-poles and residues @ each iter)
-    V_r = zeros(n, r);     W_r = zeros(n, r);
-
-    % Start the clock
-    thisiter_timer_start = tic;
-    fprintf('Beginning next IRKA iteration; current iterate is k = %d\n', iter)
-
-    % First, fill out columns of Vr; used in computing Wr
+    % Fill out columns in Vr in (1); pre-computed for constructing Wr
     k = 1;
     while k <= r
-        % 1. Construction of Vr enforces r + r^2 interpolation conditions:
-        %   @math: H1(poles(k)) = H1r(poles(k)), k = 1, ..., r
-        %   @math: H2(poles(i), poles(j)) = H2(poles(i), poles(j)), 
-        %           i, j = 1, ..., r 
-        V_r(:, k) = ((-poles(k)) * E - A)\b; 
+        Vr(:, k) = ((-poles(k)) * E - A)\b; 
         k = k + 1;
     end
-
-    % Now, fill out colummns of W_r
+    % Fill out columns of Wr in (2)
     k = 1; 
     while k <= r
-        % 2. Construction of W_r enforces r `mixed' Hermite conditions:
-        %   @math: FOres(k) * H1^(1)(poles(k)) + 2 * \sum_{j = 1}^{r} ...
-        %          SOres(k, j) * H2^(1, 0)(-poles(k), -poles(j)) = ...
-        %          FOres(k) * H1_r^(1)(poles(k)) + 2 * \sum_{j = 1}^{r} ...
-        %          SOres(k, j) * H2_r^(1, 0)(poles(k), poles(j)) = ...
         tmp = zeros(n, 1); 
         i = 1;
         while i <= r 
-            % Compute sum over i of mu_i,k * (poles(i) * E - A)\b
-            tmp = tmp + (SOres(i, k) * V_r(:, i)); 
+            % Grab columns of Vr, sum sores(i,k)*(-poles(i) * E - A)\b over
+            % i = 1, ..., r
+            tmp = tmp + (sores(i, k) * Vr(:, i)); 
             i = i + 1;
         end
-        % Multiply by - 2 * M
+        % Premultiply by - 2 * M
         tmp = - 2 * M * tmp; 
-        if ~pure_QO % If not purely QO, compute 
-            tmp = tmp - FOres(k) *  c';
+        % If output is not purely quadratic, account for linear term
+        if ~pureqo 
+            tmp = tmp - fores(k) * c';
         end
-        % Now, only one final linear solve required; apply to the sum
-        % TODO: Need conj of pole here? I don't think so, just the negative
-        % W_r(:, k) = ((-poles(k) * E' - A')\tmp);
-        W_r(:, k) = ((-poles(k) * E - A)'\tmp);
+        % Compute final linear solve against summed term
+        Wr(:, k) = ((-poles(k) * E - A)'\tmp);
         k = k + 1;
     end
     
     % Orthonormalize projection matrices
-    [V_r, ~] = qr(V_r, "econ");     [W_r, ~] = qr(W_r, "econ");
-    % Compute LQO-ROM via PG-proj and new parameters
-    % (1-31-24) Change to real transpose instead of Hermitian; may need to put back! - SR
-    % W_rt = W_r.';  V_rt = V_r.';
-    W_rt = W_r';  V_rt = V_r';
-    E_r = W_rt * E * V_r;   A_r = W_rt * A * V_r;   b_r = W_rt * b;
-    if ~pure_QO % Compute reduced linear output term
-        c_r = c * V_r;  
+    [Vr, ~] = qr(Vr, "econ");     [Wr, ~] = qr(Wr, "econ");
+    % Compute reduced model via projection
+    Wrt = Wr';  Vrt = Vr';
+    Er = Wrt * E * Vr;   Ar = Wrt * A * Vr;   br = Wrt * b;
+    if ~pureqo % Compute reduced linear output term
+        cr = c * Vr;  
+        fores_prev = fores;
     end
-    M_r = V_rt * M * V_r;
+    Mr = Vrt * M * Vr;
 
-    % Save params from prev iteration
-    poles_prev = poles; SOres_prev = SOres;
+    % Save poles and residues from last iteration
+    poles_prev = poles; sores_prev = sores;
     
-    % Diagonalize Ar; Get RO-poles ...
-    [X_r, L_r] = eig(A_r, E_r);     poles = diag(L_r);
-    try
-        poles = cplxpair(poles, 10e-3); % Sort in complex conj pairs
-    catch
-        warning('Warning! Reduced-model has become overtly complex; cannot sort eigenvalues into complex conjugate pairs. Returning unsorted poles')
+    % Solve r x r generalized eigenvalue problem s*Er - Ar to get new \
+    % reduced-order poles and residues
+    [Xr, Lr] = eig(Ar, Er);     poles = diag(Lr);
+    try % Attempt to sort poles into complex conjugate pairs
+        poles = cplxpair(poles, 10e-3); 
+    catch % If model has become overtly complex, throw 
+        warning('Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex conjugate pairs. Returning unsorted poles')
     end
-    pole_history(:,iter+1) = poles;
+    % Track poles
+    pole_hist(:, iter+1) = poles;
 
-    % ... + 1st, 2nd-order residues of H1r, H2r
-    X_rinv = X_r\eye(r, r); mod_b_r = E_r\b_r;
-    if ~pure_QO % Compute FO residues
-        FOres_prev = FOres; 
-        FOres = (c_r * X_r)' .* (X_rinv * (mod_b_r));    
+    Xrinv = Xr\eye(r, r); mod_br = Er\br;
+    if ~pureqo % Compute FO residues
+        FOres_prev = fores; 
+        fores = (cr * Xr)'.*(Xrinv * (mod_br));    
     end
-    SOres = ((X_rinv * (mod_b_r))' .* ((X_r' * M_r * X_r))) .* (X_rinv * (mod_b_r));
+    sores = ((Xrinv * (mod_br))'.*((Xr' * Mr * Xr))).*(Xrinv * (mod_br));
 
     % End the clock
-    fprintf('End of current IRKA iterate k = %d\n', iter)
-    fprintf('Current IRKA iteration finished in %.2f s\n',toc(thisiter_timer_start))
+    fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
+    fprintf(1, 'End of current iterate k = %d\n', iter)
+    fprintf(1, '---------------------------------------\n');
 
-    % Track convergence of poles; Update iter count + compute max deviation 
-    % between poles across iterations
-    iter = iter + 1;    err(iter) = max(abs(poles - poles_prev));
-    fprintf('Largest magnitude change in interpolation points from previous iteration is %.2f \n', err(iter))
+    % Track convergence of poles
+    iter = iter + 1;    
+    err(iter) = max(abs(poles - poles_prev));
+    fprintf('Change in poles is is %.2f \n', err(iter))
+    fprintf(1, '---------------------------------------\n');
 end
 
-% If broken, interpolation occurs using poles + residues from previous iter
-% Return appropriate poles + residues
-poles = poles_prev; SOres = SOres_prev;
-if ~pure_QO
-    FOres = FOres_prev;
-end
-
-if iter == (itermax + 1)
-    fprintf('IRKA has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_timer_start))
+% Once broken, poles and residues from the previous iteration are used to
+% check interpolation. So, return these in info struct
+info = struct;
+info.poles = poles_prev;    
+info.sores = sores_prev;
+if ~pureqo
+    info.fores = fores_prev;
 else
-    fprintf('IRKA has converged in %d iterations\n', iter)
-    fprintf('Total time elapsed is %.2f s\n', toc(overall_timer_start))
+    info.fores = zeros(r, 1);
 end
 
-% If plotting convergence
-if plot_conv == true
+if iter == (opts.maxiter + 1)
+    fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_start))
+    fprintf(1, '---------------------------------------\n');
+else
+    fprintf('Algorithm has converged in %d iterations\n', iter)
+    fprintf('Total time elapsed is %.2f s\n', toc(overall_start))
+    fprintf(1, '---------------------------------------\n');
+end
+
+% Plot convergence of poles automatically if requested
+if opts.plotconv == true
     semilogy(1:iter, err, '-o', LineWidth=1.5)
     xlim([1,iter])
     xlabel('Iteration count')

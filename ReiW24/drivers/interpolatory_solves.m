@@ -1,5 +1,13 @@
 function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E, A, B, Q, shifts, r, opts)
-% Author: Sean Reiter (seanr7@vt.edu)
+% INTERPOLATORY_SOLVES Driver function for computing interpolatory
+% projections of frequency-domain linear quadratic output systems.
+
+% Copyright (c) 2024 Sean Reiter
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+
+% Virginia Tech, Department of Mathematics
+% Last editied: 2/29/2024
 
 % Function to compute linear solves for interpolatory model-order reduction
 % of linear quadratic-output (LQO) dynamical systems. `Primitive' bases are 

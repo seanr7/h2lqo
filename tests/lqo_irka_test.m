@@ -35,18 +35,23 @@ Q_qo = blkdiag(eye(n), zeros(n));
 
 %%
 
-r = 4;
-interp_pts = -10 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
-SO_res = (tmp + tmp')/2;
-max_iter = 100; tol = 10e-8;   plot = true;
+% r = 4;
+% interp_pts = -10 * rand(r, 1);   FO_res = rand(r, 1);    tmp = rand(r, 1);
+% SO_res = (tmp + tmp')/2;
+% max_iter = 100; tol = 10e-8;   plot = true;
 
 % Run iteration + plot conv
-[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, conv_nodes, conv_FO_res, conv_SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, [], Q_qo, ...
-    interp_pts, FO_res, SO_res, max_iter, tol, plot);
+% [E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, conv_nodes, conv_FO_res, conv_SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, [], Q_qo, ...
+%     interp_pts, FO_res, SO_res, max_iter, tol, plot);
 
+addpath("ReiW24\drivers\")
+
+r = 4;
+[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, info] = sisolqo_irka(E_qo, A_qo, B_qo, [], Q_qo, r);
+conv_nodes = info.poles;    conv_SO_res = info.sores;
 % Check interpolation conditions
-H2 = @(s1, s2) B_qo.' * (((s1 * E_qo - A_qo).')\Q_qo) * ((s2 * E_qo - A_qo)\B_qo);
-H2r = @(s1, s2) B_qo_r.' * (((s1 * E_qo_r - A_qo_r).')\Q_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r);
+H2 = @(s1, s2) B_qo' * (((s1 * E_qo - A_qo)')\Q_qo) * ((s2 * E_qo - A_qo)\B_qo);
+H2r = @(s1, s2) B_qo_r' * (((s1 * E_qo_r - A_qo_r)')\Q_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r);
 
 fprintf('2nd-order optimality conditions, %d^2 in total', r)
 for i = 1:r
@@ -57,30 +62,22 @@ for i = 1:r
 end
 % 
 % % Partial deriv wrt first argument of H2, H2r
-% H2_prime_s1 = @(s1, s2) -b.' * (((s1 * E - A).'\E.') * ((s1 * E - A).'\M)) * ((s2 * E - A)\b); 
-% H2_prime_s2 = @(s1, s2) -b.' * ((s1 * E - A).'\M) * ((s2 * E - A)\E) * ((s2 * E - A)\b); 
-% H2r_prime_s1 = @(s1, s2) -br.' * (((s1 * Er - Ar).'\Er.') * ((s1 * Er - Ar).'\Mr)) * ((s2 * Er - Ar)\br);   % Partial deriv w.r.t s1
-% H2r_prime_s2 = @(s1, s2) -br.' * ((s1 * Er - Ar).'\Mr) * (((s2 * Er - Ar)\Er) * ((s2 * Er - Ar)\br)); 
+H2_prime_s1 = @(s1, s2) -B_qo' * (((s1 * E_qo - A_qo)'\E_qo') * ((s1 * E_qo - A_qo)'\Q_qo)) * ((s2 * E_qo - A_qo)\B_qo); 
+H2_prime_s2 = @(s1, s2) -B_qo' * ((s1 * E_qo - A_qo)'\Q_qo) * ((s2 * E_qo - A_qo)\E_qo) * ((s2 * E_qo - A_qo)\B_qo); 
+H2r_prime_s1 = @(s1, s2) -B_qo_r' * (((s1 * E_qo_r - A_qo_r)'\E_qo_r') * ((s1 * E_qo_r - A_qo_r)'\Q_qo_r)) * ((s2 * E_qo_r- A_qo_r)\B_qo_r); 
+H2r_prime_s2 = @(s1, s2) -B_qo_r' * ((s1 * E_qo_r - A_qo_r)'\Q_qo_r) * (((s2 * E_qo_r - A_qo_r)\E_qo_r) * ((s2 * E_qo_r - A_qo_r)\B_qo_r)); 
 % 
-% fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
-% 
-% for i = 1:r
-%     ro_side = 0;
-%     fo_side = 0;
-%     for j = 1:r
-%         % ro_side = ro_side + 2 * conv_SO_res(j, i) * H2r_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
-%         % fo_side = fo_side + 2 * conv_SO_res(j, i) * H2_prime_s2(-conv_nodes(i), -conj(conv_nodes(j)));
-% 
-%         ro_side = ro_side + 2 * conv_SO_res(i, j) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
-%         fo_side = fo_side + 2 * conv_SO_res(i, j) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
-% 
-%         % ro_side = ro_side - conv_SO_res(i, j) * H2r_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
-%         %             conv_SO_res(j, i) * H2r_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
-%         % fo_side = fo_side - conv_SO_res(i, j) * H2_prime_s1(-(conv_nodes(i)), -conv_nodes(j)) + ...
-%         %             conv_SO_res(j, i) * H2_prime_s2(-(conv_nodes(j)), -conv_nodes(i));
-%     end
-%     fo_side - ro_side
-% end
+fprintf('Mixed linear + quadratic optimality conditions, %d in total', r)
+
+for i = 1:r
+    ro_side = 0;
+    fo_side = 0;
+    for j = 1:r
+        ro_side = ro_side + 2 * conv_SO_res(j, i) * H2r_prime_s1(-conv_nodes(i), -conv_nodes(j));
+        fo_side = fo_side + 2 * conv_SO_res(j, i) * H2_prime_s1(-conv_nodes(i), -conv_nodes(j));
+    end
+    fo_side - ro_side
+end
 
 %% 1a. Toy model
 n = 8; 

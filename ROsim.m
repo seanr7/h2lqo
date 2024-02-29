@@ -65,7 +65,7 @@ if write
     filename = 'outputs_for_paper/r25_mag.dat';
     dlmwrite(filename, magmatrix, ...
         'delimiter', '\t', 'precision', 8);
-    errmatrix = [s_hz', abs(mag-mag_r25_irka)', abs(mag-mag_r25_Linfty_g)', abs(mag-mag_r25_Linfty_pg)', abs(mag-mag_r25_avg_g)', abs(mag-mag_r25_avg_pg)'];
+    errmatrix = [s_hz', abs(mag-mag_r25_irka)./abs(mag)', abs(mag-mag_r25_Linfty_g)./abs(mag)', abs(mag-mag_r25_Linfty_pg)./abs(mag)', abs(mag-mag_r25_avg_g)./abs(mag)', abs(mag-mag_r25_avg_pg)./abs(mag)'];
     filename = 'outputs_for_paper/r25_err.dat';
     dlmwrite(filename, errmatrix, ...
         'delimiter', '\t', 'precision', 8);
@@ -108,11 +108,11 @@ legend('Full-order', 'r=25, IRKA', 'r=25 Linfty-g', 'r=25 Linfty-pg', 'r=25 avg-
 % Make aspect ration `golden'
 figure
 
-plot(s_hz, abs(mag-mag_r25_irka), '-.','color',ColMat(2,:),LineWidth=1);hold on
-plot(s_hz, abs(mag-mag_r25_Linfty_g),'--','color', ColMat(3,:),LineWidth=1);
-plot(s_hz, abs(mag-mag_r25_Linfty_pg),'--.','color', ColMat(4,:),LineWidth=1);
-plot(s_hz, abs(mag-mag_r25_avg_g),'--.','color', ColMat(5,:),LineWidth=1);
-plot(s_hz, abs(mag-mag_r25_avg_pg),'--.','color', ColMat(6,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r25_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
+semilogy(s_hz, abs(mag-mag_r25_Linfty_g)./abs(mag),'--','color', ColMat(3,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r25_Linfty_pg)./abs(mag),'--.','color', ColMat(4,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r25_avg_g)./abs(mag),'--.','color', ColMat(5,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r25_avg_pg)./abs(mag),'--.','color', ColMat(6,:),LineWidth=1);
 
 legend('r=25, IRKA', 'r=25 Linfty-g', 'r=25 Linfty-pg', 'r=25 avg-g', 'r=25 avg-pg')
 

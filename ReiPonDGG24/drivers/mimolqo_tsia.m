@@ -1,5 +1,5 @@
 function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
-% LQOMIMO_TSIA Two-sided iteration algorithm for model-order reudction of
+% MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 
 % Copyright (c) 2024 Sean Reiter
@@ -53,10 +53,10 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %   | Ar              | Initial state matrix                              |
 %   |                 | (default -diag(logspace(-1,2,r))                  |
 %   +-----------------+---------------------------------------------------+
-%   | Br              | Initial state matrix                              |
+%   | Br              | Initial input matrix                              |
 %   |                 | (default eye(n, m))                               |
 %   +-----------------+---------------------------------------------------+
-%   | Cr              | Initial state matrix                              |
+%   | Cr              | Initial linear-output matrix                      |
 %   |                 | (default eye(p, r))                               |
 %   +-----------------+---------------------------------------------------+
 %   | Mr              | Initial quadratic-output matrices                 |
@@ -164,6 +164,7 @@ end
 
 if iter == (opts.maxiter + 1)
     fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_start))
+    fprintf(1, '---------------------------------------\n');
 else
     fprintf('Algorithm has converged in %d iterations\n', iter)
     fprintf('Total time elapsed is %.2f s\n', toc(overall_start))
