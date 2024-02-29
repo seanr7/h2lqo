@@ -1,4 +1,6 @@
 %% RUNME
+% 
+
 % Script file to run all experiments on plateTVA model in
 % "Interpolatory model order reduction of large-scale dynamical systems
 % with root mean squared error measures"
@@ -12,20 +14,19 @@ clear all;
 close all;
 
 % Get and set all paths
-% [rootpath, name, ~] = fileparts(mfilename('fullpath'));
-[rootpath, filename, ~] = fileparts( ...
-    '/Users/16316/Desktop/h2lqo/ReiW24/runme.m');
+fullpath = matlab.desktop.editor.getActiveFilename;
+[rootpath, filename, ~] = fileparts(fullpath(3:end));
 loadname            = [rootpath filesep() ...
     'data' filesep() filename];
 savename            = [rootpath filesep() ...
-    'out' filesep() filename];
+    'results' filesep() filename];
 
 % Add paths to drivers and data
 addpath([rootpath, '/drivers'])
 addpath([rootpath, '/data'])
 
 % Write .log file, put in `out' folder
-if exist([savename '.log'], 'file')
+if exist([savename '.log'], 'file') == 2
     delete([savename '.log']);
 end
 outname = [savename '.log']';
@@ -173,3 +174,4 @@ semilogy(s_hz, abs(mag-mag_r25_avg_g)./abs(mag),'--.','color', ColMat(5,:),LineW
 semilogy(s_hz, abs(mag-mag_r25_avg_pg)./abs(mag),'--.','color', ColMat(6,:),LineWidth=1);
 
 legend('r=25, IRKA', 'r=25 Linfty-g', 'r=25 Linfty-pg', 'r=25 avg-g', 'r=25 avg-pg')
+diary off
