@@ -101,36 +101,35 @@ fprintf(1, 'Reduced order simulations finished in %.2f s\n', toc(overall_start))
 fprintf(1, '--------------------------------------------------\n');
 
 % Compute magnitudes to plot
-% In absolute value, below
-mag_r25_irka = abs(res_r25_irka);
-mag_r25_Linfty_g = abs(res_r25_Linfty_g);
-mag_r25_Linfty_pg = abs(res_r25_Linfty_pg);
-mag_r25_avg_g = abs(res_r25_avg_g);
-mag_r25_avg_pg = abs(res_r25_avg_pg);
+% To plot magnitudes in absolute value, uncomment the code below
+% mag_r25_irka      = abs(res_r25_irka);
+% mag_r25_Linfty_g  = abs(res_r25_Linfty_g);
+% mag_r25_Linfty_pg = abs(res_r25_Linfty_pg);
+% mag_r25_avg_g     = abs(res_r25_avg_g);
+% mag_r25_avg_pg    = abs(res_r25_avg_pg);
 
-% In dB, below
-% mag_r25_irka = 10*log10(abs(res_r25_irka)/1e-9);
-% mag_r25_Linfty_g = 10*log10(abs(res_r25_Linfty_g)/1e-9);
-% mag_r25_Linfty_pg = 10*log10(abs(res_r25_Linfty_pg)/1e-9);
-% mag_r25_avg_g = 10*log10(abs(res_r25_avg_g)/1e-9);
-% mag_r25_avg_pg = 10*log10(abs(res_r25_avg_pg)/1e-9);
+% To plot magnitudes in dB, uncomment the code below
+mag_r25_irka      = 10*log10(abs(res_r25_irka)/1e-9);
+mag_r25_Linfty_g  = 10*log10(abs(res_r25_Linfty_g)/1e-9);
+mag_r25_Linfty_pg = 10*log10(abs(res_r25_Linfty_pg)/1e-9);
+mag_r25_avg_g     = 10*log10(abs(res_r25_avg_g)/1e-9);
+mag_r25_avg_pg    = 10*log10(abs(res_r25_avg_pg)/1e-9);
  
-write = 0;
+write = 1;
 if write
     % Store data
-    magmatrix = [s_hz', mag', mag_r25_irka', mag_r25_Linfty_g', mag_r25_Linfty_pg', mag_r25_avg_g', mag_r25_avg_pg'];
-    filename = 'outputs_for_paper/r25_mag.dat';
+    magmatrix = [s_hz', mag', mag_r25_irka', mag_r25_Linfty_g', mag_r25_Linfty_pg', ...
+        mag_r25_avg_g', mag_r25_avg_pg'];
+    filename = 'results/r25_mag.dat';
     dlmwrite(filename, magmatrix, ...
         'delimiter', '\t', 'precision', 8);
-    errmatrix = [s_hz', abs(mag-mag_r25_irka)./abs(mag)', abs(mag-mag_r25_Linfty_g)./abs(mag)', abs(mag-mag_r25_Linfty_pg)./abs(mag)', abs(mag-mag_r25_avg_g)./abs(mag)', abs(mag-mag_r25_avg_pg)./abs(mag)'];
-    filename = 'outputs_for_paper/r25_err.dat';
+    errmatrix = [s_hz', (abs(mag-mag_r25_irka)./abs(mag))', (abs(mag-mag_r25_Linfty_g)./abs(mag))', ...
+        (abs(mag-mag_r25_Linfty_pg)./abs(mag))', (abs(mag-mag_r25_avg_g)./abs(mag))', ...
+        (abs(mag-mag_r25_avg_pg)./abs(mag))'];
+    filename = 'results/r25_err.dat';
     dlmwrite(filename, errmatrix, ...
         'delimiter', '\t', 'precision', 8);
 end
-
-% plot(s_hz,mag_ro10)
-% hold on
-% plot(f, mag)
 
 ColMat = zeros(6,3);
 

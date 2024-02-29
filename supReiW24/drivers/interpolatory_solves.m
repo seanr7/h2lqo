@@ -2,14 +2,8 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
     E, A, b, Q, shifts, r, opts)
 % INTERPOLATORY_SOLVES Driver function for computing interpolatory
 % projections of frequency-domain linear quadratic output systems.
-
-% Copyright (c) 2024 Sean Reiter
-% All rights reserved.
-% License: BSD 2-Clause license (see COPYING)
-
-% Virginia Tech, Department of Mathematics
-% Last editied: 2/29/2024
-
+%
+%
 % DESCRIPTION:
 %   Function to compute interpolatory projection matrices Vorth, Worth, for
 %   use in the model reduction frequency domain linear quadratic output 
@@ -43,7 +37,7 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %   It is assumed that the eigenvalues of (s*E-A) lie in the open left
 %   half-plane, and that the points shifts are placed along the imaginary
 %   axis.
-
+%
 % INPUTS:
 %   E      - invertible descriptor matrix with dimensions n x n in (1),
 %            if empty set to eye(n, n)
@@ -103,6 +97,12 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %   H_shifts - Transfer function evaluations of full-order model (E, A, b,
 %              Q) computed at inputted shifts.
 
+% Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+
+% Virginia Tech, USA
+% Last editied: 2/29/2024
 %%
 % Grab dimensions.
 q =  max(size(shifts));

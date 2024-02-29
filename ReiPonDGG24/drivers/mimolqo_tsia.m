@@ -1,14 +1,7 @@
 function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 % MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
-
-% Copyright (c) 2024 Sean Reiter
-% All rights reserved.
-% License: BSD 2-Clause license (see COPYING)
-
-% Virginia Tech, Department of Mathematics
-% Last editied: 2/27/2024
-
+%
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Er, Ar, Br, Cr, Mr)
 %   using the two-sided iteration algorithm given in 
@@ -23,7 +16,7 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %   projeciton W = Z and V = X.
 %   It is assumed that the eigenvalues of (s*E-A) lie in the open left
 %   half-plane.
-
+%
 % INPUTS:
 %   E    - invertible descriptor matrix with dimensions n x n in (1),
 %          if empty set to eye(n, n)
@@ -73,6 +66,13 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %           dimensions p x r x r in (2) 
 %           If M is zero then Mr is zeros(r, r)
 %   poles - history of poles throughout the iteration 
+
+% Copyright (c) 2024 Sean Reiter
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+
+% Virginia Tech, USA
+% Last editied: 2/29/2024
 %%
 % Grab state, input, output dimensions
 % Check input matrices.
