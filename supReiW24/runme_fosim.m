@@ -1,27 +1,54 @@
-%%
-% Author: Sean Reiter (seanr7@vt.edu)
-clear
-close all
 %% 
-% 'rms' - evaluate root mean square z-displacement of all nodes on the
-%         plate surface
+% Script file to run full-order simulation of the vibro-acoustic plate 
+% (plateTVA) data set.
 
-% End goal: frequency-domain rms evaluations of plate model in
-%           `plateTVA_n201900m1q28278.mat'. Available at
-%           https://zenodo.org/record/7671686
+% This file is part of the archive Code, Data and Results for Numerical 
+% Experiments in "Interpolatory model order reduction of large-scale 
+% dynamical systems with root mean squared error measures"
+% Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+%
 
-% To compute rms `output', need to simulation a SIMO model, with 28278
-% outputs. Instead, treat as an LQO model, and compute these evaluations
-% directly
+clc;
+clear all;
+close all;
 
-fprintf('Loading plateTVA model...\n')
+% Get and set all paths
+fullpath = matlab.desktop.editor.getActiveFilename;
+[rootpath, filename, ~] = fileparts(fullpath(3:end));
+loadname            = [rootpath filesep() ...
+    'data' filesep() filename];
+savename            = [rootpath filesep() ...
+    'results' filesep() filename];
+
+% Add paths to drivers and data
+addpath([rootpath, '/drivers'])
+addpath([rootpath, '/data'])
+
+% Write .log file, put in `out' folder
+if exist([savename '.log'], 'file') == 2
+    delete([savename '.log']);
+end
+outname = [savename '.log']';
+
+diary(outname)
+diary on; 
+
+fprintf(1, ['SCRIPT: ' upper(filename) '\n']);
+fprintf(1, ['========' repmat('=', 1, length(filename)) '\n']);
+fprintf(1, '\n');
+%% Load base data.
+% To compute root mean squared output, treat plateTVA model as a linear
+% quadratic output system.
+
+fprintf(1, 'Loading plateTVA model...\n')
+fprintf(1, '-------------------------\n');
 load('data/plateTVA_n201900m1q28278_fo')
 n_nodes = full(sum(sum(C)));
 
-%% Convert plate model to FO (first-order) from SO (second-order)
-% Model is given in SO-form
-% Necessarily, need to conver to FO to do LQO_IRKA for now
-fprintf('Converting SO realization to a FO-LQO system\n')
+%% Convert plate model to first-order from second-order.
+fprintf(1, 'Converting second-order realization to first-order linear quadratic output system\n')
 tic
 [n, ~] = size(M);
 
@@ -36,42 +63,45 @@ A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
 B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
 B_qo(n+1:2*n, :) = B;
-% No scalar output in this example; only QO
 
-% Our `M' matrix (i.e., the quadratic output matrix) is C' * C
+% Our quadratic output matrix is C' * C
 Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
-Q_qo(1:n, 1:n) = C' * C; % Double check this...
-fprintf('FO-LQO realization built in %.2f s\n',toc)
+Q_qo(1:n, 1:n) = C' * C; 
+fprintf(1, 'First-order realization built in %.2f s\n',toc)
+fprintf(1, '--------------------------------------------\n');
 
-%% Sample H2(s1, s2) (QO-tf)
-% frequencies to sample at (s) are given in '*.mat' file 
-
-s = 1i*linspace(0,2*pi*250, 500);
+%% Full-order simulation.
+% Frequencies to sample at in range of 0 - 250 hz
+s = 1i*linspace(0, 2*pi*250, 500);
+s_hz = imag(s)/2/pi;
 % recompute = true;
-recompute = true;
+recompute = false;
 if recompute == true
-    fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s\n', 250*15.72)
+    fprintf(1, 'Beginning full order simulation\n')
+    fprintf(1, '-------------------------------\n');
     overall_start = tic;
     res = zeros(1,length(s));
     for ii=1:length(s)
-        fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
+        fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n',ii,imag(s(ii))/2/pi)
         current_iter = tic;
-        tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt((tmp' * Q_qo * tmp) / n_nodes); % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-        fprintf('Iteration of FO-sim finished in %.2f s\n',toc(current_iter))
+        tmp = (s(ii)*E_qo - A_qo) \ B_qo;
+        res(ii) = sqrt((tmp'*Q_qo*tmp)/n_nodes); 
+        fprintf(1, 'Current iteration of full order simulation finished in %.2f s\n',toc(current_iter))
+        fprintf(1, '----------------------------------------------------------------------\n');
     end
-    fprintf('Full-order sim finished; time of completion is %.2f s/n', toc(overall_start))
-    f = imag(s)/2/pi;
+    fprintf(1, 'Reduced order simulations finished in %.2f s\n', toc(overall_start))
+    fprintf(1, '--------------------------------------------------\n');
     mag = 10*log10(abs(res)/1e-9);
-    filename = 'FOSIM_data.mat';
-    save(filename,'res','f','mag')
-
+    filename = 'data/fosim_data.mat';
+    save(filename,'res','s_hz','mag')
 else
-    fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat')
-    % load('FOSIM_data.mat')
+    fprintf('Not re-running the full-order simulation; loading saved data from file fosim_data.mat\n')
+    load('data/fosim_data.mat')
 end
 
-% figure('name','Transfer function')
-% plot(f,mag)
-% xlabel('Frequency [Hz]')
-% ylabel('Magnitude [dB]')
+figure('name', 'Transfer function')
+golden_ratio = (sqrt(5)+1)/2;
+axes('position', [.125 .15 .75 golden_ratio-1])
+plot(s_hz,mag,LineWidth=1)
+xlabel('Frequency [Hz]')
+ylabel('Magnitude [dB]')

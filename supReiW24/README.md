@@ -24,17 +24,21 @@ The code was tested under MATLAB 2023b.
 The `runme*.m` files can be used to reproduce experiments from the
 corresponding paper.
 The scripts correspond to the following experiments:
-* `runme`: experiments using the vibro-acoustic plate data set
-* `runme_lqoirka`: code to generate the interpolatory reduced-order models 
-  computed using `\drivers\sisolqo_irka.m` and used in `runme.m`
+* `runme`: experiments using the vibro-acoustic plate (plateTVA) data set
 * `runme_benchmarks`: code to generate the interpolatory reduced-order 
   models computed using `\drivers\interpolatory_solves.m` and used in 
   `runme.m`
+* `runme_fosim`: code to run the full-order simulation of the plateTVA data
+  set
+* `runme_lqoirka`: code to generate the interpolatory reduced-order models 
+  computed using `\drivers\sisolqo_irka.m` and used in `runme.m`
 
 The results computed by these scripts will be saved to the `results`
 folder. Existing results will be overwritten.
 
-The vibro-acoustic plate model is ...
+The vibro-acoustic plate (plateTVA) data is licensed to Steffen W. R. 
+Werner under the BSD-2 License and available at 
+https://zenodo.org/record/7671686
 
 
 ## Author

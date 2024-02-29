@@ -1,10 +1,11 @@
 %% RUNME
-% 
+% Script file to run all experiments on the vibro-acoustic plate (plateTVA) 
+% data set.
 
-% Script file to run all experiments on plateTVA model in
-% "Interpolatory model order reduction of large-scale dynamical systems
-% with root mean squared error measures"
-% Copyright (c) 2024 Sean Reiter
+% This file is part of the archive Code, Data and Results for Numerical 
+% Experiments in "Interpolatory model order reduction of large-scale 
+% dynamical systems with root mean squared error measures"
+% Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
