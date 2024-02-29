@@ -43,14 +43,14 @@ fprintf(1, 'Load problem data for order r = 25 reduced models\n');
 fprintf(1, '-------------------------------------------------\n');
 
 % order r = 25 reduced models
-load('data/plateTVAlqo_r25_redux_lqoirka.mat')
-load('data/plateTVAlqo_r25_Linfty_g.mat')
-load('data/plateTVAlqo_r25_Linfty_pg.mat')
-load('data/plateTVAlqo_r25_avg_g.mat')
-load('data/plateTVAlqo_r25_avg_pg.mat')
+load('results/plateTVAlqo_r25_lqoirka.mat')
+load('results/plateTVAlqo_r25_Linfty_g.mat')
+load('results/plateTVAlqo_r25_Linfty_pg.mat')
+load('results/plateTVAlqo_r25_avg_g.mat')
+load('results/plateTVAlqo_r25_avg_pg.mat')
 
 % Simulation data for full-order plateTVA model
-load('data/simdata/fosim_data.mat')
+load('data/fosim_data.mat')
 % Load C matrix from original model to get n_nodes used in calculating rms
 % response
 load('data/plateTVA_n201900m1q28278_fo.mat','C')
@@ -59,8 +59,6 @@ n_nodes = full(sum(sum(C)));
 % Compute frequencies used in the simulation
 s    = 1i*linspace(0,2*pi*250, 500); 
 s_hz = imag(s)/2/pi; 
-mag  = abs(res);
-% mag  = 10*log10(abs(res)/1e-9); % Magnitude of FO transfer function
 
 fprintf(1, '\n');
 
@@ -69,11 +67,11 @@ fprintf(1, 'Simulate rms response for order r = 25 reduced models\n');
 fprintf(1, '-----------------------------------------------------\n');
 
 % Allocate space for results
-res_r25_irka = zeros(1,length(s));
-res_r25_Linfty_g = zeros(1, length(s));
+res_r25_irka      = zeros(1,length(s));
+res_r25_Linfty_g  = zeros(1, length(s));
 res_r25_Linfty_pg = zeros(1, length(s));
-res_r25_avg_g = zeros(1, length(s));
-res_r25_avg_pg = zeros(1, length(s));
+res_r25_avg_g     = zeros(1, length(s));
+res_r25_avg_pg    = zeros(1, length(s));
 
 fprintf(1, 'Beginning reduced order simulations\n')
 fprintf(1, '-------------------------------\n');
@@ -102,6 +100,7 @@ fprintf(1, '--------------------------------------------------\n');
 
 % Compute magnitudes to plot
 % To plot magnitudes in absolute value, uncomment the code below
+% mag               = abs(res);
 % mag_r25_irka      = abs(res_r25_irka);
 % mag_r25_Linfty_g  = abs(res_r25_Linfty_g);
 % mag_r25_Linfty_pg = abs(res_r25_Linfty_pg);
@@ -109,6 +108,7 @@ fprintf(1, '--------------------------------------------------\n');
 % mag_r25_avg_pg    = abs(res_r25_avg_pg);
 
 % To plot magnitudes in dB, uncomment the code below
+mag               = 10*log10(abs(res)/1e-9); 
 mag_r25_irka      = 10*log10(abs(res_r25_irka)/1e-9);
 mag_r25_Linfty_g  = 10*log10(abs(res_r25_Linfty_g)/1e-9);
 mag_r25_Linfty_pg = 10*log10(abs(res_r25_Linfty_pg)/1e-9);
@@ -153,8 +153,8 @@ plot(s_hz, mag,'--o','color',ColMat(1,:),'markersize',4,LineWidth=1);hold on;
 plot(s_hz, mag_r25_irka, '-.','color',ColMat(2,:),LineWidth=1);
 plot(s_hz, mag_r25_Linfty_g,'--','color', ColMat(3,:),LineWidth=1);
 plot(s_hz, mag_r25_Linfty_pg,'--.','color', ColMat(4,:),LineWidth=1);
-% plot(s_hz, mag_r25_avg_g,'--.','color', ColMat(5,:),LineWidth=1);
-% plot(s_hz, mag_r25_avg_pg,'--.','color', ColMat(6,:),LineWidth=1);
+plot(s_hz, mag_r25_avg_g,'--.','color', ColMat(5,:),LineWidth=1);
+plot(s_hz, mag_r25_avg_pg,'--.','color', ColMat(6,:),LineWidth=1);
 
 legend('Full-order', 'r=25, IRKA', 'r=25 Linfty-g', 'r=25 Linfty-pg', 'r=25 avg-g', 'r=25 avg-pg')
 %%
