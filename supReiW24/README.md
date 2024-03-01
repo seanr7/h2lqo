@@ -24,7 +24,8 @@ The code was tested under MATLAB 2023b.
 The `runme*.m` files can be used to reproduce experiments from the
 corresponding paper.
 The scripts correspond to the following experiments:
-* `runme`: experiments using the vibro-acoustic plate (plateTVA) data set
+* `runme`: experiments using the vibro-acoustic plate with tuned vibration 
+  absorbers (plateTVA) data set
 * `runme_benchmarks`: code to generate the interpolatory reduced-order 
   models computed using `\drivers\interpolatory_solves.m` and used in 
   `runme.m`
@@ -36,9 +37,8 @@ The scripts correspond to the following experiments:
 The results computed by these scripts will be saved to the `results`
 folder. Existing results will be overwritten.
 
-The vibro-acoustic plate (plateTVA) data is licensed to Steffen W. R. 
-Werner under the BSD-2 License and available at 
-https://zenodo.org/record/7671686
+The plateTVA data is licensed to Quirin Aumann under the CC-BY 4.0 License 
+and available at https://zenodo.org/records/7671686
 
 
 ## Author
@@ -88,9 +88,9 @@ March 2024. doi:10.5281/zenodo.1072952
     @MISC{supReiW24,
       author =       {Reiter, S. and Werner, S.~W.~R.},
       title  =       {Code, Data and Results for Numerical 
-                      Experiments in "Interpolatory model order reduction 
-                      of large-scale dynamical systems with root mean 
-                      squared error measures" (version 1.0)},
+                      Experiments in ``{I}nterpolatory model order 
+                      reduction of large-scale dynamical systems with root 
+                      mean squared error measures'' (version 1.0)},
       month  =       mar,
       year   =       {2024},
       doi    =       {10.5281/zenodo.zenodo.1072952}

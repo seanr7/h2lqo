@@ -2,6 +2,7 @@
 % Script file to reduced models of the vibro-acoustic plate (plateTVA) data 
 % set using the various benchmark interpolatory approaches.
 
+%
 % This file is part of the archive Code, Data and Results for Numerical 
 % Experiments in "Interpolatory model order reduction of large-scale 
 % dynamical systems with root mean squared error measures"

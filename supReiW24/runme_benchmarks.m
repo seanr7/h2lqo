@@ -2,6 +2,7 @@
 % Script file to reduced models of the vibro-acoustic plate (plateTVA) data 
 % set using the various benchmark interpolatory approaches.
 
+%
 % This file is part of the archive Code, Data and Results for Numerical 
 % Experiments in "Interpolatory model order reduction of large-scale 
 % dynamical systems with root mean squared error measures"
@@ -165,6 +166,7 @@ Q_qo_r50_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_pg = Worth'*B_qo;
 filename = 'results/plateTVAlqo_r50_Linfty_pg.mat';
 save(filename, 'E_qo_r50_Linfty_pg', 'A_qo_r50_Linfty_pg', 'B_qo_r50_Linfty_pg', ...
     'Q_qo_r50_Linfty_pg', 'pW', 'pV') 
+
 %%
 fprintf(1, '3. Pivoted QR and Galerkin projection\n')
 fprintf(1, '-------------------------------------\n')
@@ -205,7 +207,6 @@ Q_qo_r50_avg_g = Vorth'*Q_qo*Vorth; B_qo_r50_avg_g = Worth'*B_qo;
 filename = 'results/plateTVAlqo_r50_avg_g.mat';
 save(filename, 'E_qo_r50_avg_g', 'A_qo_r50_avg_g', 'B_qo_r50_avg_g', ...
     'Q_qo_r50_avg_g', 'pW', 'pV') 
-
 
 %%
 fprintf(1, '4. Pivoted QR and Petrov-Galerkin projection\n')

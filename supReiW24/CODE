@@ -20,4 +20,5 @@ dependencies: MATLAB (2023b)
 systems: Linux
 website: https://zenodo.org/record/10729524
 keywords: Model Order Reduction, Linear Quadratic Output Systems, Root Mean 
- Squared Error, Vibro-acoustic System, MOR, MATLAB, Rational Interpolation
+ Squared Error, Vibro-acoustic System, MOR, MATLAB, Rational Interpolation,
+ IRKA

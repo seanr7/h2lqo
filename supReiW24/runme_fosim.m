@@ -2,6 +2,7 @@
 % Script file to run full-order simulation of the vibro-acoustic plate 
 % (plateTVA) data set.
 
+%
 % This file is part of the archive Code, Data and Results for Numerical 
 % Experiments in "Interpolatory model order reduction of large-scale 
 % dynamical systems with root mean squared error measures"
