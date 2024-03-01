@@ -2,14 +2,8 @@ function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
 % SISOLQO_IRKA Iterative rational Krylov algorithm for model-order
 % reudction of linear systems with a single quadratic output and single
 % input
-
-% Copyright (c) 2024 Sean Reiter
-% All rights reserved.
-% License: BSD 2-Clause license (see COPYING)
-
-% Virginia Tech, Department of Mathematics
-% Last editied: 2/29/2024
-
+%
+%
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Er, Ar, br, cr, Mr)
 %   via the iterative rational Krylov algorithm implemented in 
@@ -83,6 +77,13 @@ function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %   | sores           | Final second-order residues                       |
 %   +-----------------+---------------------------------------------------+
+
+% Copyright (c) 2024 Sean Reiter
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+
+% Virginia Tech, Department of Mathematics
+% Last editied: 2/29/2024
 
 %%
 % Grab state, input, output dimensions
