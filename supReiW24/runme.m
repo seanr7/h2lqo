@@ -360,7 +360,6 @@ if write
         'delimiter', '\t', 'precision', 8);
 end
 
-
 %% Plot transfer function errors and magnitude for r = 100 reduced models.
 fprintf(1, 'Plotting response magnitude and error for order r = 100 reduced models\n');
 fprintf(1, '----------------------------------------------------------------------\n');

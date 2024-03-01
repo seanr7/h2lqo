@@ -1,30 +1,55 @@
-%%
-% Author: Sean Reiter (seanr7@vt.edu)
-clear
-close all
-%% 
-% 'rms' - evaluate root mean square z-displacement of all nodes on the
-%         plate surface
+%% RUNME
+% Script file to reduced models of the vibro-acoustic plate (plateTVA) data 
+% set using the various benchmark interpolatory approaches.
 
-% Objective: frequency-domain rms evaluations of plate model in
-%            `plateTVA_n201900m1q28278.mat'. Available at
-%            https://zenodo.org/record/7671686
+% This file is part of the archive Code, Data and Results for Numerical 
+% Experiments in "Interpolatory model order reduction of large-scale 
+% dynamical systems with root mean squared error measures"
+% Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
+% All rights reserved.
+% License: BSD 2-Clause license (see COPYING)
+%
 
-% To compute rms `output', need to simulate a SIMO model, with 28278
-% outputs. Instead, treat as an linear quadratic output system, 
-% and compute rms evaluations directly
+clc;
+clear all;
+close all;
 
-addpath('drivers/')
-addpath('data/')
-fprintf('Loading plateTVA model...\n')
+% Get and set all paths
+fullpath = matlab.desktop.editor.getActiveFilename;
+[rootpath, filename, ~] = fileparts(fullpath(3:end));
+loadname            = [rootpath filesep() ...
+    'data' filesep() filename];
+savename            = [rootpath filesep() ...
+    'results' filesep() filename];
+
+% Add paths to drivers and data
+addpath([rootpath, '/drivers'])
+addpath([rootpath, '/data'])
+
+% Write .log file, put in `out' folder
+if exist([savename '.log'], 'file') == 2
+    delete([savename '.log']);
+end
+outname = [savename '.log']';
+
+diary(outname)
+diary on; 
+
+fprintf(1, ['SCRIPT: ' upper(filename) '\n']);
+fprintf(1, ['========' repmat('=', 1, length(filename)) '\n']);
+fprintf(1, '\n');
+
+%% Load base data.
+% To compute root mean squared output, treat plateTVA model as a linear
+% quadratic output system.
+
+fprintf(1, 'Loading plateTVA model...\n')
+fprintf(1, '-------------------------\n');
 load('data/plateTVA_n201900m1q28278_fo')
 n_nodes = full(sum(sum(C)));
 
-%% 
-% Convert plate model to FO (first-order) from SO (second-order)
-% Model is given in SO-form
-% Necessarily, need to conver to FO to do LQO_IRKA for now
-fprintf('Converting 2nd-order LTI system to a 1st-order LQO system\n')
+%% Convert plate model to first-order from second-order.
+fprintf(1, 'Converting second-order realization to first-order linear quadratic output system\n')
 tic
 [n, ~] = size(M);
 
@@ -39,12 +64,12 @@ A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
 B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
 B_qo(n+1:2*n, :) = B;
-% No scalar output in this example; only QO
 
-% Our `M' matrix (i.e., the quadratic output matrix) is C' * C
+% Our quadratic output matrix is C' * C
 Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
 Q_qo(1:n, 1:n) = C' * C; 
-fprintf('1st-order LQO realization built in %.2f s\n',toc)
+fprintf(1, 'First-order realization built in %.2f s\n',toc)
+fprintf(1, '--------------------------------------------\n');
 
 %% 
 % Simulate full-order model 

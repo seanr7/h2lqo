@@ -177,7 +177,7 @@ if opts.recomp_bases
         % iteration
         fprintf(1, 'Saving your bases!\n')
         fprintf(1, '------------------\n')
-        filename = 'prim_bases_g.mat';
+        filename = 'results/prim_bases_g.mat';
         save(filename, 'Vprim', 'Wprim');
     end
     if strcmp(opts.proj, 'pg')
@@ -201,7 +201,7 @@ if opts.recomp_bases
         % iteration
         fprintf(1, 'Saving your bases!\n')
         fprintf(1, '------------------\n')
-        filename = 'prim_bases_pg.mat';
+        filename = 'results/prim_bases_pg.mat';
         save(filename, 'Vprim', 'Wprim');
     end
 % Otherwise, pre-computed bases are passed as arguments.
