@@ -54,7 +54,7 @@ load('results/plateTVAlqo_r25_avg_pg.mat')
 load('results/fosim_data.mat')
 % Load C matrix from original model to get n_nodes used in calculating rms
 % response
-load('data/plateTVA_n201900m1q28278_fo.mat','C')
+load('data/plateTVA_n201900m1q28278.mat','C')
 n_nodes = full(sum(sum(C)));
 
 % Compute frequencies used in the simulation

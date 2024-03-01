@@ -21,11 +21,17 @@ The code was tested under MATLAB 2023b.
 
 ## Getting Started
 
-The `runme*.m` files can be used to reproduce experiments from the
-corresponding paper.
+To reproduce the experiments, first download the vibro-acoustic plate with 
+tuned vibration absorbers (plateTVA) data set licensed to Quirin Aumann 
+under the CC-BY 4.0 License and available at 
+https://zenodo.org/records/7671686. 
+Then, move the file `plateTVA_n201900m1q28278.mat` to the folder titled
+`data`.
+
+After downloading the plateTVA data set as described above, `runme*.m` 
+files can be used to reproduce experiments from the corresponding paper.
 The scripts correspond to the following experiments:
-* `runme`: experiments using the vibro-acoustic plate with tuned vibration 
-  absorbers (plateTVA) data set
+* `runme`: experiments using the plateTVA data set
 * `runme_benchmarks`: code to generate the interpolatory reduced-order 
   models computed using `\drivers\interpolatory_solves.m` and used in 
   `runme.m`
@@ -36,9 +42,6 @@ The scripts correspond to the following experiments:
 
 The results computed by these scripts will be saved to the `results`
 folder. Existing results will be overwritten.
-
-The plateTVA data is licensed to Quirin Aumann under the CC-BY 4.0 License 
-and available at https://zenodo.org/records/7671686
 
 
 ## Author
