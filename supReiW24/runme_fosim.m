@@ -38,6 +38,7 @@ diary on;
 fprintf(1, ['SCRIPT: ' upper(filename) '\n']);
 fprintf(1, ['========' repmat('=', 1, length(filename)) '\n']);
 fprintf(1, '\n');
+
 %% Load base data.
 % To compute root mean squared output, treat plateTVA model as a linear
 % quadratic output system.
