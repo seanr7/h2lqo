@@ -16,8 +16,7 @@ clear all;
 close all;
 
 % Get and set all paths
-fullpath = matlab.desktop.editor.getActiveFilename;
-[rootpath, filename, ~] = fileparts(fullpath(3:end));
+[rootpath, filename, ~] = fileparts(mfilename('fullpath'));
 loadname            = [rootpath filesep() ...
     'data' filesep() filename];
 savename            = [rootpath filesep() ...

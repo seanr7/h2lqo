@@ -16,8 +16,7 @@ clear all;
 close all;
 
 % Get and set all paths
-fullpath = matlab.desktop.editor.getActiveFilename;
-[rootpath, filename, ~] = fileparts(fullpath(3:end));
+[rootpath, filename, ~] = fileparts(mfilename('fullpath'));
 loadname            = [rootpath filesep() ...
     'data' filesep() filename];
 savename            = [rootpath filesep() ...
@@ -52,7 +51,7 @@ load('results/plateTVAlqo_r25_avg_g.mat')
 load('results/plateTVAlqo_r25_avg_pg.mat')
 
 % Simulation data for full-order plateTVA model
-load('data/fosim_data.mat')
+load('results/fosim_data.mat')
 % Load C matrix from original model to get n_nodes used in calculating rms
 % response
 load('data/plateTVA_n201900m1q28278_fo.mat','C')

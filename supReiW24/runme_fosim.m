@@ -16,8 +16,7 @@ clear all;
 close all;
 
 % Get and set all paths
-fullpath = matlab.desktop.editor.getActiveFilename;
-[rootpath, filename, ~] = fileparts(fullpath(3:end));
+[rootpath, filename, ~] = fileparts(mfilename('fullpath'));
 loadname            = [rootpath filesep() ...
     'data' filesep() filename];
 savename            = [rootpath filesep() ...
@@ -98,7 +97,7 @@ if recompute == true
     save(filename,'res','s_hz','mag')
 else
     fprintf('Not re-running the full-order simulation; loading saved data from file fosim_data.mat\n')
-    load('data/fosim_data.mat')
+    load('results/fosim_data.mat')
 end
 
 figure('name', 'Transfer function')
