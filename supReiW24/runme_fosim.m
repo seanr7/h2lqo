@@ -106,3 +106,6 @@ axes('position', [.125 .15 .75 golden_ratio-1])
 plot(s_hz,mag,LineWidth=1)
 xlabel('Frequency [Hz]')
 ylabel('Magnitude [dB]')
+
+%%
+diary off

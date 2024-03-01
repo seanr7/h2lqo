@@ -71,89 +71,32 @@ Q_qo(1:n, 1:n) = C' * C;
 fprintf(1, 'First-order realization built in %.2f s\n',toc)
 fprintf(1, '--------------------------------------------\n');
 
-%% 
-% Simulate full-order model 
-% 250 frequencies to sample at from 0hz - 250hz (s) are given in '*.mat' file 
-% Instead, use 500 frequences from 0hz - 500hz
+%% Computed reduced-models.
+% Compute reduced-models using the iterative rational Krylov algorithm for
+% linear quadratic output systems.
+fprintf(1, 'Computing reduced-model via IRKA\n')
+fprintf(1, '--------------------------------\n')
 
-s = 1i*linspace(0,2*pi*500, 501);% Comment out to keep original freq range
-
-% recompute = true;
-recompute = false;
-if recompute == true
-    fprintf('Beginning full-order simulation. Estimated time of completion is %.2f s\n', 250*15.72)
-    overall_start = tic;
-    res = zeros(1,length(s));
-    for ii=1:length(s)
-        fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
-        current_iter = tic;
-        tmp = (s(ii) * E_qo - A_qo) \ B_qo;
-        % res(ii) is H2(s(ii), s(ii)) = sqrt(((s(ii) * E_qo - A_qo)') \ Q_qo ((s(ii) * E_qo - A_qo) \ eye(n, n)))
-        % i.e., sqrt() of quadratic-output transfer function
-        res(ii) = sqrt((tmp' * Q_qo * tmp) / n_nodes); % Q: So really, we want sqrt(H_2(s(ii), s(ii))/n_nodes ? (Just to put it in my language..)
-        fprintf('Iteration of full-order simulation finished in %.2f s\n',toc(current_iter))
-    end
-    fprintf('Full-order simulation finished; total time of completion is %.2f s\n', toc(overall_start))
-    f = imag(s)/2/pi;
-    mag = 10*log10(abs(res)/1e-9);
-    frpintf('Saving full-order simulation data\n')
-    filename = 'FOsim_data.mat';
-    save(filename,'res','f','mag')
-    movefile FOsim_data.mat data/FOsim_data.mat
-
-else
-    fprintf('Not re-running the full-order simulation; loading saved data from file FOSIM_data.mat\n')
-    % load('FOSIM_data.mat')
-end
-
-% figure('name','Transfer function')
-% plot(f,mag)
-% xlabel('Frequency [Hz]')
-% ylabel('Magnitude [dB]')
-
-%% 
-% Now, compute LQO-ROM via 
-%   - LQO-IRKA
-%   - More to come ...
-
-
-r = 50; % Order
+% Set order of reduction
+r = 50;
 % Initialization parameters
-poles_prev = -logspace(1, 3, r)'; % Spread 
-tmp = 10 *  rand(r, r);
-SO_res_prev = (tmp+tmp')/2; 
-itermax = 15;
-tol = 10e-4;
+opts.maxiter  = 15;
+opts.tol      = 10e-4;
+opts.plotconv = false;
+% Initial selection of poles and residues
+poles      = -logspace(1, 3, r)';
+opts.poles = poles;
+tmp        = 10 *  rand(r, r); sores = (tmp+tmp')/2; 
+opts.sores = sores;
+opts.fores = [];
 
-fprintf('Beginning construction of order %d the LQO-ROM via LQO-IRKA\n', r)
+[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, info] = sisolqo_irka(E_qo, A_qo, B_qo, [], ...
+    Q_qo, r, opts);
 
-[E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, poles, ~, SO_res, pole_history] = lqo_irka(E_qo, A_qo, B_qo, ...
-    [], Q_qo, poles_prev, [], SO_res_prev, itermax, tol, 1);
-
-filename = 'plateTVA_r50_redux_lqoirka.mat';
-save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'pole_history', 'SO_res') 
-movefile plateTVA_r50_redux_lqoirka.mat ~/data/plateTVA_r50_redux_lqoirka.mat
+poles = info.pole_hist;
+SOres = info.sores; 
+filename = 'results/plateTVAlqo_r50_lqoirka.mat';
+save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SOres') 
 
 %%
-% Now, do reduced-order simulations
-
-fprintf('Beginning reduced-order simulation\n')
-overall_start = tic;
-
-res_ro = zeros(1,length(s));
-for ii=1:length(s)
-    fprintf('Frequency step %d, f=%.2f Hz ... ',ii,imag(s(ii))/2/pi)
-    current_iter = tic;
-    tmp = (s(ii) * E_qo_r - A_qo_r) \ B_qo_r;
-    res_ro(ii) = sqrt((tmp' * Q_qo_r * tmp) / n_nodes);
-    fprintf('Iteration of reduced-order simulation finished in %.2f s\n',toc(current_iter))
-end
-fprintf('Reduced-order simulation finished; time of completion is %.2f s/n', toc(overall_start))
-
-f_ro = imag(s)/2/pi;
-mag_ro = 10*log10(abs(res_ro)/1e-9);
-
-fprintf('Saving reduced-order simulation data')
-filename = 'ROsim_plateTVA_r50_redux_lqoirka.mat';
-movefile ROsim_plateTVA_r50_redux_lqoirka.mat data/ROsim_plateTVA_r50_redux_lqoirka.mat
-save(filename,'res_ro','f_ro','mag_ro')
+diary off
