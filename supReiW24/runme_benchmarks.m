@@ -245,5 +245,9 @@ filename = 'results/plateTVAlqo_r50_avg_pg.mat';
 save(filename, 'E_qo_r50_avg_pg', 'A_qo_r50_avg_pg', 'B_qo_r50_avg_pg', ...
     'Q_qo_r50_avg_pg', 'pW', 'pV')
 
-%%
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
 diary off

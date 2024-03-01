@@ -98,5 +98,9 @@ SOres = info.sores;
 filename = 'results/plateTVAlqo_r50_lqoirka.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SOres') 
 
-%%
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
 diary off

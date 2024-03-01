@@ -107,5 +107,9 @@ plot(s_hz,mag,LineWidth=1)
 xlabel('Frequency [Hz]')
 ylabel('Magnitude [dB]')
 
-%%
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
 diary off

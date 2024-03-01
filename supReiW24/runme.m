@@ -391,5 +391,9 @@ legend('Full-order', 'r=100, IRKA', 'r=100 Linfty-g', 'r=100 Linfty-pg', ...
 % Overwrite figure
 saveas(figure(3), 'results/r100_plots.png')
 
-%%
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
 diary off
