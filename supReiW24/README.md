@@ -1,6 +1,6 @@
-Code, Data and Results for Numerical Experiments in "Interpolatory 
-model order reduction of large-scale dynamical systems with root mean 
-squared error measures"
+Code and Results for Numerical Experiments in "Interpolatory model order
+reduction of large-scale dynamical systems with root mean squared error
+measures"
 ===========================================================================
 
 This archive contains the companion codes, used data and computed results
@@ -80,7 +80,7 @@ The DOI for version 1.0 is
 
 ### Cite as
 
-S. Reiter and S. W. R. Werner. Code, Data and Results for Numerical 
+S. Reiter and S. W. R. Werner. Code and Results for Numerical 
 Experiments in "Interpolatory model order reduction of large-scale 
 dynamical systems with root mean squared error measures" (version 1.0),
 March 2024. doi:10.5281/zenodo.1072952
@@ -90,10 +90,10 @@ March 2024. doi:10.5281/zenodo.1072952
 
     @MISC{supReiW24,
       author =       {Reiter, S. and Werner, S.~W.~R.},
-      title  =       {Code, Data and Results for Numerical 
-                      Experiments in ``{I}nterpolatory model order 
-                      reduction of large-scale dynamical systems with root 
-                      mean squared error measures'' (version 1.0)},
+      title  =       {Code and Results for Numerical Experiments in
+                  ``{I}nterpolatory model order reduction of large-scale
+                  dynamical systems with root mean squared error measures''
+                  (version 1.0)},
       month  =       mar,
       year   =       {2024},
       doi    =       {10.5281/zenodo.zenodo.1072952}
