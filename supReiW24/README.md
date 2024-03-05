@@ -3,8 +3,8 @@ reduction of large-scale dynamical systems with root mean squared error
 measures"
 ===========================================================================
 
-This archive contains the companion codes, used data and computed results
-for the paper:
+This archive contains the companion codes and computed results for the
+paper:
 
 S. Reiter, S. W. R. Werner; "Interpolatory model order reduction of 
 large-scale dynamical systems with root mean squared error measures",
@@ -64,9 +64,8 @@ Copyright (C) 2024 Sean Reiter, Steffen W. R. Werner
 In general, this software is licensed under the BSD-2 License.
 See [COPYING](COPYING) for a copy of the license.
 
-The files in `results` and `data` with its content are licensed under 
-the CC-BY 4.0 License. See [COPYING_DATA](COPYING_DATA) for a copy of the 
-license.
+The files in `results` are licensed under the CC-BY 4.0 License.
+See [COPYING_DATA](COPYING_DATA) for a copy of the license.
 
 
 ## Citation
@@ -80,8 +79,8 @@ The DOI for version 1.0 is
 
 ### Cite as
 
-S. Reiter and S. W. R. Werner. Code and Results for Numerical 
-Experiments in "Interpolatory model order reduction of large-scale 
+S. Reiter and S. W. R. Werner. Code and results for numerical 
+experiments in "Interpolatory model order reduction of large-scale 
 dynamical systems with root mean squared error measures" (version 1.0),
 March 2024. doi:10.5281/zenodo.1072952
 
@@ -91,9 +90,9 @@ March 2024. doi:10.5281/zenodo.1072952
     @MISC{supReiW24,
       author =       {Reiter, S. and Werner, S.~W.~R.},
       title  =       {Code and Results for Numerical Experiments in
-                  ``{I}nterpolatory model order reduction of large-scale
-                  dynamical systems with root mean squared error measures''
-                  (version 1.0)},
+                      ``{I}nterpolatory model order reduction of large-scale
+                      dynamical systems with root mean squared error measures''
+                      (version 1.0)},
       month  =       mar,
       year   =       {2024},
       doi    =       {10.5281/zenodo.zenodo.1072952}

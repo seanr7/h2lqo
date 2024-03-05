@@ -97,9 +97,14 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %   H_shifts - Transfer function evaluations of full-order model (E, A, b,
 %              Q) computed at inputted shifts.
 
+%
+% This file is part of the archive Code and Results for Numerical 
+% Experiments in "Interpolatory model order reduction of large-scale 
+% dynamical systems with root mean squared error measures"
 % Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
+%
 
 % Virginia Tech, USA
 % Last editied: 2/29/2024

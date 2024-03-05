@@ -3,7 +3,7 @@
 % (plateTVA) data set.
 
 %
-% This file is part of the archive Code, Data and Results for Numerical 
+% This file is part of the archive Code and Results for Numerical 
 % Experiments in "Interpolatory model order reduction of large-scale 
 % dynamical systems with root mean squared error measures"
 % Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner

@@ -20,7 +20,7 @@ function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
 %   projeciton. 
 %   It is assumed that the eigenvalues of (s*E-A) lie in the open left
 %   half-plane.
-
+%
 % INPUTS:
 %   E    - invertible descriptor matrix with dimensions n x n in (1),
 %          if empty set to eye(n, n)
@@ -78,9 +78,14 @@ function [Er, Ar, br, cr, Mr, info] = sisolqo_irka(E, A, b, c, M, r, opts)
 %   | sores           | Final second-order residues                       |
 %   +-----------------+---------------------------------------------------+
 
-% Copyright (c) 2024 Sean Reiter
+%
+% This file is part of the archive Code and Results for Numerical 
+% Experiments in "Interpolatory model order reduction of large-scale 
+% dynamical systems with root mean squared error measures"
+% Copyright (c) 2024 Sean Reiter, Steffen W. R. Werner
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
+%
 
 % Virginia Tech, Department of Mathematics
 % Last editied: 2/29/2024
