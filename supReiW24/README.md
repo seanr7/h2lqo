@@ -95,5 +95,5 @@ March 2024. doi:10.5281/zenodo.1072952
                       (version 1.0)},
       month  =       mar,
       year   =       {2024},
-      doi    =       {10.5281/zenodo.zenodo.1072952}
+      doi    =       {10.5281/zenodo.1072952}
     }
