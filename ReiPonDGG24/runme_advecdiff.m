@@ -12,24 +12,23 @@ clear all;
 close all;
 
 % Get and set all paths
-% [rootpath, name, ~] = fileparts(mfilename('fullpath'));
-[rootpath, filename, ~] = fileparts( ...
-    '/Users/16316/Desktop/h2lqo/ReiPonDGG24/runme_advecdiff.m');
-    % '/Users/seanr/Desktop/h2lqo/ReiPonDGG24/runme_advecdiff.m');SS
+[rootpath, filename, ~] = fileparts(mfilename('fullpath'));
 loadname            = [rootpath filesep() ...
-    'data' filesep() filename(7:end)];
+    'data' filesep() filename];
 savename            = [rootpath filesep() ...
-    'out' filesep() filename(7:end)];
+    'results' filesep() filename];
 
-% Add path to drivers
+% Add paths to drivers and data
 addpath([rootpath, '/drivers'])
+addpath([rootpath, '/data'])
 addpath([rootpath, '/QBDynamicsQBOutput_MATLAB'])
 
-% Write .log file
-if exist([savename '.log'], 'file')
+% Write .log file, put in `out' folder
+if exist([savename '.log'], 'file') == 2
     delete([savename '.log']);
 end
 outname = [savename '.log']';
+
 diary(outname)
 diary on; 
 
@@ -37,13 +36,14 @@ fprintf(1, ['SCRIPT: ' upper(filename) '\n']);
 fprintf(1, ['========' repmat('=', 1, length(filename)) '\n']);
 fprintf(1, '\n');
 
+
 %% Load base data.
 fprintf(1, 'Load problem data\n');
 fprintf(1, '-----------------\n');
 
 % TODO: Check best practice for using someone else's code in code you want
 % to publish ... 
-nx   = 900;  % No. of spatial grid points
+nx   = 300;  % No. of spatial grid points
 diff = 1e-2; % Diffusion parameter
 adv  = 1;    % Advection parameter
 
@@ -52,7 +52,7 @@ adv  = 1;    % Advection parameter
 E = full(E);     % E = I in this example
 A = full(A);    
 B = full(B);   
-C = eye(nx, nx); % Linear output matrix
+Clin = eye(nx, nx); % Linear output matrix
 Mquad = eye(nx, nx); % Quadratic output matrix
 
 fprintf(1, '\n');
@@ -79,7 +79,7 @@ fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 % Note, v is nt \times nx
 % Compute quadratic cost by 1/(2*n) * ||x(t) - \bf{1}||_2^2
 h = 1/nx;
-output = (h/2) * sum((C*v' - ones(nx,1)*ones(1,length(t)) ).^2, 1);
+output = (h/2) * sum((Clin*v' - ones(nx,1)*ones(1,length(t)) ).^2, 1);
 
 % plot state
 xplot = linspace(0, 1, nx+1); 
@@ -108,18 +108,45 @@ for tt = 1:length(t)
 end
 y = y + (1/2) * ones(1, nt+1);
 
-figure(2)
-plot(t, y, '-'); hold on
-xlabel('$t$'); 
-ylabel('$y(t)$')
+figure(1)
+% Define colormat
+ColMat(1,:) = [ 0.8500    0.3250    0.0980];
+ColMat(2,:) = [0.3010    0.7450    0.9330];
+ColMat(3,:) = [  0.9290    0.6940    0.1250];
+ColMat(4,:) = [0.4660    0.6740    0.1880];
+ColMat(5,:) = [0.4940    0.1840    0.5560];
+
+
+% Make aspect ration `golden'
+figure
+% golden_ratio = (sqrt(5)+1)/2;
+% axes('position', [.125 .15 .75 golden_ratio-1])
+subplot(2,1,1)
+plot(t, y, '-','color',ColMat(1,:), LineWidth=1.5)
+hold on
+grid on
+% xlabel('$t$','interpreter','latex'); 
+% ylabel('$y(t)$','interpreter','latex')
 
 %% Run algorithm.
 fprintf(1, 'Computed reduced-order models via LQO-TSIA\n');
 fprintf(1, '------------------------------------------\n');
 
 r = 25;
-[Er, Ar, Br, Clinr, Mquadr, poles] = lqomimo_tsia(E, A, B, Clin, Mquad, r);
+[Er, Ar, Br, Clinr, Mquadr, poles] = mimolqo_tsia(E, A, B, Clin, Mquad, r);
+%%
+pole_hist = poles;
+maxiter = max(size(poles));
+for k = 2:maxiter
+    err(k) = abs(max(poles(:, k)-poles(:,k-1)));
+end
 
+figure
+golden_ratio = (sqrt(5)+1)/2;
+axes('position', [.125 .15 .75 golden_ratio-1])
+semilogy([1:maxiter], err, '-o', 'color',ColMat(3,:), LineWidth=1.5)
+xlim([2,maxiter])
+xlabel('$k$', 'interpreter', 'latex')
 %% Run ode15 and simulate reduced output.
 fprintf(1, 'Solve reduced AdvecDiff problem via ode15\n');
 fprintf(1, '-----------------------------------------\n');
@@ -142,14 +169,43 @@ for tt = 1:length(tr)
 end
 yr = yr + (1/2) * ones(1, nt+1);
 
-figure(2)
-plot(t, yr, '--'); hold on
+plot(t, yr, '-.', 'color',ColMat(3,:), LineWidth=1.5); hold on
+lgd = legend('$y(t)$', '$\hat{y}(t)$','interpreter','latex','FontName','Arial',...
+    'location', 'northeast');
+fontsize(lgd,10,'points')
 
-figure(3)
-plot(t, abs(y - yr), '--'); hold on
-xlabel('$t$'); 
-ylabel('$y(t)-y_r(t)$')
+subplot(2,1,2)
+plot(t, abs(y - yr), '-','color',ColMat(3,:),LineWidth=1.5); hold on
+% xlabel('$t$'); 
+% ylabel('$y(t)-\hat{y}(t)$','interpreter','latex')
 % figure(3)
 % [~, totaliter] = size(poles);   totaliter = totaliter - 1;
 % err = max(abs(poles - poles))
 % plot()
+%%
+
+% %% Hierarchy
+% addpath('supReiW24/drivers/')
+% % load('data/heat-cont.mat')
+% % % A = full(A);    B = full(B);    Clin = full(C);    E = eye(200,200);
+% % Clin = C;
+% % [n,~] = size(A);    p = 1; % relevant dimensions
+% % B = B(:, p);  Clin = Clin(p, :); % If using ISS model, make SISO
+% % Mquad = (diag(2*ones(1,n)) + diag(-1*ones(1,n-1),1) + diag(-1*ones(1,n-1),-1));
+% % Mquad = Mquad*10e-2;
+% % Elin = speye(200, 200);
+% % nx = 200;
+% B = B(:,1);
+% for r = 2:2:20  
+%     fprintf(1, 'r=%d', r)
+%     [Er, Ar, Br, Clinr, Mquadr, poles] = sisolqo_irka(E, A, B, Clin, Mquad, r);
+%     % [Er, Ar, Br, Clinr, Mquadr, poles] = mimolqo_tsia(E, A, B, Clin, Mquad, r);
+%     Aerr = [A, zeros(nx, r); zeros(r, nx), Ar]; Berr = [B; Br];
+%     Cerr = [Clin, - Clinr]; Merr = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadr];
+%     Perr = lyap(Aerr, Berr*Berr');
+%     Qerr = lyap(Aerr', Cerr'*Cerr + Merr*Perr*Merr);
+%     k=r/2;  H2errs(k) = sqrt(trace(Berr'*Qerr*Berr));
+%     H2errs(k)
+% end
+% %%
+% plot([2, 4, 6, 8, 10, 12, 14, 16, 18, 20],abs(H2errs))

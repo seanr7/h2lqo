@@ -44,7 +44,7 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %   |                 | (default eye(r, r))                               |
 %   +-----------------+---------------------------------------------------+
 %   | Ar              | Initial state matrix                              |
-%   |                 | (default -diag(logspace(-1,2,r))                  |
+%   |                 | (default -diag(logspace(1,3,r))                  |
 %   +-----------------+---------------------------------------------------+
 %   | Br              | Initial input matrix                              |
 %   |                 | (default eye(n, m))                               |
@@ -99,7 +99,7 @@ if ~isfield(opts, 'Er')
     opts.Er = eye(r, r);
 end
 if ~isfield(opts, 'Ar')
-    opts.Ar = -diag(logspace(-1, 2, r)); 
+    opts.Ar = -diag(logspace(1, 3, r)); 
 end
 if ~isfield(opts, 'Br')
     opts.Br = eye(r, m);  
