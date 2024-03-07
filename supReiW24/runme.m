@@ -286,7 +286,7 @@ fprintf(1, 'Load problem data for order r = 100 reduced models\n');
 fprintf(1, '--------------------------------------------------\n');
 
 % order r = 100 reduced models
-% load('results/plateTVAlqo_r100_lqoirka.mat')
+load('results/plateTVAlqo_r100_lqoirka.mat')
 load('results/plateTVAlqo_r100_Linfty_g.mat')
 load('results/plateTVAlqo_r100_Linfty_pg.mat')
 load('results/plateTVAlqo_r100_avg_g.mat')
@@ -300,7 +300,7 @@ fprintf(1, 'Simulate rms response for order r = 100 reduced models\n');
 fprintf(1, '-----------------------------------------------------\n');
 
 % Allocate space for results
-% res_r100_irka      = zeros(1,length(s));
+res_r100_irka      = zeros(1,length(s));
 res_r100_Linfty_g  = zeros(1, length(s));
 res_r100_Linfty_pg = zeros(1, length(s));
 res_r100_avg_g     = zeros(1, length(s));
@@ -314,7 +314,7 @@ for ii=1:length(s)
     fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
     current_iter = tic;
     % Tmp solves
-    % tmp_r100_irka = (s(ii)*E_qo_r - A_qo_r)\B_qo_r;
+    tmp_r100_irka = (s(ii)*E_qo_r - A_qo_r)\B_qo_r;
     tmp_r100_Linfty_g = (s(ii)*E_qo_r100_Linfty_g - A_qo_r100_Linfty_g)\B_qo_r100_Linfty_g;
     tmp_r100_Linfty_pg = (s(ii)*E_qo_r100_Linfty_pg - A_qo_r100_Linfty_pg)\B_qo_r100_Linfty_pg;
     tmp_r100_avg_g = (s(ii)*E_qo_r100_avg_g - A_qo_r100_avg_g)\B_qo_r100_avg_g;
@@ -340,13 +340,13 @@ fprintf(1, '--------------------------------------------------\n');
 % mag_r100_avg_pg    = abs(res_r100_avg_pg);
 
 % To plot magnitudes in dB, uncomment the code below
-% mag_r100_irka      = 10*log10(abs(res_r100_irka)/1e-9);
+mag_r100_irka      = 10*log10(abs(res_r100_irka)/1e-9);
 mag_r100_Linfty_g  = 10*log10(abs(res_r100_Linfty_g)/1e-9);
 mag_r100_Linfty_pg = 10*log10(abs(res_r100_Linfty_pg)/1e-9);
 mag_r100_avg_g     = 10*log10(abs(res_r100_avg_g)/1e-9);
 mag_r100_avg_pg    = 10*log10(abs(res_r100_avg_pg)/1e-9);
  
-write = 0;
+write = 1;
 if write
     % Store data
     magmatrix = [s_hz', mag', mag_r100_irka', mag_r100_Linfty_g', mag_r100_Linfty_pg', ...
@@ -366,7 +366,7 @@ fprintf(1, '--------------------------------------------------------------------
 figure(3)
 % Pointwise L_infty error
 subplot(2,1,1)
-semilogy(s_hz, abs(mag-mag_r25_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
+semilogy(s_hz, abs(mag-mag_r100_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
 semilogy(s_hz, abs(mag-mag_r100_Linfty_g)./abs(mag),'--','color', ColMat(3,:),LineWidth=1);
 semilogy(s_hz, abs(mag-mag_r100_Linfty_pg)./abs(mag),'--','color', ColMat(4,:),LineWidth=1);
 semilogy(s_hz, abs(mag-mag_r100_avg_g)./abs(mag),'--.','color', ColMat(5,:),LineWidth=1);
@@ -377,7 +377,7 @@ ylabel('Magnitude [dB]')
 % Magnitude
 subplot(2,1,2)
 plot(s_hz, mag,'--o','color',ColMat(1,:),'markersize',4,LineWidth=1);hold on;
-plot(s_hz, mag_r25_irka, '-.','color',ColMat(2,:),LineWidth=1);
+plot(s_hz, mag_r100_irka, '-.','color',ColMat(2,:),LineWidth=1);
 plot(s_hz, mag_r100_Linfty_g,'--','color', ColMat(3,:),LineWidth=1);
 plot(s_hz, mag_r100_Linfty_pg,'--','color', ColMat(4,:),LineWidth=1);
 plot(s_hz, mag_r100_avg_g,'--.','color', ColMat(5,:),LineWidth=1);
