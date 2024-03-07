@@ -320,7 +320,7 @@ for ii=1:length(s)
     tmp_r100_avg_g = (s(ii)*E_qo_r100_avg_g - A_qo_r100_avg_g)\B_qo_r100_avg_g;
     tmp_r100_avg_pg = (s(ii)*E_qo_r100_avg_pg - A_qo_r100_avg_pg)\B_qo_r100_avg_pg;
     % Evaluate rms response
-    % res_r100_irka(ii) = sqrt((tmp_r100_irka'*Q_qo_r*tmp_r100_irka)/n_nodes);
+    res_r100_irka(ii) = sqrt((tmp_r100_irka'*Q_qo_r*tmp_r100_irka)/n_nodes);
     res_r100_Linfty_g(ii) = sqrt((tmp_r100_Linfty_g'*Q_qo_r100_Linfty_g*tmp_r100_Linfty_g)/n_nodes);
     res_r100_Linfty_pg(ii) = sqrt((tmp_r100_Linfty_pg'*Q_qo_r100_Linfty_pg*tmp_r100_Linfty_pg)/n_nodes);
     res_r100_avg_g(ii) = sqrt((tmp_r100_avg_g' * Q_qo_r100_avg_g * tmp_r100_avg_g)/n_nodes);
