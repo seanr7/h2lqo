@@ -84,7 +84,7 @@ fprintf(1, '--------------------------------------------\n');
 % Compute linear solves at the designated shifts
 shifts = 1i*linspace(1,2*pi*251, 250);
 % Set order of reduction
-r = 50;
+r = 100;
 fprintf(1, '1. Linfty sampling and Galerkin projection\n')
 fprintf(1, '------------------------------------------\n')
 % Set input opts
@@ -92,7 +92,7 @@ opts.compression = 'Linfty';
 opts.proj = 'g';
 % Set to true to re-compute primitive bases, else use those saved in
 % 'results/'
-recomp_bases = true;
+recomp_bases = false;
 if recomp_bases
     Vprim = []; Wprim = [];
 else
@@ -127,13 +127,13 @@ save(filename, 'E_qo_r50_Linfty_g', 'A_qo_r50_Linfty_g', 'B_qo_r50_Linfty_g', ..
 
 %%
 fprintf(1, '2. Linfty sampling and Petrov-Galerkin projection\n')
-fprintf(1, '------------------------------------------\n')
+fprintf(1, '-------------------------------------------------\n')
 % Set input opts
 opts.compression = 'Linfty';
 opts.proj = 'pg';
 % Set to true to re-compute primitive bases, else use those saved in
 % 'results/'
-recomp_bases = true;
+recomp_bases = false;
 if recomp_bases
     Vprim = []; Wprim = [];
 else
