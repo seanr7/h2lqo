@@ -88,7 +88,7 @@ r = 100;
 fprintf(1, '1. Linfty sampling and Galerkin projection\n')
 fprintf(1, '------------------------------------------\n')
 % Set input opts
-opts.compression = 'Linfty';
+opts.compress = 'Linfty';
 opts.proj = 'g';
 % Set to true to re-compute primitive bases, else use those saved in
 % 'results/'
@@ -98,15 +98,15 @@ if recomp_bases
 else
     load('results/prim_bases_g') 
 end
-recomp_tf = true;
-if recomp_tf
+recomp_evals = true;
+if recomp_evals
     H_shifts = [];
 else
     load('results/H_shifts') 
 end
 % Set input opts
 opts.recomp_bases = recomp_bases;
-opts.recomp_tf = recomp_tf;
+opts.recomp_evals = recomp_evals;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
@@ -129,7 +129,7 @@ save(filename, 'E_qo_r100_Linfty_g', 'A_qo_r100_Linfty_g', 'B_qo_r100_Linfty_g',
 fprintf(1, '2. Linfty sampling and Petrov-Galerkin projection\n')
 fprintf(1, '-------------------------------------------------\n')
 % Set input opts
-opts.compression = 'Linfty';
+opts.compress = 'Linfty';
 opts.proj = 'pg';
 % Set to true to re-compute primitive bases, else use those saved in
 % 'results/'
@@ -139,15 +139,15 @@ if recomp_bases
 else
     load('results/prim_bases_pg') 
 end
-recomp_tf = true;
-if recomp_tf
+recomp_evals = true;
+if recomp_evals
     H_shifts = [];
 else
     load('results/H_shifts') 
 end
 % Set input opts
 opts.recomp_bases = recomp_bases;
-opts.recomp_tf = recomp_tf;
+opts.recomp_evals = recomp_evals;
 opts.Vprim = Vprim;
 opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
@@ -170,7 +170,7 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % fprintf(1, '3. Pivoted QR and Galerkin projection\n')
 % fprintf(1, '-------------------------------------\n')
 % % Set input opts
-% opts.compression = 'avg';
+% opts.compress = 'avg';
 % opts.proj = 'g';
 % % Set to true to re-compute primitive bases, else use those saved in
 % % 'results/'
@@ -183,15 +183,15 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % else
 %     load('results/prim_bases_g') 
 % end
-% recomp_tf = true;
-% if recomp_tf
+% recomp_evals = true;
+% if recomp_evals
 %     Hshifts = [];
 % else
 %     load('results/H_shifts') 
 % end
 % % Set input opts
 % opts.recomp_bases = recomp_bases;
-% opts.recomp_tf = recomp_tf;
+% opts.recomp_evals = recomp_evals;
 % opts.Vprim = Vprim;
 % opts.Wprim = Wprim;
 % opts.H_shifts = H_shifts;
@@ -211,7 +211,7 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % fprintf(1, '4. Pivoted QR and Petrov-Galerkin projection\n')
 % fprintf(1, '--------------------------------------------\n')
 % % Set input opts
-% opts.compression = 'avg';
+% opts.compress = 'avg';
 % opts.proj = 'pg';
 % % Set to true to re-compute primitive bases, else use those saved in
 % % 'results/'
@@ -221,15 +221,15 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % else
 %     load('results/prim_bases_pg') 
 % end
-% recomp_tf = true;
-% if recomp_tf
+% recomp_evals = true;
+% if recomp_evals
 %     Hshifts = [];
 % else
 %     load('results/H_shifts') 
 % end
 % % Set input opts
 % opts.recomp_bases = recomp_bases;
-% opts.recomp_tf = recomp_tf;
+% opts.recomp_evals = recomp_evals;
 % opts.Vprim = Vprim;
 % opts.Wprim = Wprim;
 % opts.H_shifts = H_shifts;

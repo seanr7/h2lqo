@@ -135,10 +135,10 @@ if ~isfield(opts, 'recomp_bases')
     fprintf(1, '------------------------------------------------\n')
     opts.recomp_bases = 0; 
 end
-if ~isfield(opts, 'recomp_tf')
-    fprintf(1, 'Setting default value for opts.recomp_tf = 0\n')
+if ~isfield(opts, 'recomp_evals')
+    fprintf(1, 'Setting default value for opts.recomp_evals = 0\n')
     fprintf(1, '------------------------------------------------\n')
-    opts.recomp_tf = 0;
+    opts.recomp_evals = 0;
 end
 if ~isfield(opts, 'Vprim')
     fprintf(1, 'Setting default value for opts.Vprim = []\n')
@@ -216,9 +216,9 @@ else
     Vprim = opts.Vprim; Wprim = opts.Wprim;
 end
 
-% If opts.recomp_tf, compute transfer function evaluations
+% If opts.recomp_evals, compute transfer function evaluations
 % Cheap, because Vprim already given
-if opts.recomp_tf
+if opts.recomp_evals
     compute_tf = tic;
     fprintf(1, 'Computing transfer function values at given shifts \n')
     fprintf(1, '---------------------------------------------------\n')
@@ -236,8 +236,8 @@ end
 
 if strcmp(opts.compress, 'avg')
     compression = tic;
-    fprintf(1, 'Computing orthonormalized model reduction bases via pivoted QR'\n')
-    fprintf(1, '--------------------------------------------------------------'\n')
+    fprintf(1, 'Computing orthonormalized model reduction bases via pivoted QR\n')
+    fprintf(1, '--------------------------------------------------------------\n')
     [Vorth, ~, pV] = qr(Vprim, 'vector', 'econ');   
     [Worth, ~, pW] = qr(Wprim, 'vector', 'econ');
     % Grab r leading columns orthonormal columns from pivoted QR of Vprim
@@ -248,8 +248,8 @@ if strcmp(opts.compress, 'avg')
 end
 if strcmp(opts.compress, 'Linfty')
     compression = tic;
-    fprintf(1, 'Computing orthonormalized model reduction bases via greedy Linfty search'\n')
-    fprintf(1, '------------------------------------------------------------------------'\n')
+    fprintf(1, 'Computing orthonormalized model reduction bases via greedy Linfty search\n')
+    fprintf(1, '------------------------------------------------------------------------\n')
     % Space for indices
     p = zeros(r, 1); 
     % Columns of Vprim, Wprim, chosen where abs transfer function error is
