@@ -263,7 +263,7 @@ if strcmp(opts.compress, 'Linfty')
     Qr = Vprim(:, p1)' * Q * Vprim(:, p1);  Br = Wprim(:, p1)' * b;
     for k = 1:r-1
         iter_compression = tic;
-        fprintf(1, 'Current iterate of greedy Linfty search is k = %d h\n', k)
+        fprintf(1, 'Current iterate of greedy Linfty search is k = %d  \n', k)
         fprintf(1, '---------------------------------------------------\n')
         % Evaluate the previous interpolatory reduced model at the
         % locations in shifts for Linfty error estimation

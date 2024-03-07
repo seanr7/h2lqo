@@ -84,7 +84,7 @@ fprintf(1, '--------------------------------------------\n');
 % Compute linear solves at the designated shifts
 shifts = 1i*linspace(1,2*pi*251, 250);
 % Set order of reduction
-r = 100;
+r = 50;
 fprintf(1, '1. Linfty sampling and Galerkin projection\n')
 fprintf(1, '------------------------------------------\n')
 % Set input opts
@@ -115,15 +115,15 @@ opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
-E_qo_r100_Linfty_g = Worth'*E_qo*Vorth; A_qo_r100_Linfty_g = Worth'*A_qo*Vorth; 
-Q_qo_r100_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_g = Worth'*B_qo;
+E_qo_r50_Linfty_g = Worth'*E_qo*Vorth; A_qo_r50_Linfty_g = Worth'*A_qo*Vorth; 
+Q_qo_r50_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_g = Worth'*B_qo;
 
 % Save shifts 
 % save('H_shifts.mat', 'H_shifts');
 
-filename = 'results/plateTVAlqo_r100_Linfty_g_redux.mat';
-save(filename, 'E_qo_r100_Linfty_g', 'A_qo_r100_Linfty_g', 'B_qo_r100_Linfty_g', ...
-    'Q_qo_r100_Linfty_g', 'pW', 'pV') 
+filename = 'results/plateTVAlqo_r50_Linfty_g_redux.mat';
+save(filename, 'E_qo_r50_Linfty_g', 'A_qo_r50_Linfty_g', 'B_qo_r50_Linfty_g', ...
+    'Q_qo_r50_Linfty_g', 'pW', 'pV') 
 
 %%
 fprintf(1, '2. Linfty sampling and Petrov-Galerkin projection\n')
@@ -156,15 +156,15 @@ opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
-E_qo_r100_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r100_Linfty_pg = Worth'*A_qo*Vorth; 
-Q_qo_r100_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_pg = Worth'*B_qo;
+E_qo_r50_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r50_Linfty_pg = Worth'*A_qo*Vorth; 
+Q_qo_r50_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_pg = Worth'*B_qo;
 
 % Save shifts 
 % save('H_shifts.mat', 'H_shifts');
 
-filename = 'results/plateTVAlqo_r100_Linfty_pg_redux.mat';
-save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_pg', ...
-    'Q_qo_r100_Linfty_pg', 'pW', 'pV') 
+filename = 'results/plateTVAlqo_r50_Linfty_pg_redux.mat';
+save(filename, 'E_qo_r50_Linfty_pg', 'A_qo_r50_Linfty_pg', 'B_qo_r50_Linfty_pg', ...
+    'Q_qo_r50_Linfty_pg', 'pW', 'pV') 
 
 %%
 % fprintf(1, '3. Pivoted QR and Galerkin projection\n')
@@ -200,12 +200,12 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
 %     B_qo, Q_qo, shifts, r, opts);
 % % Compute corresponding reduced model
-% E_qo_r100_avg_g = Worth'*E_qo*Vorth; A_qo_r100_avg_g = Worth'*A_qo*Vorth; 
-% Q_qo_r100_avg_g = Vorth'*Q_qo*Vorth; B_qo_r100_avg_g = Worth'*B_qo;
+% E_qo_r50_avg_g = Worth'*E_qo*Vorth; A_qo_r50_avg_g = Worth'*A_qo*Vorth; 
+% Q_qo_r50_avg_g = Vorth'*Q_qo*Vorth; B_qo_r50_avg_g = Worth'*B_qo;
 % 
-% filename = 'results/plateTVAlqo_r100_avg_g.mat';
-% save(filename, 'E_qo_r100_avg_g', 'A_qo_r100_avg_g', 'B_qo_r100_avg_g', ...
-%     'Q_qo_r100_avg_g', 'pW', 'pV') 
+% filename = 'results/plateTVAlqo_r50_avg_g.mat';
+% save(filename, 'E_qo_r50_avg_g', 'A_qo_r50_avg_g', 'B_qo_r50_avg_g', ...
+%     'Q_qo_r50_avg_g', 'pW', 'pV') 
 % 
 % %%
 % fprintf(1, '4. Pivoted QR and Petrov-Galerkin projection\n')
@@ -238,12 +238,12 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
 %     B_qo, Q_qo, shifts, r, opts);
 % % Compute corresponding reduced model
-% E_qo_r100_avg_pg = Worth'*E_qo*Vorth; A_qo_r100_avg_pg = Worth'*A_qo*Vorth; 
-% Q_qo_r100_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r100_avg_pg = Worth'*B_qo;
+% E_qo_r50_avg_pg = Worth'*E_qo*Vorth; A_qo_r50_avg_pg = Worth'*A_qo*Vorth; 
+% Q_qo_r50_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r50_avg_pg = Worth'*B_qo;
 % 
-% filename = 'results/plateTVAlqo_r100_avg_pg.mat';
-% save(filename, 'E_qo_r100_avg_pg', 'A_qo_r100_avg_pg', 'B_qo_r100_avg_pg', ...
-%     'Q_qo_r100_avg_pg', 'pW', 'pV')
+% filename = 'results/plateTVAlqo_r50_avg_pg.mat';
+% save(filename, 'E_qo_r50_avg_pg', 'A_qo_r50_avg_pg', 'B_qo_r50_avg_pg', ...
+%     'Q_qo_r50_avg_pg', 'pW', 'pV')
 
 %% Finished script.
 fprintf(1, 'FINISHED SCRIPT.\n');
