@@ -112,7 +112,7 @@ opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
 
 % Compute model reduction bases
-[~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+[~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
 E_qo_r100_Linfty_g = Worth'*E_qo*Vorth; A_qo_r100_Linfty_g = Worth'*A_qo*Vorth; 
@@ -153,7 +153,7 @@ opts.Wprim = Wprim;
 opts.H_shifts = H_shifts;
 
 % Compute model reduction bases
-[~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+[~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
 E_qo_r100_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r100_Linfty_pg = Worth'*A_qo*Vorth; 
@@ -197,7 +197,7 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % opts.H_shifts = H_shifts;
 % 
 % % Compute model reduction bases
-% [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+% [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
 %     B_qo, Q_qo, shifts, r, opts);
 % % Compute corresponding reduced model
 % E_qo_r100_avg_g = Worth'*E_qo*Vorth; A_qo_r100_avg_g = Worth'*A_qo*Vorth; 
@@ -235,7 +235,7 @@ save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_p
 % opts.H_shifts = H_shifts;
 % 
 % % Compute model reduction bases
-% [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+% [~, ~, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(E_qo, A_qo, ...
 %     B_qo, Q_qo, shifts, r, opts);
 % % Compute corresponding reduced model
 % E_qo_r100_avg_pg = Worth'*E_qo*Vorth; A_qo_r100_avg_pg = Worth'*A_qo*Vorth; 
