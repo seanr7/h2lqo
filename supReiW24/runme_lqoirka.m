@@ -45,7 +45,7 @@ fprintf(1, '\n');
 
 fprintf(1, 'Loading plateTVA model...\n')
 fprintf(1, '-------------------------\n');
-load('data/plateTVA_n201900m1q28278')
+load('data/plateTVA_n201900m1q28278.mat')
 n_nodes = full(sum(sum(C)));
 
 %% Convert plate model to first-order from second-order.
