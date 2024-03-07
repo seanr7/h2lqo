@@ -100,7 +100,7 @@ else
 end
 recomp_tf = true;
 if recomp_tf
-    Hshifts = [];
+    H_shifts = [];
 else
     load('results/H_shifts') 
 end
@@ -141,7 +141,7 @@ else
 end
 recomp_tf = true;
 if recomp_tf
-    Hshifts = [];
+    H_shifts = [];
 else
     load('results/H_shifts') 
 end
