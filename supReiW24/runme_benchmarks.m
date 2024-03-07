@@ -115,15 +115,15 @@ opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
-E_qo_r50_Linfty_g = Worth'*E_qo*Vorth; A_qo_r50_Linfty_g = Worth'*A_qo*Vorth; 
-Q_qo_r50_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_g = Worth'*B_qo;
+E_qo_r100_Linfty_g = Worth'*E_qo*Vorth; A_qo_r100_Linfty_g = Worth'*A_qo*Vorth; 
+Q_qo_r100_Linfty_g = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_g = Worth'*B_qo;
 
 % Save shifts 
 % save('H_shifts.mat', 'H_shifts');
 
-filename = 'results/plateTVAlqo_r50_Linfty_g.mat';
-save(filename, 'E_qo_r50_Linfty_g', 'A_qo_r50_Linfty_g', 'B_qo_r50_Linfty_g', ...
-    'Q_qo_r50_Linfty_g', 'pW', 'pV') 
+filename = 'results/plateTVAlqo_r100_Linfty_g_redux.mat';
+save(filename, 'E_qo_r100_Linfty_g', 'A_qo_r100_Linfty_g', 'B_qo_r100_Linfty_g', ...
+    'Q_qo_r100_Linfty_g', 'pW', 'pV') 
 
 %%
 fprintf(1, '2. Linfty sampling and Petrov-Galerkin projection\n')
@@ -156,94 +156,94 @@ opts.H_shifts = H_shifts;
 [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
     B_qo, Q_qo, shifts, r, opts);
 % Compute corresponding reduced model
-E_qo_r50_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r50_Linfty_pg = Worth'*A_qo*Vorth; 
-Q_qo_r50_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r50_Linfty_pg = Worth'*B_qo;
+E_qo_r100_Linfty_pg = Worth'*E_qo*Vorth; A_qo_r100_Linfty_pg = Worth'*A_qo*Vorth; 
+Q_qo_r100_Linfty_pg = Vorth'*Q_qo*Vorth; B_qo_r100_Linfty_pg = Worth'*B_qo;
 
 % Save shifts 
 % save('H_shifts.mat', 'H_shifts');
 
-filename = 'results/plateTVAlqo_r50_Linfty_pg.mat';
-save(filename, 'E_qo_r50_Linfty_pg', 'A_qo_r50_Linfty_pg', 'B_qo_r50_Linfty_pg', ...
-    'Q_qo_r50_Linfty_pg', 'pW', 'pV') 
+filename = 'results/plateTVAlqo_r100_Linfty_pg_redux.mat';
+save(filename, 'E_qo_r100_Linfty_pg', 'A_qo_r100_Linfty_pg', 'B_qo_r100_Linfty_pg', ...
+    'Q_qo_r100_Linfty_pg', 'pW', 'pV') 
 
 %%
-fprintf(1, '3. Pivoted QR and Galerkin projection\n')
-fprintf(1, '-------------------------------------\n')
-% Set input opts
-opts.compression = 'avg';
-opts.proj = 'g';
-% Set to true to re-compute primitive bases, else use those saved in
-% 'results/'
-% Note: At this point in the script, primitive bases for Galerkin and
-% Petrov-Galerkin projection have been computed and saved, and can be
-% recycled for faster computation.
-recomp_bases = false;
-if recomp_bases
-    Vprim = []; Wprim = [];
-else
-    load('results/prim_bases_g') 
-end
-recomp_tf = false;
-if recomp_tf
-    Hshifts = [];
-else
-    load('results/H_shifts') 
-end
-% Set input opts
-opts.recomp_bases = recomp_bases;
-opts.recomp_tf = recomp_tf;
-opts.Vprim = Vprim;
-opts.Wprim = Wprim;
-opts.H_shifts = H_shifts;
-
-% Compute model reduction bases
-[~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
-    B_qo, Q_qo, shifts, r, opts);
-% Compute corresponding reduced model
-E_qo_r50_avg_g = Worth'*E_qo*Vorth; A_qo_r50_avg_g = Worth'*A_qo*Vorth; 
-Q_qo_r50_avg_g = Vorth'*Q_qo*Vorth; B_qo_r50_avg_g = Worth'*B_qo;
-
-filename = 'results/plateTVAlqo_r50_avg_g.mat';
-save(filename, 'E_qo_r50_avg_g', 'A_qo_r50_avg_g', 'B_qo_r50_avg_g', ...
-    'Q_qo_r50_avg_g', 'pW', 'pV') 
-
-%%
-fprintf(1, '4. Pivoted QR and Petrov-Galerkin projection\n')
-fprintf(1, '--------------------------------------------\n')
-% Set input opts
-opts.compression = 'avg';
-opts.proj = 'pg';
-% Set to true to re-compute primitive bases, else use those saved in
-% 'results/'
-recomp_bases = false;
-if recomp_bases
-    Vprim = []; Wprim = [];
-else
-    load('results/prim_bases_pg') 
-end
-recomp_tf = false;
-if recomp_tf
-    Hshifts = [];
-else
-    load('results/H_shifts') 
-end
-% Set input opts
-opts.recomp_bases = recomp_bases;
-opts.recomp_tf = recomp_tf;
-opts.Vprim = Vprim;
-opts.Wprim = Wprim;
-opts.H_shifts = H_shifts;
-
-% Compute model reduction bases
-[~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
-    B_qo, Q_qo, shifts, r, opts);
-% Compute corresponding reduced model
-E_qo_r50_avg_pg = Worth'*E_qo*Vorth; A_qo_r50_avg_pg = Worth'*A_qo*Vorth; 
-Q_qo_r50_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r50_avg_pg = Worth'*B_qo;
-
-filename = 'results/plateTVAlqo_r50_avg_pg.mat';
-save(filename, 'E_qo_r50_avg_pg', 'A_qo_r50_avg_pg', 'B_qo_r50_avg_pg', ...
-    'Q_qo_r50_avg_pg', 'pW', 'pV')
+% fprintf(1, '3. Pivoted QR and Galerkin projection\n')
+% fprintf(1, '-------------------------------------\n')
+% % Set input opts
+% opts.compression = 'avg';
+% opts.proj = 'g';
+% % Set to true to re-compute primitive bases, else use those saved in
+% % 'results/'
+% % Note: At this point in the script, primitive bases for Galerkin and
+% % Petrov-Galerkin projection have been computed and saved, and can be
+% % recycled for faster computation.
+% recomp_bases = false;
+% if recomp_bases
+%     Vprim = []; Wprim = [];
+% else
+%     load('results/prim_bases_g') 
+% end
+% recomp_tf = true;
+% if recomp_tf
+%     Hshifts = [];
+% else
+%     load('results/H_shifts') 
+% end
+% % Set input opts
+% opts.recomp_bases = recomp_bases;
+% opts.recomp_tf = recomp_tf;
+% opts.Vprim = Vprim;
+% opts.Wprim = Wprim;
+% opts.H_shifts = H_shifts;
+% 
+% % Compute model reduction bases
+% [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+%     B_qo, Q_qo, shifts, r, opts);
+% % Compute corresponding reduced model
+% E_qo_r100_avg_g = Worth'*E_qo*Vorth; A_qo_r100_avg_g = Worth'*A_qo*Vorth; 
+% Q_qo_r100_avg_g = Vorth'*Q_qo*Vorth; B_qo_r100_avg_g = Worth'*B_qo;
+% 
+% filename = 'results/plateTVAlqo_r100_avg_g.mat';
+% save(filename, 'E_qo_r100_avg_g', 'A_qo_r100_avg_g', 'B_qo_r100_avg_g', ...
+%     'Q_qo_r100_avg_g', 'pW', 'pV') 
+% 
+% %%
+% fprintf(1, '4. Pivoted QR and Petrov-Galerkin projection\n')
+% fprintf(1, '--------------------------------------------\n')
+% % Set input opts
+% opts.compression = 'avg';
+% opts.proj = 'pg';
+% % Set to true to re-compute primitive bases, else use those saved in
+% % 'results/'
+% recomp_bases = false;
+% if recomp_bases
+%     Vprim = []; Wprim = [];
+% else
+%     load('results/prim_bases_pg') 
+% end
+% recomp_tf = true;
+% if recomp_tf
+%     Hshifts = [];
+% else
+%     load('results/H_shifts') 
+% end
+% % Set input opts
+% opts.recomp_bases = recomp_bases;
+% opts.recomp_tf = recomp_tf;
+% opts.Vprim = Vprim;
+% opts.Wprim = Wprim;
+% opts.H_shifts = H_shifts;
+% 
+% % Compute model reduction bases
+% [~, ~, Worth, Vorth, H_shifts, pW, pV, opts] = interpolatory_solves(E_qo, A_qo, ...
+%     B_qo, Q_qo, shifts, r, opts);
+% % Compute corresponding reduced model
+% E_qo_r100_avg_pg = Worth'*E_qo*Vorth; A_qo_r100_avg_pg = Worth'*A_qo*Vorth; 
+% Q_qo_r100_avg_pg = Vorth'*Q_qo*Vorth; B_qo_r100_avg_pg = Worth'*B_qo;
+% 
+% filename = 'results/plateTVAlqo_r100_avg_pg.mat';
+% save(filename, 'E_qo_r100_avg_pg', 'A_qo_r100_avg_pg', 'B_qo_r100_avg_pg', ...
+%     'Q_qo_r100_avg_pg', 'pW', 'pV')
 
 %% Finished script.
 fprintf(1, 'FINISHED SCRIPT.\n');
