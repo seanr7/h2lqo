@@ -2,6 +2,8 @@
 % Script file to run all experiments on advection diffusion model in
 % "$\mathcal{H}_2%-optimal model reduction of linear systems with multiple
 % quadratic outputs"
+
+%
 % Copyright (c) 2024 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
@@ -81,23 +83,6 @@ fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 h = 1/nx;
 output = (h/2) * sum((Clin*v' - ones(nx,1)*ones(1,length(t)) ).^2, 1);
 
-% plot state
-xplot = linspace(0, 1, nx+1); 
-vfull = [u0(t), v];  % Adds back in Dirichlet BC data for full state
-% figure(1)
-% mesh(xplot, t, vfull); 
-% xlabel('$x$'); 
-% ylabel('$t$')
-% zlabel('$v(x, t)$')
-% title('State (original)')
-
-% fprintf(1, '\n');
-% figure(2)
-% plot(t, output, '-'); hold on
-% xlabel('$t$'); 
-% ylabel('$z(t)$')
-% hold on 
-
 fprintf(1, 'Simulate full output\n');
 fprintf(1, '--------------------\n');
 % Output has mixed linear and quadratic terms
@@ -108,7 +93,6 @@ for tt = 1:length(t)
 end
 y = y + (1/2) * ones(1, nt+1);
 
-figure(1)
 % Define colormat
 ColMat(1,:) = [ 0.8500    0.3250    0.0980];
 ColMat(2,:) = [0.3010    0.7450    0.9330];
@@ -116,37 +100,23 @@ ColMat(3,:) = [  0.9290    0.6940    0.1250];
 ColMat(4,:) = [0.4660    0.6740    0.1880];
 ColMat(5,:) = [0.4940    0.1840    0.5560];
 
-
-% Make aspect ration `golden'
-figure
-% golden_ratio = (sqrt(5)+1)/2;
-% axes('position', [.125 .15 .75 golden_ratio-1])
+figure(1)
 subplot(2,1,1)
 plot(t, y, '-','color',ColMat(1,:), LineWidth=1.5)
 hold on
 grid on
-% xlabel('$t$','interpreter','latex'); 
-% ylabel('$y(t)$','interpreter','latex')
+xlabel('$t$','interpreter','latex'); 
+ylabel('$y(t)$','interpreter','latex')
+
 
 %% Run algorithm.
 fprintf(1, 'Computed reduced-order models via LQO-TSIA\n');
 fprintf(1, '------------------------------------------\n');
 
 r = 25;
-[Er, Ar, Br, Clinr, Mquadr, poles] = mimolqo_tsia(E, A, B, Clin, Mquad, r);
-%%
-pole_hist = poles;
-maxiter = max(size(poles));
-for k = 2:maxiter
-    err(k) = abs(max(poles(:, k)-poles(:,k-1)));
-end
+[Er, Ar, Br, Clinr, Mquadr, pole_history] = mimolqo_tsia(E, A, B, Clin, Mquad, r);
 
-figure
-golden_ratio = (sqrt(5)+1)/2;
-axes('position', [.125 .15 .75 golden_ratio-1])
-semilogy([1:maxiter], err, '-o', 'color',ColMat(3,:), LineWidth=1.5)
-xlim([2,maxiter])
-xlabel('$k$', 'interpreter', 'latex')
+
 %% Run ode15 and simulate reduced output.
 fprintf(1, 'Solve reduced AdvecDiff problem via ode15\n');
 fprintf(1, '-----------------------------------------\n');
@@ -176,12 +146,35 @@ fontsize(lgd,10,'points')
 
 subplot(2,1,2)
 plot(t, abs(y - yr), '-','color',ColMat(3,:),LineWidth=1.5); hold on
-% xlabel('$t$'); 
-% ylabel('$y(t)-\hat{y}(t)$','interpreter','latex')
-% figure(3)
-% [~, totaliter] = size(poles);   totaliter = totaliter - 1;
-% err = max(abs(poles - poles))
-% plot()
+xlabel('$t$','interpreter','latex'); 
+ylabel('$y(t)$','interpreter','latex')
+
+% Overwrite figure
+saveas(figure(1), 'results/advecdiff_plots.png')
+
+
+%% Plot convergence of poles.
+fprintf(1, 'Plotting convergence of the method\n');
+fprintf(1, '----------------------------------\n');
+maxiter = max(size(pole_history));  pole_change = zeros(maxiter, 1);
+for k = 2:maxiter
+    pole_change(k) = abs(max(pole_history(:, k) - pole_history(:,k-1)));
+end
+
+figure(2)
+golden_ratio = (sqrt(5)+1)/2;
+axes('position', [.125 .15 .75 golden_ratio-1])
+semilogy(1:maxiter, pole_change, '-o', 'color',ColMat(3,:), LineWidth=1.5)
+xlim([2,maxiter])
+xlabel('$k$', 'interpreter', 'latex')
+
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
+diary off
+
 %%
 
 % %% Hierarchy

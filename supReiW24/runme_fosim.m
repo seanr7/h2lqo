@@ -1,4 +1,4 @@
-%% 
+%% RUNME_FOSIM
 % Script file to run full-order simulation of the vibro-acoustic plate 
 % (plateTVA) data set.
 

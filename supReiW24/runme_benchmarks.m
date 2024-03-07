@@ -1,4 +1,4 @@
-%% RUNME
+%% RUNME_BENCHMARKS
 % Script file to reduced models of the vibro-acoustic plate (plateTVA) data 
 % set using the various benchmark interpolatory approaches.
 

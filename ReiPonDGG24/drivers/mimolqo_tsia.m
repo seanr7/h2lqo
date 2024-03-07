@@ -67,12 +67,15 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %           If M is zero then Mr is zeros(r, r)
 %   poles - history of poles throughout the iteration 
 
+%
 % Copyright (c) 2024 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
-
+%
 % Virginia Tech, USA
 % Last editied: 2/29/2024
+%
+
 %%
 % Grab state, input, output dimensions
 % Check input matrices.
