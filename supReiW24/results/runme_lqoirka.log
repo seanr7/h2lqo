@@ -1,0 +1,178 @@
+SCRIPT: RUNME_LQOIRKA
+=====================
+
+Loading plateTVA model...
+-------------------------
+Converting second-order realization to first-order linear quadratic output system
+First-order realization built in 1.17 s
+--------------------------------------------
+Computing reduced-model via IRKA
+--------------------------------
+Initializing algorithm
+----------------------
+Current iterate is k = 1
+---------------------------------------
+Current iterate finished in 0.05 s
+End of current iterate k = 1
+---------------------------------------
+Change in poles is is 999.44 
+---------------------------------------
+Current iterate is k = 2
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.06 s
+End of current iterate k = 2
+---------------------------------------
+Change in poles is is 37.66 
+---------------------------------------
+Current iterate is k = 3
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 3
+---------------------------------------
+Change in poles is is 14.74 
+---------------------------------------
+Current iterate is k = 4
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 4
+---------------------------------------
+Change in poles is is 12.42 
+---------------------------------------
+Current iterate is k = 5
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.08 s
+End of current iterate k = 5
+---------------------------------------
+Change in poles is is 12.03 
+---------------------------------------
+Current iterate is k = 6
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 6
+---------------------------------------
+Change in poles is is 12.15 
+---------------------------------------
+Current iterate is k = 7
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 7
+---------------------------------------
+Change in poles is is 12.14 
+---------------------------------------
+Current iterate is k = 8
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 8
+---------------------------------------
+Change in poles is is 12.13 
+---------------------------------------
+Current iterate is k = 9
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 9
+---------------------------------------
+Change in poles is is 12.16 
+---------------------------------------
+Current iterate is k = 10
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 10
+---------------------------------------
+Change in poles is is 9.79 
+---------------------------------------
+Current iterate is k = 11
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.05 s
+End of current iterate k = 11
+---------------------------------------
+Change in poles is is 12.14 
+---------------------------------------
+Current iterate is k = 12
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.04 s
+End of current iterate k = 12
+---------------------------------------
+Change in poles is is 12.03 
+---------------------------------------
+Current iterate is k = 13
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.04 s
+End of current iterate k = 13
+---------------------------------------
+Change in poles is is 12.00 
+---------------------------------------
+Current iterate is k = 14
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.04 s
+End of current iterate k = 14
+---------------------------------------
+Change in poles is is 12.02 
+---------------------------------------
+Current iterate is k = 15
+---------------------------------------
+[Warning: Warning! Reduced model has become overtly complex; cannot sort eigenvalues into complex
+conjugate pairs. Returning unsorted poles] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('sisolqo_irka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m', 196)" style="font-weight:bold">sisolqo_irka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/drivers/sisolqo_irka.m',196,0)">line 196</a>)
+In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('runme_lqoirka', '/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m', 125)" style="font-weight:bold">runme_lqoirka</a> (<a href="matlab: opentoline('/Users/seanreiter/Desktop/h2lqo/supReiW24/runme_lqoirka.m',125,0)">line 125</a>)] 
+Current iterate finished in 0.04 s
+End of current iterate k = 15
+---------------------------------------
+Change in poles is is 12.15 
+---------------------------------------
+Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is 0.75 s
+---------------------------------------
+FINISHED SCRIPT.
+================
+

@@ -1,0 +1,12 @@
+SCRIPT: RUNME_FOSIM
+===================
+
+Loading plateTVA model...
+-------------------------
+Converting second-order realization to first-order linear quadratic output system
+First-order realization built in 1.31 s
+--------------------------------------------
+Not re-running the full-order simulation; loading saved data from file fosim_data.mat
+FINISHED SCRIPT.
+================
+
