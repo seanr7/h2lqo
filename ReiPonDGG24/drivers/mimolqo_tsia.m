@@ -1,25 +1,23 @@
-function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
+function [Ar, Br, Cr, Mr, poles] = mimolqo_tsia(A, B, C, M, r, opts)
 % MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
 % DESCRIPTION:
-%   Computes a linear quadratic output reduced model (Er, Ar, Br, Cr, Mr)
+%   Computes a linear quadratic output reduced model (Ar, Br, Cr, Mr)
 %   using the two-sided iteration algorithm given in 
 %   "$\mathcal{H}_2%-optimal model reduction of linear systems with 
 %   multiple quadratic outputs"
 %   At each iteration, two Sylvester equations
 %
-%       A*X*Er' + E*X*Ar' + B*Br' = 0                                   (1)
-%       A'*Z*Er + E'*Z*Ar - 2*M1*X*M1r - ... - 2*Mp*X*Mpr - C*Cr' = 0   (2)
+%       A*X + X*Ar' + B*Br' = 0                                   (1)
+%       A'*Z + Z*Ar - 2*M1*X*M1r - ... - 2*Mp*X*Mpr - C*Cr' = 0   (2)
 %
 %   Are solved, and a linear quadratic output reduced model is obtained via
 %   projeciton W = Z and V = X.
-%   It is assumed that the eigenvalues of (s*E-A) lie in the open left
+%   It is assumed that the eigenvalues of (s*I-A) lie in the open left
 %   half-plane.
 %
 % INPUTS:
-%   E    - invertible descriptor matrix with dimensions n x n in (1),
-%          if empty set to eye(n, n)
 %   A    - state matrix with dimensions n x n in (1)
 %   B    - input matrix with dimensions n x m in (1)
 %   C    - linear output matrix with dimensions p x n in (2)
@@ -40,11 +38,8 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %   |                 | steps                                             |
 %   |                 | (default 100)                                     |
 %   +-----------------+---------------------------------------------------+
-%   | Er              | Initial descriptor matrix                         |
-%   |                 | (default eye(r, r))                               |
-%   +-----------------+---------------------------------------------------+
 %   | Ar              | Initial state matrix                              |
-%   |                 | (default -diag(logspace(1,3,r))                  |
+%   |                 | (default -diag(logspace(1,3,r))                   |
 %   +-----------------+---------------------------------------------------+
 %   | Br              | Initial input matrix                              |
 %   |                 | (default eye(n, m))                               |
@@ -57,7 +52,6 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Er    - reduced descriptor matrix with dimensions n x n in (1),
 %   Ar    - reduced state matrix with dimensions r x r in (1)
 %   Br    - reduced descriptor matrix with dimensions r x m in (1)
 %   Cr    - reduced linear output matrix with dimensions p x r in (2)
@@ -73,7 +67,7 @@ function [Er, Ar, Br, Cr, Mr, poles] = mimolqo_tsia(E, A, B, C, M, r, opts)
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 2/29/2024
+% Last editied: 3/14/2024
 %
 
 %%
@@ -83,12 +77,8 @@ n = size(A, 1);
 m = size(B, 2);
 p = size(C, 1);
 
-if isempty(E)
-    E = eye(n, n);
-end
-
 % Check and set inputs
-if (nargin < 7) 
+if (nargin < 6) 
     opts = struct(); % Empty struct 
 end
 
@@ -97,9 +87,6 @@ if ~isfield(opts, 'tol')
 end
 if ~isfield(opts, 'maxiter')
     opts.maxiter = 100;
-end
-if ~isfield(opts, 'Er')
-    opts.Er = eye(r, r);
 end
 if ~isfield(opts, 'Ar')
     opts.Ar = -diag(logspace(1, 3, r)); 
@@ -126,8 +113,7 @@ end
 overall_start = tic;
 fprintf(1, 'Initializing algorithm\n')
 fprintf(1, '----------------------\n');
-Er = opts.Er;   Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;  
-Mr = opts.Mr;  
+Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;   Mr = opts.Mr;  
 
 % Set counter and tolerance to enter while
 iter = 1;   err(iter) = eps + 1; 
@@ -136,8 +122,7 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     fprintf(1, 'Current iterate is k = %d\n', iter)
     fprintf(1, '---------------------------------------\n')
     % Solve equation (1) for n x r right projection matrix X
-    [X, ~, ~, ~, ~] = mess_sylvester_sparse_dense(A, 'N', Ar, 'T', B*Br', ...
-        E, Er);
+    X = lyap(A, Ar', B*Br');
     % For some reason; Convergence is VERY poor if -B*Br' not present...
 
     % Solve equation (2) for n x r left projection matrix Z
@@ -145,12 +130,13 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     for i = 1:p
         rhs = rhs - 2*M(:, :, i)*X*Mr(:, :, i);
     end
-    [Z, ~, ~, ~, ~] = mess_sylvester_sparse_dense(A, 'T', Ar, 'N', rhs, E, Er);
+    Z = lyap(A', Ar, rhs);
     
     % Orthonormalize projection matrices
     [V, ~] = qr(X, "econ");     [W, ~] = qr(Z, "econ");
     % Compute reduced model via projection
-    Er = W'*E*V;   Ar = W'*A*V;   Br = W'*B;    Cr = C*V;  Mr = V'*M*V;
+    obl = W'*V;
+    Ar  = (obl)\(W'*A*V);   Br = (obl)\(W'*B);   Cr = C*V;   Mr = V'*M*V;
 
     % End the clock
     fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
@@ -158,8 +144,8 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     fprintf(1, '---------------------------------------\n')
 
     iter = iter + 1;    
-    % Get eigenvalues of matrix pencil (s*Er-Ar) (reduced system poles)
-    [~, Lr] = eig(Ar, Er);     poles(:, iter) = diag(Lr);
+    % Get eigenvalues of matrix pencil (s*Ir-Ar) (reduced system poles)
+    [~, Lr] = eig(Ar);     poles(:, iter) = diag(Lr);
     err(iter) = max(abs(poles(:, iter) - poles(:, iter - 1)));
     fprintf('Change in poles is is %.2f \n', err(iter))
     fprintf(1, '---------------------------------------\n')
