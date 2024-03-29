@@ -1,4 +1,4 @@
-function [Ar, Br, Cr, Mr, poles] = mimolqo_tsia(A, B, C, M, r, opts)
+function [Ar, Br, Cr, Mr, convhistory] = mimolqo_tsia(A, B, C, M, r, opts)
 % MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
@@ -52,14 +52,14 @@ function [Ar, Br, Cr, Mr, poles] = mimolqo_tsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Ar    - reduced state matrix with dimensions r x r in (1)
-%   Br    - reduced descriptor matrix with dimensions r x m in (1)
-%   Cr    - reduced linear output matrix with dimensions p x r in (2)
-%           If C is zero then Cr is zeros(p, r)
-%   Mr    - 3d-array of reduced (symmetric) quadratic output matrices with 
-%           dimensions p x r x r in (2) 
-%           If M is zero then Mr is zeros(r, r)
-%   poles - history of poles throughout the iteration 
+%   Ar          - reduced state matrix with dimensions r x r in (1)
+%   Br          - reduced descriptor matrix with dimensions r x m in (1)
+%   Cr          - reduced linear output matrix with dimensions p x r in (2)
+%                 If C is zero then Cr is zeros(p, r)
+%   Mr          - 3d-array of reduced (symmetric) quadratic output matrices with 
+%                 dimensions p x r x r in (2) 
+%                 If M is zero then Mr is zeros(r, r)
+%   convhistory - history of error convergence
 
 %
 % Copyright (c) 2024 Sean Reiter
@@ -116,8 +116,8 @@ fprintf(1, '----------------------\n');
 Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;   Mr = opts.Mr;  
 
 % Set counter and tolerance to enter while
-iter = 1;   err(iter) = eps + 1; 
-while (err(iter) > opts.tol && iter <= opts.maxiter)
+iter = 1;   h2err(iter) = eps + 1; 
+while (h2err(iter) > opts.tol && iter <= opts.maxiter)
     iter_start = tic; % Start timer on this iteration
     fprintf(1, 'Current iterate is k = %d\n', iter)
     fprintf(1, '---------------------------------------\n')
@@ -136,7 +136,11 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
     [V, ~] = qr(X, "econ");     [W, ~] = qr(Z, "econ");
     % Compute reduced model via projection
     obl = W'*V;
-    Ar  = (obl)\(W'*A*V);   Br = (obl)\(W'*B);   Cr = C*V;   Mr = V'*M*V;
+    Ar  = (obl)\(W'*A*V);   Br = (obl)\(W'*B);   Cr = C*V;   
+    for i = 1:p
+        Mr(:, :, i) = V'*M(:, :, i)*V;    
+    end
+
 
     % End the clock
     fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
@@ -145,9 +149,9 @@ while (err(iter) > opts.tol && iter <= opts.maxiter)
 
     iter = iter + 1;    
     % Get eigenvalues of matrix pencil (s*Ir-Ar) (reduced system poles)
-    [~, Lr] = eig(Ar);     poles(:, iter) = diag(Lr);
-    err(iter) = max(abs(poles(:, iter) - poles(:, iter - 1)));
-    fprintf('Change in poles is is %.2f \n', err(iter))
+    [~, Lr] = eig(Ar);     convhistory(:, iter) = diag(Lr);
+    h2err(iter) = max(abs(convhistory(:, iter) - convhistory(:, iter - 1)));
+    fprintf('Change in poles is is %.2f \n', h2err(iter))
     fprintf(1, '---------------------------------------\n')
 end
 
