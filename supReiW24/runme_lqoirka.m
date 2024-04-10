@@ -78,7 +78,7 @@ fprintf(1, 'Computing reduced-model via IRKA\n')
 fprintf(1, '--------------------------------\n')
 
 % Set order of reduction
-r = 50;
+r = 100;
 % Initialization parameters
 opts.maxiter  = 50;
 opts.tol      = 10e-4;
@@ -95,7 +95,7 @@ opts.fores = [];
 
 poles = info.pole_hist;
 SOres = info.sores; 
-filename = 'results/plateTVAlqo_r50_full_lqoirka.mat';
+filename = 'results/plateTVAlqo_r100_full_lqoirka.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SOres') 
 
 %% Finished script.
