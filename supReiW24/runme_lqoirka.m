@@ -80,7 +80,7 @@ fprintf(1, '--------------------------------\n')
 % Set order of reduction
 r = 50;
 % Initialization parameters
-opts.maxiter  = 15;
+opts.maxiter  = 50;
 opts.tol      = 10e-4;
 opts.plotconv = false;
 % Initial selection of poles and residues
