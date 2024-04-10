@@ -1,4 +1,4 @@
-function [Ar, Br, Cr, Mr, convhistory] = mimolqo_tsia(A, B, C, M, r, opts)
+function [Ar, Br, Cr, Mr, h2errs] = mimolqo_tsia(A, B, C, M, r, opts)
 % MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
@@ -31,8 +31,8 @@ function [Ar, Br, Cr, Mr, convhistory] = mimolqo_tsia(A, B, C, M, r, opts)
 %   |    PARAMETER    |                     MEANING                       |
 %   +-----------------+---------------------------------------------------+
 %   | tol             | nonnegative scalar, tolerance for convergence     |
-%   |                 | based on the poles of the reduced model           |
-%   |                 | (default 10e-6)                                   |
+%   |                 | based on the H2error of the reduced model         |
+%   |                 | (default 10e-4)                                   |
 %   +-----------------+---------------------------------------------------+
 %   | maxiter         | positive integer, maximum number of iteration     |
 %   |                 | steps                                             |
@@ -52,14 +52,14 @@ function [Ar, Br, Cr, Mr, convhistory] = mimolqo_tsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Ar          - reduced state matrix with dimensions r x r in (1)
-%   Br          - reduced descriptor matrix with dimensions r x m in (1)
-%   Cr          - reduced linear output matrix with dimensions p x r in (2)
-%                 If C is zero then Cr is zeros(p, r)
-%   Mr          - 3d-array of reduced (symmetric) quadratic output matrices with 
-%                 dimensions p x r x r in (2) 
-%                 If M is zero then Mr is zeros(r, r)
-%   convhistory - history of error convergence
+%   Ar     - reduced state matrix with dimensions r x r in (1)
+%   Br     - reduced descriptor matrix with dimensions r x m in (1)
+%   Cr     - reduced linear output matrix with dimensions p x r in (2)
+%            If C is zero then Cr is zeros(p, r)
+%   Mr     - 3d-array of reduced (symmetric) quadratic output matrices 
+%            with dimensions p x r x r in (2) 
+%            If M is zero then Mr is zeros(r, r)
+%   h2errs - history of error convergence
 
 %
 % Copyright (c) 2024 Sean Reiter
@@ -75,7 +75,16 @@ function [Ar, Br, Cr, Mr, convhistory] = mimolqo_tsia(A, B, C, M, r, opts)
 % Check input matrices.
 n = size(A, 1);
 m = size(B, 2);
-p = size(C, 1);
+if isempty(C)
+    try
+        [~, ~, p] = size(M, 1);
+    catch
+        p = 1;
+    end
+else
+    p = size(C, 1);
+end
+
 
 % Check and set inputs
 if (nargin < 6) 
@@ -109,15 +118,53 @@ if ~isfield(opts, 'Mr')
     end
 end
 
+% If no linear output matrix, set to zero
+if isempty(C)
+    C = zeros(p, n);
+end
+
 %% Begin algorithm.
 overall_start = tic;
 fprintf(1, 'Initializing algorithm\n')
 fprintf(1, '----------------------\n');
 Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;   Mr = opts.Mr;  
 
-% Set counter and tolerance to enter while
-iter = 1;   h2err(iter) = eps + 1; 
-while (h2err(iter) > opts.tol && iter <= opts.maxiter)
+% Precompute squared H2 norm of full-order model
+norm_start = tic;
+fprintf(1, 'Precomputing H2 norm of full order model\n')
+fprintf(1, '----------------------------------------\n')
+P   = lyap(A, B*B');
+rhs = C'*C; 
+for i = 1:p
+    rhs = rhs + M(:, :, i)*P*M(:, :, i);
+end
+Q  = lyap(A', rhs);
+h  = abs(trace(B'*Q*B)); % h = ||G||_{\mathcal{H}_2}
+fprintf(1, 'Norm computed in %8f s\n', toc(norm_start))
+fprintf(1, '--------------------------\n')
+
+iter = 1; 
+% Compute H2 error due to initial reduced model
+%   ||G - Gr||_{\mathcal{H}_2} = h + tr(Br'*Qr*Br) + 2tr(B'*Y*Br)
+% Here, Y denotes off diagonal block of error Gramian Q
+% 1. Computed reduced quadratic output observability Gramian Qr and Y
+Pr    = lyap(Ar, Br*Br'); 
+X     = lyap(A, Ar', B*Br');
+rhsQr = Cr'*Cr; 
+rhsY  = -C'*Cr;
+for i = 1:p
+    rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i);
+    rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);
+end
+Qr           = lyap(Ar', rhsQr);
+Y            = lyap(A', Ar, rhsY);
+% 2. Compute H2 error from trace formula
+h2errs(iter) = h + abs(trace(Br'*Qr*Br)) + abs(trace(B'*Y*Br));
+
+% Set convergence to enter while
+changein_h2errs(iter) = opts.tol + 1;
+
+while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     iter_start = tic; % Start timer on this iteration
     fprintf(1, 'Current iterate is k = %d\n', iter)
     fprintf(1, '---------------------------------------\n')
@@ -140,18 +187,38 @@ while (h2err(iter) > opts.tol && iter <= opts.maxiter)
     for i = 1:p
         Mr(:, :, i) = V'*M(:, :, i)*V;    
     end
+        
+    iter = iter + 1;    
 
+    fprintf(1, 'Computing H2 error at the current iteration\n')
+    fprintf(1, '-------------------------------------------\n')
+    % Compute H2 error at this iteration
+    %   ||G - Gr||_{\mathcal{H}_2}^2 = h + tr(Br'*Qr*Br) + 2tr(B'*Y*Br)
+    % Here, Y denotes off diagonal block of error Gramian Q
+    % 1. Computed reduced quadratic output observability Gramian Qr and Y
+    Pr    = lyap(Ar, Br*Br'); 
+    rhsQr = Cr'*Cr; 
+    rhsY  = -C'*Cr;
+    for i = 1:p
+        rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i); % No factor of 2 for Y
+        rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);    % X was computed above
+    end
+    Qr = lyap(Ar', rhsQr);
+    Y  = lyap(A', Ar, rhsY);
+    % 2. Compute H2 error from trace formula
+    h2errs(iter) = h + abs(trace(Br'*Qr*Br)) + abs(trace(B'*Y*Br));
+    fprintf(1, 'Rel. H2 error of current tsia reduced model is ||G - Gr||_H2/||G||_H2 = %.12f\n', ...
+        sqrt(h2errs(iter))/h);
+
+    % How has the H2 error changed since last iteration? We track
+    % convergence based on when this stops moving, compare to intial error
+    changein_h2errs(iter) = abs(h2errs(iter) - h2errs(iter-1))/h2errs(1);
+    fprintf('Change in squared H2 errors is is %.12f \n', changein_h2errs(iter))
+    fprintf(1, '----------------------------------------\n')
 
     % End the clock
     fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
     fprintf(1, 'End of current iterate k = %d\n', iter)
-    fprintf(1, '---------------------------------------\n')
-
-    iter = iter + 1;    
-    % Get eigenvalues of matrix pencil (s*Ir-Ar) (reduced system poles)
-    [~, Lr] = eig(Ar);     convhistory(:, iter) = diag(Lr);
-    h2err(iter) = max(abs(convhistory(:, iter) - convhistory(:, iter - 1)));
-    fprintf('Change in poles is is %.2f \n', h2err(iter))
     fprintf(1, '---------------------------------------\n')
 end
 

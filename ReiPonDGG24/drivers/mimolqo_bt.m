@@ -72,15 +72,17 @@ function [Ar, Br, Cr, Mr, info] = mimolqo_bt(A, B, C, M, r)
 % Grab state, input, output dimensions
 % Check input matrices.
 n = size(A, 1);
-m = size(B, 2);
-p = size(C, 1);
-
-% Check and set inputs
 if isempty(C)
+    try
+        [~, ~, p] = size(M, 1);
+    catch
+        p = 1;
+    end
     pureqo = true;
     C      = zeros(p, r);
     Cr     = zeros(p, r);
 else
+    p      = size(C, 1);
     pureqo = false;
 end
 
@@ -96,7 +98,7 @@ fprintf(1, '--------------------------------------------\n');
 P = lyap(A, B*B');
 
 % Solve for quadratic output observability Gramian Q
-if ~pureqo % If output is purely quadratic
+if ~pureqo % If output is not purely quadratic
     rhs = C'*C;
 else
     rhs = zeros(n, n);
@@ -111,8 +113,20 @@ fprintf(1, 'Computing projection matrices\n')
 fprintf(1, '---------------------------- \n');
 
 % Compute square root factors of Gramians, and take the svd of U'*L
-U         = sqrt(P);   U = U';
-L         = sqrt(Q);   L = L';
+try
+    U = chol(P);   
+    U = U';
+catch
+    U = chol(P + eye(n, n)*10e-10);   
+    U = U';
+end
+try
+    L = chol(Q);   
+    L = L';
+catch
+    L = chol(Q + eye(n, n)*10e-10);    
+    L = L';
+end
 [Z, S, Y] = svd(U'*L);
 
 % Compute projection matrices
@@ -128,7 +142,7 @@ end
 % Quadratic output
 Mr = repmat(zeros(r, r), 1, 1, p);
 for i = 1:p
-    Mr(:, :, i) = V'*M*V;
+    Mr(:, :, i) = V'*M(:, :, i)*V;
 end
 
 % Output info

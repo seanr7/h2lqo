@@ -83,8 +83,7 @@ fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 
 % Note, v is nt \times nx
 % Compute quadratic cost by 1/(2*n) * ||x(t) - \bf{1}||_2^2
-h      = 1/nx;
-output = (h/2) * sum((Clin*v' - ones(nx,1)*ones(1,length(t)) ).^2, 1);
+h = 1/nx;
 
 fprintf(1, 'Simulate full output.\n');
 fprintf(1, '--------------------.\n');
@@ -123,7 +122,7 @@ fprintf(1, '-------------------------------------------\n');
 r = 25;
 
 % Run two-sided iteration
-[Ar, Br, Clinr, Mquadr, pole_history] = mimolqo_tsia(A, B, Clin, Mquad, ...
+[Ar, Br, Clinr, Mquadr, h2errs] = mimolqo_tsia(A, B, Clin, Mquad, ...
     r);
 
 % Benchmark against balanced truncation approach
@@ -141,7 +140,7 @@ vr0      = zeros(nxr, 1); % Initial condition
 options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
                   'Mass', eye(r,r), 'Jacobian', Ar, ...
                   'MStateDependence', 'none', 'Stats','on');
-fAdvDiffred = @(tr,yr)(Ar*yr + Br*[u0(tr);u1(tr)]);
+fAdvDiffred = @(tr,vr)(Ar*vr + Br*[u0(tr);u1(tr)]);
 [tr, vr]    = ode15s(fAdvDiffred, tsteps, vr0, options);
 % Note, vr is nt \times nxr
 
@@ -158,28 +157,28 @@ vr0      = zeros(nxr, 1); % Initial condition
 options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
                   'Mass', eye(r,r), 'Jacobian', Arbt, ...
                   'MStateDependence', 'none', 'Stats','on');
-fAdvDiffred = @(tr,yrbt)(Arbt*yrbt + Brbt*[u0(tr);u1(tr)]);
-[tr, vrbt]    = ode15s(fAdvDiffred, tsteps, vr0, options);
+fAdvDiffredbt = @(tr,vrbt)(Arbt*vrbt + Brbt*[u0(tr);u1(tr)]);
+[trbt, vrbt]  = ode15s(fAdvDiffredbt, tsteps, vr0, options);
 % Note, vr is nt \times nxr
 
 fprintf(1, 'Simulate bt reduced output\n');
 fprintf(1, '--------------------------\n');
 yrbt = Clinrbt*vrbt';
-for tt = 1:length(tr)
+for tt = 1:length(trbt)
     yrbt(:,tt) = yrbt(:,tt) + (h/2)*vrbt(tt, :)*Mquadrbt*vrbt(tt, :)';
 end
 yrbt = yrbt + (1/2) * ones(1, nt+1);
 
-plot(t, yr, '-', 'color',ColMat(3,:), LineWidth=1.5); hold on
+plot(t, yr, '--', 'color',ColMat(3,:), LineWidth=1.5); hold on
 plot(t, yrbt, '-.', 'color',ColMat(4,:), LineWidth=1.5); 
 lgd = legend('$y(t)$', '$y_r(t)$', '$y_{r,bt}(t)$', 'interpreter','latex','FontName','Arial',...
     'location', 'northeast');
 fontsize(lgd, 10, 'points')
 
 subplot(2,1,2)
-plot(t, abs(y - yr)./abs(y), '-.','color',ColMat(3,:),LineWidth=1.5); 
+plot(tr, abs(y - yr)./abs(y), '--','color',ColMat(3,:),LineWidth=1.5); 
 hold on;
-plot(t, abs(y - yrbt)./abs(y), '--.','color',ColMat(4,:),LineWidth=1.5); 
+plot(trbt, abs(y - yrbt)./abs(y), '-.','color',ColMat(4,:),LineWidth=1.5); 
 xlabel('$t$','interpreter','latex'); 
 ylabel('$|y(t) - y_r(t)|/|y(t)|$ ', 'fontsize', fs, 'interpreter', 'latex', ...
     LineWidth=1.5)
@@ -192,25 +191,22 @@ print -depsc2 results/advecdiff_output_plots
 write = 1;
 if write
     outputs = [t, y', yr', yrbt'];
-    dlmwrite('results/r25_outputs.dat', outputs, 'delimiter', '\t', 'precision', ...
+    dlmwrite('results/r25_advecdiff_outputs.dat', outputs, 'delimiter', '\t', 'precision', ...
         8);
     outputerrors = [t, (abs(y-yr)./abs(y))', (abs(y-yrbt)./abs(y))'];
-    dlmwrite('results/r25_outputerrors.dat', outputerrors, ...
+    dlmwrite('results/r25_advecdiff_outputerrors.dat', outputerrors, ...
         'delimiter', '\t', 'precision', 8);
 end
 
 
-%% Plot convergence of poles.
+%% Plot convergence of H2 errors.
 fprintf(1, 'Plotting convergence of the method\n');
 fprintf(1, '----------------------------------\n');
-maxiter = max(size(pole_history));  pole_change = zeros(maxiter, 1);
-for k = 2:maxiter
-    pole_change(k) = abs(max(pole_history(:, k) - pole_history(:,k-1)));
-end
+maxiter = max(size(h2errs));  
 
 figure(2)
 set(gca, 'fontsize', 10)
-semilogy(1:maxiter, pole_change, '-o', 'color',ColMat(3,:), LineWidth=1.5)
+semilogy(1:maxiter, h2errs, '-o', 'color',ColMat(3,:), LineWidth=1.5)
 xlim([2,maxiter])
 % golden_ratio = (sqrt(5)+1)/2;
 % axes('position', [.125 .15 .75 golden_ratio-1])
@@ -221,8 +217,8 @@ print -depsc2 results/advecdiff_conv_plots
 % Write data
 write = 1;
 if write
-    conv = [(1:maxiter)', pole_change];
-    dlmwrite('results/r25_conv.dat', conv, 'delimiter', '\t', 'precision', ...
+    conv = [(1:maxiter)', h2errs'];
+    dlmwrite('results/r25_advecdiff_conv.dat', conv, 'delimiter', '\t', 'precision', ...
         8);
 end
 
@@ -239,9 +235,9 @@ Q        = lyap(A', Clin'*Clin + Mquad*P*Mquad);
 fom_norm = sqrt(abs(trace(B'*Q*B)));
 
 % Toggle input opts
-options      = struct();
-opts.tol     = 10e-8;
-opts.maxiter = 200;
+opts           = struct();
+% opts.tol     = 10e-8;
+% opts.maxiter = 200;
 for r = 2:2:rmax  
     fprintf(1, 'Current reduced model is hierarchy; r=%d\n', r)
     fprintf(1, '----------------------------------------\n')
@@ -259,8 +255,9 @@ for r = 2:2:rmax
     Qerr        = lyap(Aerr', Cerr'*Cerr + Merr*Perr*Merr); % Error observability Gramian
     k           = r/2;  
     H2errors(k) = sqrt(abs(trace(Berr'*Qerr*Berr)))/fom_norm;
-    fprintf(1, 'H2 error of current tsua reduced model is ||G-Gr||_H2 = %.16f\n', ...
+    fprintf(1, 'Relative H2 error of current tsia reduced model is ||G-Gr||_H2 = %.16f\n', ...
         H2errors(k));
+    fprintf(1, '------------------------------------------------------------------------------\n')
 
     % bt reduced models
     [Arbt, Brbt, Clinrbt, Mquadrbt, info] = mimolqo_bt(A, B, Clin, Mquad, ...
@@ -276,14 +273,16 @@ for r = 2:2:rmax
     Qerrbt        = lyap(Aerrbt', Cerrbt'*Cerrbt + Merrbt*Perrbt*Merrbt);
     k             = r/2;  
     H2errorsbt(k) = sqrt(abs(trace(Berrbt'*Qerrbt*Berrbt)))/fom_norm;
-    fprintf(1, 'H2 error of current bt reduced model is ||G-Gr||_H2 = %.16f\n', ...
+    fprintf(1, 'Relative H2 error of current bt reduced model is ||G-Gr||_H2 = %.16f\n', ...
         H2errorsbt(k));
+    fprintf(1, '------------------------------------------------------------------------------\n')
+
 end
 
 write = 1;
 if write
     h2errors = [(2:2:rmax)', H2errors, H2errorsbt];
-    dlmwrite('results/h2errors.dat', h2errors, 'delimiter', '\t', 'precision', ...
+    dlmwrite('results/advecdiff_h2errors.dat', h2errors, 'delimiter', '\t', 'precision', ...
         8);
 end
 
