@@ -72,7 +72,8 @@ fprintf(1, '---------------------------------------------------------------\n');
 % Second order solve accounting for structure
 tic
 tmp     = (s1*M + E)\B; 
-sosolve = [(1/s1)*(tmp - (s1^2*M + s*E + K)\(K*tmp)); s1*(s1^2*M + s*E + K)\B];
+sosolve = [(1/s1).*(tmp - ((s1^2).*M + s1.*E + K)\(K*tmp)); ...
+    s1.*((s1^2).*M + s1.*E + K)\B];
 fprintf(1, 'Single second-order structured solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
 
@@ -94,7 +95,8 @@ fprintf(1, '---------------------------------------------------------------\n');
 % Second order solve accounting for structure
 tic
 tmp     = (s1*M + E)\B; 
-sosolve = [(1/s1)*(tmp - (s1^2*M + s*E + K)\(K*tmp)); s1*(s1^2*M + s*E + K)\B];
+sosolve = [(1/s1).*(tmp - ((s1^2).*M + s1.*E + K)\(K*tmp)); ...
+    s1.*((s1^2).*M + s1.*E + K)\B];
 fprintf(1, 'Single second-order structured solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
 
