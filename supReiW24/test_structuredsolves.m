@@ -64,7 +64,7 @@ fprintf(1, '--------------------------------------------\n');
 
 % First order solve; no structure taken into account
 tic
-s1      = -1 + 1i;
+s1      = -1+1i;
 fosolve = (s1 * E_qo - A_qo)\B_qo;
 fprintf(1, 'Single first-order solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
@@ -73,7 +73,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 tic
 tmp     = (s1*M + E)\B; 
 sosolve = [(1/s1).*(tmp - ((s1^2).*M + s1.*E + K)\(K*tmp)); ...
-    s1.*((s1^2).*M + s1.*E + K)\B];
+    s1.*(((s1^2).*M + s1.*E + K)\B)];
 fprintf(1, 'Single second-order structured solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
 
@@ -82,12 +82,12 @@ fprintf(1, '---------------------------------------------------------------\n');
 fprintf(1, 'Absolute solution error %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
 
-fprintf(1, 'Testing now for frequency closer to zero')
+fprintf(1, 'Testing now for frequency closer to zero\n')
 fprintf(1, '---------------------------------------------------------------\n');
 
 % First order solve; no structure taken into account
 tic
-s1      = 10e-6*(-1 + 1i);
+s1      = 10e-4*(s1);
 fosolve = (s1 * E_qo - A_qo)\B_qo;
 fprintf(1, 'Single first-order solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
@@ -96,7 +96,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 tic
 tmp     = (s1*M + E)\B; 
 sosolve = [(1/s1).*(tmp - ((s1^2).*M + s1.*E + K)\(K*tmp)); ...
-    s1.*((s1^2).*M + s1.*E + K)\B];
+    s1.*(((s1^2).*M + s1.*E + K)\B)];
 fprintf(1, 'Single second-order structured solve finished in %.2f s\n',toc)
 fprintf(1, '---------------------------------------------------------------\n');
 

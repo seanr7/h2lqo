@@ -53,20 +53,20 @@ fprintf(1, 'Converting second-order realization to first-order linear quadratic 
 tic
 [n, ~] = size(M);
 
-E_qo = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
-E_qo(1:n, 1:n) = speye(n); % (1, 1) block
+E_qo                   = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
+E_qo(1:n, 1:n)         = speye(n); % (1, 1) block
 E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is (sparse) mass matrix
 
-A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
-A_qo(1:n, n+1:2*n) = speye(n); % (1, 2) block of A_qo
-A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
+A_qo                   = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
+A_qo(1:n, n+1:2*n)     = speye(n); % (1, 2) block of A_qo
+A_qo(n+1:2*n, 1:n)     = -K;  % (2, 1) block is -damping matrix
 A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
 
-B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
-B_qo(n+1:2*n, :) = B;
+B_qo                   = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
+B_qo(n+1:2*n, :)       = B;
 
 % Our quadratic output matrix is C' * C
-Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
+Q_qo           = spalloc(2*n, 2*n, nnz(C' * C));
 Q_qo(1:n, 1:n) = C' * C; 
 fprintf(1, 'First-order realization built in %.2f s\n',toc)
 fprintf(1, '--------------------------------------------\n');
@@ -93,8 +93,8 @@ opts.fores = [];
 [E_qo_r, A_qo_r, B_qo_r, ~, Q_qo_r, info] = sisolqo_irka(E_qo, A_qo, B_qo, [], ...
     Q_qo, r, opts);
 
-poles = info.pole_hist;
-SOres = info.sores; 
+poles    = info.pole_hist;
+SOres    = info.sores; 
 filename = 'results/plateTVAlqo_r100_full_lqoirka.mat';
 save(filename, 'E_qo_r', 'A_qo_r', 'B_qo_r', 'Q_qo_r', 'poles', 'SOres') 
 
