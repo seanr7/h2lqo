@@ -34,23 +34,22 @@ fprintf(1, '\n');
 
 fprintf(1, 'Loading plateTVA model...\n')
 fprintf(1, '-------------------------\n');
-% load('data/plateTVA_n201900m1q28278.mat')
-% n_nodes = full(sum(sum(C)));
+load('data/plateTVA_n201900m1q28278.mat')
+n_nodes = full(sum(sum(C)));
 
 %%%% TOY TEST %%%%
-n1 = 10; alpha=.002; beta=alpha; v = 5;
-
-[M, D, K]=triplechain_MSD(n1, alpha, beta, v);
-
-M = full(M);
-D = full(D);
-K = full(K);
-
-O  = zeros(size(K,1),1);
-Cv = O';
-Cp = ones(1,size(K,1));
-B  = ones(size(K,1),1);
-C  = [Cp, Cv];
+% n1 = 10; alpha=.002; beta=alpha; v = 5;
+% 
+% [M, D, K]=triplechain_MSD(n1, alpha, beta, v);
+% 
+% M = full(M);
+% D = full(D);
+% K = full(K);
+% E = D;
+% 
+% C  = ones(1,size(K,1));
+% B  = ones(size(K,1),1);
+% B1 = B;
 %%%% TOY TEST %%%%
 
 %% Convert plate model to first-order from second-order.
@@ -69,7 +68,8 @@ A_qo(n+1:2*n, 1:n)     = -K;                                     % (2, 1) block 
 A_qo(n+1:2*n, n+1:2*n) = -E;                                     % (2, 2) block is -stiffness matrix
 
 B_qo             = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
-B_qo(n+1:2*n, :) = B;
+B_qo(n+1:2*n, :) = B; 
+B1               = B;           
 
 % Our quadratic output matrix is C' * C
 Q_qo           = spalloc(2*n, 2*n, nnz(C' * C));
@@ -91,7 +91,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [0; B], here
-sosolve = so_structured_solve(M, E, K, B, s1, 0);
+sosolve = so_structured_solve(M, E, K, B1, s1, 0);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
@@ -109,12 +109,12 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [B; 0], here
-B       = Bhat(1:n, :);
-sosolve = so_structured_solve(M, E, K, B, s1, 1);
+B2      = Bhat(1:n, :);
+sosolve = so_structured_solve(M, E, K, B2, s1, 1);
 
-fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
-fprintf(1, 'Absolute solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, 'Absolute solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
 
 %%
@@ -125,7 +125,7 @@ fprintf(1, 'Starting solves, rhs Bhat = [0; B]\n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = B_qo;
 tic
-s1 = 10e-4*(s1);
+s1   = 10e-8*s1;
 % First order solve; no structure taken into account
 fosolve = (s1 * E_qo - A_qo)\Bhat;
 fprintf(1, 'Single first-order solve finished in %.2f s\n',toc);
@@ -133,7 +133,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [0; B], here
-sosolve = so_structured_solve(M, E, K, B, s1, 0);
+sosolve = so_structured_solve(M, E, K, B1, s1, 0);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
@@ -151,5 +151,10 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [B; 0], here
-B       = Bhat(1:n, :);
-sosolve = so_structured_solve(M, E, K, B, s1, 1);
+B2      = Bhat(1:n, :);
+sosolve = so_structured_solve(M, E, K, B2, s1, 1);
+
+fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+fprintf(1, '---------------------------------------------------------------\n');
+fprintf(1, 'Absolute solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, '---------------------------------------------------------------\n');

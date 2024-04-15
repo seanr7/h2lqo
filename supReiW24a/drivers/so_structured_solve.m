@@ -28,7 +28,8 @@ function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, struct_rhs, time)
 %   If b = [bso; 0], then
 %
 %       z = ((s^2)*Mso + s*Dso + Ks0)\(Kso*bso); (5a)
-%       v = [(1/s)*(bso - z); s*z];              (5b)
+%       v = [(1/s)*(bso - z);                    (5b)
+%            -z];               
 %
 %   It is assumed that the complex shift s is not a pole of the matrix
 %   pencil (s*E - A) and (s*M + D), and that s is strictly nonzero.
@@ -72,7 +73,7 @@ end
 if nargin < 6
     error('Must specify structure of the right hand side!\n')
 end
-
+[n, ~] = size(Mso);
 %%
 if time
     tic
@@ -82,13 +83,13 @@ end
 
 % Structured solve; option 1 in (4a), (4b)
 if struct_rhs == 0 % If b = [0; bso]
-    z  = (s*Mso + Dso)\b; 
+    z  = (s*Mso + Dso)\bso; 
     v1 = (1/s).*(z - ((s^2).*Mso + s.*Dso + Kso)\(Kso*z));
     v2 = s.*(((s^2).*Mso + s.*Dso + Kso)\bso);
 else % If b = [bso; 0]
-    z  = ((s^2).*Mso + s.*Dso + Ks0)\(Kso*bso);
-    v1 = (1/s).*(bs0 - z);
-    v2 = s.*z;
+    z  = ((s^2).*Mso + s.*Dso + Kso)\(Kso*bso);
+    v1 = (1/s).*(bso - z);
+    v2 = -z;
 end
 v             = spalloc(2*n, 1, nnz(v1) + nnz(v2));
 v(1:n, :)     = v1;
