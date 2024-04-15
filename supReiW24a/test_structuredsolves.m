@@ -34,22 +34,22 @@ fprintf(1, '\n');
 
 fprintf(1, 'Loading plateTVA model...\n')
 fprintf(1, '-------------------------\n');
-load('data/plateTVA_n201900m1q28278.mat')
-n_nodes = full(sum(sum(C)));
-
+% load('data/plateTVA_n201900m1q28278.mat')
+% n_nodes = full(sum(sum(C)));
+% 
 %%%% TOY TEST %%%%
-% n1 = 10; alpha=.002; beta=alpha; v = 5;
-% 
-% [M, D, K]=triplechain_MSD(n1, alpha, beta, v);
-% 
-% M = full(M);
-% D = full(D);
-% K = full(K);
-% E = D;
-% 
-% C  = ones(1,size(K,1));
-% B  = ones(size(K,1),1);
-% B1 = B;
+n1 = 10; alpha=.002; beta=alpha; v = 5;
+
+[M, D, K]=triplechain_MSD(n1, alpha, beta, v);
+
+M = full(M);
+D = full(D);
+K = full(K);
+E = D;
+
+C  = ones(1,size(K,1));
+B  = ones(size(K,1),1);
+B1 = B;
 %%%% TOY TEST %%%%
 
 %% Convert plate model to first-order from second-order.
@@ -79,7 +79,7 @@ fprintf(1, '--------------------------------------------\n');
 
 %% Solve linear system via first order realization, second order realization
 
-fprintf(1, 'Starting solves, rhs Bhat = [0; B]\n');
+fprintf(1, 'Starting solves, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B]\n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = B_qo;
 tic
@@ -93,17 +93,17 @@ fprintf(1, '---------------------------------------------------------------\n');
 % rhs has form Bhat = [0; B], here
 sosolve = so_structured_solve(M, E, K, B1, s1, 0, 1);
 
-fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+fprintf(1, 'Relative solution error, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
-fprintf(1, 'Absolute solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, 'Absolute solution error, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
 
-fprintf(1, 'Starting solves, rhs Bhat = [B; 0]\n');
+fprintf(1, 'Starting solves, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] \n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = Q_qo*fosolve;
 tic
 % First order solve; no structure taken into account
-fosolve = (s1 * E_qo - A_qo)\Bhat;
+fosolve = ((s1 * E_qo - A_qo)')\Bhat;
 fprintf(1, 'Single first-order solve finished in %.2f s\n',toc);
 fprintf(1, '---------------------------------------------------------------\n');
 
@@ -112,16 +112,16 @@ fprintf(1, '---------------------------------------------------------------\n');
 B2      = Bhat(1:n, :);
 sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
 
-fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+fprintf(1, 'Relative solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
-fprintf(1, 'Absolute solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, 'Absolute solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
 
 %%
 fprintf(1, 'Testing now for frequency closer to zero\n')
 fprintf(1, '---------------------------------------------------------------\n');
 
-fprintf(1, 'Starting solves, rhs Bhat = [0; B]\n');
+fprintf(1, 'Starting solves, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B]\n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = B_qo;
 tic
@@ -135,17 +135,17 @@ fprintf(1, '---------------------------------------------------------------\n');
 % rhs has form Bhat = [0; B], here
 sosolve = so_structured_solve(M, E, K, B1, s1, 0, 1);
 
-fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+fprintf(1, 'Relative solution error, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
-fprintf(1, 'Absolute solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, 'Absolute solution error, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
 
-fprintf(1, 'Starting solves, rhs Bhat = [B; 0]\n');
+fprintf(1, 'Starting solves, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0]\n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = Q_qo*fosolve;
 tic
 % First order solve; no structure taken into account
-fosolve = (s1 * E_qo - A_qo)\Bhat;
+fosolve = ((s1 * E_qo - A_qo)')\Bhat;
 fprintf(1, 'Single first-order solve finished in %.2f s\n',toc);
 fprintf(1, '---------------------------------------------------------------\n');
 
@@ -154,7 +154,8 @@ fprintf(1, '---------------------------------------------------------------\n');
 B2      = Bhat(1:n, :);
 sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
 
-fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
+
+fprintf(1, 'Relative solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
-fprintf(1, 'Absolute solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
+fprintf(1, 'Absolute solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');

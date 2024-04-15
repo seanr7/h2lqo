@@ -6,7 +6,8 @@ function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, struct_rhs, time)
 % DESCRIPTION:
 %   Function to compute a single (2n x 2n) linear system solve of the form
 %
-%       v = (s*E - A)\b; (0)
+%       v = (s*E - A)\b;    (0a)
+%    or w = ((s*E - A)')\b; (0b)
 %
 %   where the mass matrix (A), descriptor matrix (E), and right hand side
 %   (b) are obtained from the first order realization of a second order 
@@ -19,39 +20,39 @@ function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, struct_rhs, time)
 %   Via the Woodbury matrix identity and the inverse formula of a 2 x 2
 %   block matrix, v is instead computed in an equivalent way using only 
 %   n x n linear solves.
-%   If b = [0; bso], then
+%   Option 1: v = (s*E - A)\b for b = [0; bso], then
 %       
 %       z = (s*Mso + Dso)\bso;                              (4a)
 %       v = [(1/s)*(z - ((s^2)*Mso + s*Dso + Kso)\(Kso*z)); (4b)
 %            s*((s^2)*Mso + s*Dso + Kso)\bso];
 % 
-%   If b = [bso; 0], then
+%   If w = ((s*E - A)')\b for b = [bso; 0], then
 %
-%       z = ((s^2)*Mso + s*Dso + Ks0)\(Kso*bso); (5a)
-%       v = [(1/s)*(bso - z);                    (5b)
-%            -z];               
+%       z = ((conj(s)^2)*Mso + conj(s)*Dso + Kso)\(Kso*bso); (5a)
+%       v = [(1/conj(s))*(bso - Kso*z);                      (5b)
+%            z];               
 %
 %   It is assumed that the complex shift s is not a pole of the matrix
 %   pencil (s*E - A) and (s*M + D), and that s is strictly nonzero.
 %
 % INPUTS:
-%   Mso        - sparse second order mass matrix with dimensions n x n in 
+%   Mso       - sparse second order mass matrix with dimensions n x n in 
 %                (1)
-%   Dso        - sparse second order damping matrix with dimensions n x n 
+%   Dso       - sparse second order damping matrix with dimensions n x n 
 %                in (2)
-%   Kso        - sparse second order stiffness matrix with dimensions n x n 
+%   Kso       - sparse second order stiffness matrix with dimensions n x n 
 %                in (2)
-%   bso        - sparse second order input matrix with dimensions n x 1 in 
+%   bso       - sparse second order input matrix with dimensions n x 1 in 
 %                (3)
-%   s          - complex shift in linear solve
-%   struct_rhs - boolean, what is structure of right hand side?
-%                   0 if b = [0;   bso];                            
-%                   1 if b = [bso; 0];  
+%   s         - complex shift in linear solve
+%   solve_opt - boolean, do we solve system (0a) or (0b)?
+%                  0 if v = (s*E - A)\b with b = [0;   bso];                            
+%                  1 if w = ((s*E - A)')\b with b = [bso; 0];  
 %   time       - optional boolean argument to print time required
 %
 % OUTPUTS:
-%   v    - sparse solution to the linear system (0) with dimensions 2n x 1 
-%          computed accoding to (4a) and (4b)
+%   v - sparse solution to the linear system (0a) or (0b) with dimensions 
+%       2n x 1 computed accoding to (4a) and (4b) or (5a) and (5b)
 
 %
 % This file is part of the archive Code and Results for Numerical 
@@ -74,6 +75,7 @@ if nargin < 6
     error('Must specify structure of the right hand side!\n')
 end
 [n, ~] = size(Mso);
+
 %%
 if time
     tic
@@ -82,14 +84,15 @@ if time
 end
 
 % Structured solve; option 1 in (4a), (4b)
-if struct_rhs == 0 % If b = [0; bso]
+if struct_rhs == 0 % if v = (s*E - A)\b with b = [0;   bso]
     z  = (s*Mso + Dso)\bso; 
     v1 = (1/s).*(z - ((s^2).*Mso + s.*Dso + Kso)\(Kso*z));
     v2 = s.*(((s^2).*Mso + s.*Dso + Kso)\bso);
-else % If b = [bso; 0]
-    z  = ((s^2).*Mso + s.*Dso + Kso)\(Kso*bso);
-    v1 = (1/s).*(bso - z);
-    v2 = -z;
+else % if w = ((s*E - A)')\b with b = [bso; 0]
+    sconj = conj(s);    
+    z     = ((sconj^2).*Mso + sconj.*Dso + Kso)\bso;
+    v1    = (1/sconj).*(bso - Kso*z);
+    v2    = z;
 end
 v             = spalloc(2*n, 1, nnz(v1) + nnz(v2));
 v(1:n, :)     = v1;
