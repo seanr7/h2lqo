@@ -1,4 +1,4 @@
-function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, time)
+function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, struct_rhs, time)
 % SO_STRUCTURED_SOLVE Function to implement a linear solve for descriptor
 % and mass matrices with second order system structure.
 %
@@ -12,29 +12,41 @@ function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, time)
 %   (b) are obtained from the first order realization of a second order 
 %   dynamical system, and thus have the particular structure
 %
-%       E = [I  0;   0     Mso]; (1)
-%       A = [I  0;  -Kso  -Dso]; (2)
-%       b = [0; bso];            (3)
+%       E = [I  0;   0     Mso];       (1)
+%       A = [I  0;  -Kso  -Dso];       (2)
+%       b = [0; bso]; or b = [bso; 0]; (3)
 %
 %   Via the Woodbury matrix identity and the inverse formula of a 2 x 2
 %   block matrix, v is instead computed in an equivalent way using only 
-%   n x n linear solves, i.e.
+%   n x n linear solves.
+%   If b = [0; bso], then
 %       
-%       z = (s*M + D)\b                             (4a)
-%       v = [(1/s)*(z - ((s^2)*M + s*D + K)\(K*z)); (4b)
-%            s*((s^2)*M + s*D + K)\b];
+%       z = (s*Mso + Dso)\bso;                              (4a)
+%       v = [(1/s)*(z - ((s^2)*Mso + s*Dso + Kso)\(Kso*z)); (4b)
+%            s*((s^2)*Mso + s*Dso + Kso)\bso];
 % 
+%   If b = [bso; 0], then
+%
+%       z = ((s^2)*Mso + s*Dso + Ks0)\(Kso*bso); (5a)
+%       v = [(1/s)*(bso - z); s*z];              (5b)
+%
 %   It is assumed that the complex shift s is not a pole of the matrix
 %   pencil (s*E - A) and (s*M + D), and that s is strictly nonzero.
 %
 % INPUTS:
-%   Mso  - sparse second order mass matrix with dimensions n x n in (1)
-%   Dso  - sparse second order damping matrix with dimensions n x n in (2)
-%   Kso  - sparse second order stiffness matrix with dimensions n x n in 
-%          (2)
-%   bso  - sparse second order input matrix with dimensions n x 1 in (3)
-%   s    - complex shift in linear solve
-%   time - optional boolean argument to print time required
+%   Mso        - sparse second order mass matrix with dimensions n x n in 
+%                (1)
+%   Dso        - sparse second order damping matrix with dimensions n x n 
+%                in (2)
+%   Kso        - sparse second order stiffness matrix with dimensions n x n 
+%                in (2)
+%   bso        - sparse second order input matrix with dimensions n x 1 in 
+%                (3)
+%   s          - complex shift in linear solve
+%   struct_rhs - boolean, what is structure of right hand side?
+%                   0 if b = [0;   bso];                            
+%                   1 if b = [bso; 0];  
+%   time       - optional boolean argument to print time required
 %
 % OUTPUTS:
 %   v    - sparse solution to the linear system (0) with dimensions 2n x 1 
@@ -53,9 +65,12 @@ function [v] = so_structured_solve(Mso, Dso, Kso, bso, s, time)
 % Last editied: 4/12/2024
 %%
 % Check and set inputs
-if nargin < 6
+if nargin < 7
     % Default is to not time solutions
     time = 0;
+end
+if nargin < 6
+    error('Must specify structure of the right hand side!\n')
 end
 
 %%
@@ -65,10 +80,16 @@ if time
     fprintf(1, '----------------------------------\n')
 end
 
-% Structured solve
-z             = (s*M + E)\b; 
-v1            = (1/s).*(z - ((s^2).*M + s.*E + K)\(K*z));
-v2            = s.*(((s^2).*M + s.*E + K)\b);
+% Structured solve; option 1 in (4a), (4b)
+if struct_rhs == 0 % If b = [0; bso]
+    z  = (s*Mso + Dso)\b; 
+    v1 = (1/s).*(z - ((s^2).*Mso + s.*Dso + Kso)\(Kso*z));
+    v2 = s.*(((s^2).*Mso + s.*Dso + Kso)\bso);
+else % If b = [bso; 0]
+    z  = ((s^2).*Mso + s.*Dso + Ks0)\(Kso*bso);
+    v1 = (1/s).*(bs0 - z);
+    v2 = s.*z;
+end
 v             = spalloc(2*n, 1, nnz(v1) + nnz(v2));
 v(1:n, :)     = v1;
 v(n+1:2*n, :) = v2;
