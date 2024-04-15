@@ -1,5 +1,5 @@
 function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(...
-    E, A, b, Q, shifts, r, opts)
+    Mso, Dso, Kso, Qfo, bso, shifts, r, opts)
 % INTERPOLATORY_SOLVES Driver function for computing interpolatory
 % projections of frequency-domain linear quadratic output systems.
 %
@@ -10,40 +10,60 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %   systems. The methodologies used are outlined in Section 5 of
 %   "Interpolatory model order reduction of large-scale dynamical systems
 %   with root mean squared error measures"
-%   n x q primitive interpolatiton bases are computed using linear solves 
+%   2n x q primitive interpolatiton bases are computed using linear solves 
 %   according to the input opts.proj, or passed; q = length(shifts), q>=r.
 %   Then, the primitive bases
 %   are compressed according to the selection procedure opts.compress.
 %
-%   The left n x r interpolatory projection matrix is computed according to
+%   The left 2n x r interpolatory projection matrix is computed according 
+%   to
 %
-%       Vprim(:, k) = (shifts(k)*E - A)\b; (1)
+%       Vprim(:, k) = (shifts(k)*Efo - Afo)\bfo; (1)
 %
 %   If performing Galerkin projection, take Wprim = Vprim.
-%   If performing Petrov-Galerkin projection, right n x r interpolatory
+%   If performing Petrov-Galerkin projection, right 2n x r interpolatory
 %   projection matrix is computed according to
 %
-%       Wprim(:, k) (shifts(k)*E - A)'\(Q*((shifts(k)*E - A)\b); (2)
+%       Wprim(:, k) = (shifts(k)*Efo - Afo)'\(Qfo*
+%                       ((shifts(k)*Efo - Afo)\bfo); (2)
+%
+%   where
+%
+%       Efo = [I  0;   0     Mso]; (3)
+%       Afo = [I  0;  -Kso  -Dso]; (4)
+%       bfo = [0; bso];            (5)
+%
+%   The linear solves are not computed directly as in (1), (2). Instead, 
+%   they are computed using the specialized companion function 
+%   'so_structured_solve.m', which leverages the underlying second-order
+%   structure of the first-order system matrices in (3) - (5). 
+%   See 'help so_structured_solve' for details.
 %
 %   If opts.compress == Linfty, primitive basis vectors are selected
 %   iteratively via a greedy search; new points are chosen where the
-%   pointwise absolute error is the largest. Once selected, these n x r
+%   pointwise absolute error is the largest. Once selected, these 2n x r
 %   matrices are orthonormalized via an economy-size QR to give Vorth and
 %   Worth.
 % 
 %   If opts.compress == avg, primitive basis vectors are `averaged' using a
 %   pivoted QR decomposition. The leading r <= q orthonormal columns are
 %   chosen as Vrorth, Wrorth.
-%   It is assumed that the eigenvalues of (s*E-A) lie in the open left
+%   It is assumed that the eigenvalues of (s*Efo-Afo) lie in the open left
 %   half-plane, and that the points shifts are placed along the imaginary
 %   axis.
 %
 % INPUTS:
-%   E      - invertible descriptor matrix with dimensions n x n in (1),
-%            if empty set to eye(n, n)
-%   A      - state matrix with dimensions n x n in (1)
-%   b      - input matrix with dimensions n x 1 in (1)
-%   Q      - symmetric quadratic output matrices with n x n in (2)
+%   Mso    - sparse second order mass matrix with dimensions n x n in 
+%            (3)
+%   Dso    - sparse second order damping matrix with dimensions n x n 
+%            in (4)
+%   Kso    - sparse second order stiffness matrix with dimensions n x n 
+%            in (4)
+%   bso    - sparse second order input matrix with dimensions n x 1 in 
+%            (5)
+%   Qfo    - sparse symmetric quadratic output matrices with dimensions 
+%            2*n x 2*n, such that Qfo(1:n, 1:n) is nonzero, Qfo is zero 
+%            elsewhere
 %   shifts - q >= r complex interpolation points along iR
 %   r      - order of reduction
 %   opts   - structure, containing the following optional entries:
@@ -84,18 +104,18 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Wprim    - Primitive n x r left interpolatory projection matrix, 
+%   Wprim    - Primitive 2n x r left interpolatory projection matrix, 
 %              constructed according to opts.proj
-%   Vprim    - Primitive n x r right interpolatory projection matrix, 
+%   Vprim    - Primitive 2nn x r right interpolatory projection matrix, 
 %              constructed according to opts.proj
-%   Worth    - Orthonormalized n x r left interpolatory projection matrix, 
+%   Worth    - Orthonormalized 2n x r left interpolatory projection matrix, 
 %              compressed according to opts.compress
-%   Vorth    - Orthonormalized n x r right interpolatory projection matrix, 
+%   Vorth    - Orthonormalized 2nn x r right interpolatory projection matrix, 
 %              compressed according to opts.compress
 %   pV       - Columns of Vprim selected by opts.compress
 %   pV       - Columns of Wprim selected by opts.compress
-%   H_shifts - Transfer function evaluations of full-order model (E, A, b,
-%              Q) computed at inputted shifts.
+%   H_shifts - Transfer function evaluations of full-order model (Efo, Afo, 
+%              bfo, Qfo) computed at inputted shifts.
 
 %
 % This file is part of the archive Code and Results for Numerical 
@@ -107,9 +127,9 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %
 
 % Virginia Tech, USA
-% Last editied: 2/29/2024
+% Last editied: 4/15/2024
 %%
-% Grab dimensions
+% Grab dimensions.
 q =  max(size(shifts));
 [n, ~] = size(A);
 
@@ -168,52 +188,52 @@ if opts.recomp_bases
         fprintf(1, 'Computing model reduction bases via Galerkin projection \n')
         fprintf(1, '--------------------------------------------------------\n')
         for k = 1:q
-            iter_start = tic; % Start timer on this iteration
             fprintf(1, 'Current iterate is k = %d\n', iter)
             fprintf(1, '-------------------------\n')
-            tmp = (shifts(k)*E - A)\b;
-            Vprim(:, k) = tmp;  Wprim(:, k) = tmp;
-            fprintf(1, 'Current linear solves finished in %.2f s\n',toc(iter_start))
-            fprintf(1, '----------------------------------------\n')
+            % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
+            v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
+            Vprim(:, k) = v;
+            Wprim(:, k) = v;
         end
         fprintf(1, 'Primitive bases computed in %.2f s\n', toc(linear_solves))
         fprintf(1, '----------------------------------\n')
         % Fail-safe; comment out if you don't want to save your bases mid
         % iteration
-        fprintf(1, 'Saving your bases!\n')
-        fprintf(1, '------------------\n')
-        filename = 'results/prim_bases_g.mat';
-        save(filename, 'Vprim', 'Wprim');
+        % fprintf(1, 'Saving your bases!\n')
+        % fprintf(1, '------------------\n')
+        % filename = 'results/prim_bases_g.mat';
+        % save(filename, 'Vprim', 'Wprim');
     end
     if strcmp(opts.proj, 'pg')
-        % In Petrove-Galerkin projection, Vprim, Wprim are as in (1), (2)
+        % In Petrov-Galerkin projection, Vprim, Wprim are as in (1), (2)
         linear_solves = tic;
         fprintf(1, 'Computing model reduction bases via Petrov-Galerkin projection \n')
         fprintf(1, '---------------------------------------------------------------\n')
         for k = 1:q
-            iter_start = tic; % Start timer on this iteration
             fprintf(1, 'Current iterate is k = %d\n', iter)
             fprintf(1, '-------------------------\n')
-            tmp = (shifts(k)*E - A)\b;
-            Vprim(:, k) = tmp;
-            Wprim(:, k) = ((shifts(k)*E - A)'\(Q*tmp));
-            fprintf(1, 'Current linear solves finished in %.2f s\n',toc(iter_start))
-            fprintf(1, '----------------------------------------\n')
+            % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
+            v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
+            Vprim(:, k) = v;
+            % Option 1 in 'so_structured_solve.m' implements ((-shifts(k) * E - A)')\(Q*v))
+            w           = so_structured_solve(Mso, Dso, Kso, Qfo*v, -shifts(k), 1, 1);
+            Wprim(:, k) = w;
         end
         fprintf(1, 'Primitive bases computed in %.2f s\n', toc(linear_solves))
         fprintf(1, '----------------------------------\n')
         % Fail-safe; comment out if you don't want to save your bases mid
         % iteration
-        fprintf(1, 'Saving your bases!\n')
-        fprintf(1, '------------------\n')
-        filename = 'results/prim_bases_pg.mat';
-        save(filename, 'Vprim', 'Wprim');
+        % fprintf(1, 'Saving your bases!\n')
+        % fprintf(1, '------------------\n')
+        % filename = 'results/prim_bases_pg.mat';
+        % save(filename, 'Vprim', 'Wprim');
     end
 % Otherwise, pre-computed bases are passed as arguments.
 else 
-    fprintf(1, 'Primitive bases passed as args; not recomputing \n')
-    fprintf(1, '------------------------------------------------\n')
-    Vprim = opts.Vprim; Wprim = opts.Wprim;
+    fprintf(1, 'Primitive bases passed as args; not recomputing\n')
+    fprintf(1, '-----------------------------------------------\n')
+    Vprim = opts.Vprim; 
+    Wprim = opts.Wprim;
 end
 
 % If opts.recomp_evals, compute transfer function evaluations
@@ -224,7 +244,7 @@ if opts.recomp_evals
     fprintf(1, '---------------------------------------------------\n')
     H_shifts = zeros(q, 1);
     for k = 1:q
-        H_shifts(k) = Vprim(:, k)'*Q*Vprim(:, k);
+        H_shifts(k) = Vprim(:, k)'*Qfo*Vprim(:, k);
     end
     fprintf(1, 'H_shifts computed in %.2f s\n', toc(compute_tf))
     fprintf(1, '----------------------------\n')

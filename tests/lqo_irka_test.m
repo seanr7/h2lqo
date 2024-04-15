@@ -8,11 +8,15 @@ n1 = 10; alpha=.002; beta=alpha; v = 5;
 
 [M, D, K]=triplechain_MSD(n1, alpha, beta, v);
 
-O = zeros(size(K,1),1);
+M = full(M);
+D = full(D);
+K = full(K);
+
+O  = zeros(size(K,1),1);
 Cv = O';
 Cp = ones(1,size(K,1));
-B = ones(size(K,1),1);
-C = [Cp, Cv];
+B  = ones(size(K,1),1);
+C  = [Cp, Cv];
 
 [n, ~] = size(M);
 
