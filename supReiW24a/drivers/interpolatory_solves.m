@@ -131,11 +131,7 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %%
 % Grab dimensions.
 q =  max(size(shifts));
-[n, ~] = size(A);
-
-if isempty(E)
-    E = eye(n, n);
-end
+[n, ~] = size(M);
 
 % Check and set inputs
 if (nargin < 7) 
@@ -175,6 +171,19 @@ if ~isfield(opts, 'H_shifts')
     fprintf(1, '------------------------------------------------\n')
     opts.H_shifts = [];
 end
+
+% Build first-order realization for later projection
+Efo                   = spalloc(2*n, 2*n, nnz(Mso) + n); % Descriptor matrix; Efo = [I, 0: 0, Mso]
+Efo(1:n, 1:n)         = speye(n);                        % (1, 1) block
+Efo(n+1:2*n, n+1:2*n) = Mso;                             % (2, 2) block is (sparse) mass matrix
+
+Afo                   = spalloc(2*n, 2*n, nnz(Kso) + nnz(Dso) + n); % Afo = [0, I; -Kso, -Dso]
+Afo(1:n, n+1:2*n)     = speye(n);                                   % (1, 2) block of Afo
+Afo(n+1:2*n, 1:n)     = -Kso;                                       % (2, 1) block is -Kso
+Afo(n+1:2*n, n+1:2*n) = -Dso;                                       % (2, 2) block is -Dso 
+
+bfo             = spalloc(2*n, 1, nnz(bso)); % bfo = [0; bso];
+bfo(n+1:2*n, :) = bso; 
 
 %% Methods.
 % If opts.recomp_bases, pre-compute Vprim and Wprim
@@ -279,8 +288,8 @@ if strcmp(opts.compress, 'Linfty')
     % since the reduced-model is `zero' at start
     [~, p1] = max(abs(H_shifts));   p(1) = p1;
     % Project down
-    Er = Wprim(:, p1)' * E * Vprim(:, p1);  Ar = Wprim(:, p1)' * A * Vprim(:, p1); 
-    Qr = Vprim(:, p1)' * Q * Vprim(:, p1);  Br = Wprim(:, p1)' * b;
+    Er = Wprim(:, p1)' * Efo * Vprim(:, p1);  Ar = Wprim(:, p1)' * Afo * Vprim(:, p1); 
+    Qr = Vprim(:, p1)' * Qfo * Vprim(:, p1);  br = Wprim(:, p1)' * bfo;
     for k = 1:r-1
         iter_compression = tic;
         fprintf(1, 'Current iterate of greedy Linfty search is k = %d  \n', k)
@@ -289,8 +298,8 @@ if strcmp(opts.compress, 'Linfty')
         % locations in shifts for Linfty error estimation
         Hr_shifts = zeros(q, 1);
         for j = 1:q
-            tmpr = (shifts(j)*Er - Ar)\Br;
-            Hr_shifts(j) = Br'*(((shifts(j)*Er - Ar)')\(Qr*tmpr)); 
+            tmpr = (shifts(j)*Er - Ar)\br;
+            Hr_shifts(j) = br'*(((shifts(j)*Er - Ar)')\(Qr*tmpr)); 
         end
         % Approximate Linfty error, choose next column where error is max
         Linfty_error = abs(H_shifts - Hr_shifts);  
@@ -304,8 +313,8 @@ if strcmp(opts.compress, 'Linfty')
         [Worth, ~] = qr(Wprim(:, p(1:k+1)), 'econ');    
         [Vorth, ~] = qr(Vprim(:, p(1:k+1)), 'econ');
         % Next Proj LQO-ROM; grab columns stored in P
-        Er = Worth'*E*Vorth;  Ar = Worth'*A*Vorth; 
-        Qr = Vorth'*Q*Vorth;  Br = Worth'*b;
+        Er = Worth'*Efo*Vorth;  Ar = Worth'*Afo*Vorth; 
+        Qr = Vorth'*Qfo*Vorth;  br = Worth'*bfo;
         fprintf(1, 'Search iteration done in %.2f s\n', toc(iter_compression))
         fprintf(1, '-------------------------------\n')
     end
