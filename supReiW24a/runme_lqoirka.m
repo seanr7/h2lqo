@@ -27,10 +27,10 @@ addpath([rootpath, '/drivers'])
 addpath([rootpath, '/data'])
 
 % Write .log file, put in `out' folder
-if exist([savename '.log'], 'file') == 2
-    delete([savename '.log']);
+if exist([savename 'r100' '.log'], 'file') == 2
+    delete([savename 'r100' '.log']);
 end
-outname = [savename '.log']';
+outname = [savename 'r100' '.log']';
 
 diary(outname)
 diary on; 
