@@ -27,6 +27,7 @@ addpath([rootpath, '/drivers'])
 addpath([rootpath, '/data'])
 
 % Write .log file, put in `out' folder
+% To not overwrite when running multiple scripts, add order
 if exist([savename 'r100' '.log'], 'file') == 2
     delete([savename 'r100' '.log']);
 end
@@ -50,6 +51,7 @@ load('data/plateTVA_n201900m1q28278.mat')
 % Rename damping matrix
 D = E; 
 % Define quadratic output matrix Qfo = C' * C
+[n, ~]        = size(M);
 Qfo           = spalloc(2*n, 2*n, nnz(C' * C));
 Qfo(1:n, 1:n) = C' * C; 
 
