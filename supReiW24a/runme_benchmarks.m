@@ -112,6 +112,7 @@ if ~(opts.recomp_evals)
     opts.H_shifts = H_shifts; 
 end
 
+r = 100;
 % Compute interpolatory bases
 [Wprim_g, Vprim_g, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(M, D, ...
     K, Qfo, B, shifts, r, opts);
@@ -211,6 +212,7 @@ if ~(opts.recomp_evals)
     opts.H_shifts = H_shifts;
 end
 
+r = 100;
 % Compute interpolatory bases
 [Wprim_pg, Vprim_pg, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(...
     M, D, K, Qfo, B, shifts, r, opts);
@@ -311,6 +313,7 @@ if ~(opts.recomp_evals)
     opts.H_shifts = H_shifts;
 end
 
+r = 100;
 % Compute interpolatory bases
 [~, ~, Worth, Vorth, ~, pW, pV] = interpolatory_solves(M, D, K, Qfo, B, shifts, ...
     r, opts);
@@ -407,6 +410,7 @@ if ~(opts.recomp_evals)
     opts.H_shifts = H_shifts;
 end
 
+r = 100;
 % Compute interpolatory bases
 [~, ~, Worth, Vorth, ~, pW, pV] = interpolatory_solves(M, D, K, Qfo, B, shifts, ...
     r, opts);
