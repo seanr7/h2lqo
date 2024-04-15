@@ -91,7 +91,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [0; B], here
-sosolve = so_structured_solve(M, E, K, B1, s1, 0);
+sosolve = so_structured_solve(M, E, K, B1, s1, 0, 1);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
@@ -110,7 +110,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 % Second order solve accounting for structure
 % rhs has form Bhat = [B; 0], here
 B2      = Bhat(1:n, :);
-sosolve = so_structured_solve(M, E, K, B2, s1, 1);
+sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
@@ -133,7 +133,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 
 % Second order solve accounting for structure
 % rhs has form Bhat = [0; B], here
-sosolve = so_structured_solve(M, E, K, B1, s1, 0);
+sosolve = so_structured_solve(M, E, K, B1, s1, 0, 1);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [0; B] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
@@ -152,7 +152,7 @@ fprintf(1, '---------------------------------------------------------------\n');
 % Second order solve accounting for structure
 % rhs has form Bhat = [B; 0], here
 B2      = Bhat(1:n, :);
-sosolve = so_structured_solve(M, E, K, B2, s1, 1);
+sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
 
 fprintf(1, 'Relative solution error, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
