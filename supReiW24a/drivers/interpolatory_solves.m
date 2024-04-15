@@ -189,7 +189,7 @@ bfo(n+1:2*n, :) = bso;
 % If opts.recomp_bases, pre-compute Vprim and Wprim
 if opts.recomp_bases 
     % Space allocation
-    Vprim = zeros(n, q);   Wprim = zeros(n, q);
+    Vprim = zeros(2*n, q);   Wprim = zeros(2*n, q);
     % Galerkin projection
     if strcmp(opts.proj, 'g')
         % In Galerkin projection, primitive bases are identical in (1)
