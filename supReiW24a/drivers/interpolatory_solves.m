@@ -131,7 +131,7 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %%
 % Grab dimensions.
 q =  max(size(shifts));
-[n, ~] = size(M);
+[n, ~] = size(Mso);
 
 % Check and set inputs
 if (nargin < 7) 
