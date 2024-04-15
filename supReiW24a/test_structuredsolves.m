@@ -34,22 +34,22 @@ fprintf(1, '\n');
 
 fprintf(1, 'Loading plateTVA model...\n')
 fprintf(1, '-------------------------\n');
-% load('data/plateTVA_n201900m1q28278.mat')
-% n_nodes = full(sum(sum(C)));
-% 
+load('data/plateTVA_n201900m1q28278.mat')
+n_nodes = full(sum(sum(C)));
+
 %%%% TOY TEST %%%%
-n1 = 10; alpha=.002; beta=alpha; v = 5;
-
-[M, D, K]=triplechain_MSD(n1, alpha, beta, v);
-
-M = full(M);
-D = full(D);
-K = full(K);
-E = D;
-
-C  = ones(1,size(K,1));
-B  = ones(size(K,1),1);
-B1 = B;
+% n1 = 10; alpha=.002; beta=alpha; v = 5;
+% 
+% [M, D, K]=triplechain_MSD(n1, alpha, beta, v);
+% 
+% M = full(M);
+% D = full(D);
+% K = full(K);
+% E = D;
+% 
+% C  = ones(1,size(K,1));
+% B  = ones(size(K,1),1);
+% B1 = B;
 %%%% TOY TEST %%%%
 
 %% Convert plate model to first-order from second-order.
