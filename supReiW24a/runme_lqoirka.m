@@ -28,10 +28,10 @@ addpath([rootpath, '/data'])
 
 % Write .log file, put in `out' folder
 % To not overwrite when running multiple scripts, add order
-if exist([savename 'r50' '.log'], 'file') == 2
-    delete([savename 'r50' '.log']);
+if exist([savename 'r25' '.log'], 'file') == 2
+    delete([savename 'r25' '.log']);
 end
-outname = [savename 'r50' '.log']';
+outname = [savename 'r25' '.log']';
 
 diary(outname)
 diary on; 
@@ -61,7 +61,7 @@ fprintf(1, '--------------------------------\n')
 
 % Set order of reduction and input opts
 opts          = struct();
-r             = 50;
+r             = 25;
 opts.maxiter  = 50;
 opts.tol      = 10e-4;
 opts.plotconv = false;
@@ -70,7 +70,7 @@ opts.plotconv = false;
 
 poles    = info.pole_hist;
 sores    = info.sores; 
-filename = 'results/plateTVAlqo_r50_lqoirka.mat';
+filename = 'results/plateTVAlqo_r25_lqoirka.mat';
 save(filename, 'Efo_r', 'Afo_r', 'Bfo_r', 'Qfo_r', 'poles', 'sores') 
 
 %% Finished script.
