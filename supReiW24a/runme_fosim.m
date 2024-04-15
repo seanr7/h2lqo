@@ -45,35 +45,41 @@ fprintf(1, '\n');
 
 fprintf(1, 'Loading plateTVA model...\n')
 fprintf(1, '-------------------------\n');
-load('data/plateTVA_n201900m1q28278')
-n_nodes = full(sum(sum(C)));
+load('data/plateTVA_n201900m1q28278.mat')
+
+% Rename damping matrix
+D = E; 
+
 
 %% Convert plate model to first-order from second-order.
+% Used in computing reduced models via benchmark approaches
 fprintf(1, 'Converting second-order realization to first-order linear quadratic output system\n')
 tic
+
 [n, ~] = size(M);
 
-E_qo = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
-E_qo(1:n, 1:n) = speye(n); % (1, 1) block
-E_qo(n+1:2*n, n+1:2*n) = M; % (2, 2) block is (sparse) mass matrix
+Efo                   = spalloc(2*n, 2*n, nnz(M) + n); % Descriptor matrix; E_qo = [I, 0: 0, M]
+Efo(1:n, 1:n)         = speye(n);                      % (1, 1) block
+Efo(n+1:2*n, n+1:2*n) = M;                             % (2, 2) block is (sparse) mass matrix
 
-A_qo = spalloc(2*n, 2*n, nnz(K) + nnz(E) + n);  % A_qo = [0, I; -K, -E]
-A_qo(1:n, n+1:2*n) = speye(n); % (1, 2) block of A_qo
-A_qo(n+1:2*n, 1:n) = -K;  % (2, 1) block is -damping matrix
-A_qo(n+1:2*n, n+1:2*n) = -E; % (2, 2) block is -stiffness matrix
+Afo                   = spalloc(2*n, 2*n, nnz(K) + nnz(D) + n); % A_qo = [0, I; -K, -D]
+Afo(1:n, n+1:2*n)     = speye(n);                               % (1, 2) block of Afo
+Afo(n+1:2*n, 1:n)     = -K;                                     % (2, 1) block is -D
+Afo(n+1:2*n, n+1:2*n) = -D;                                     % (2, 2) block is -K
 
-B_qo = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
-B_qo(n+1:2*n, :) = B;
+Bfo             = spalloc(2*n, 1, nnz(B)); % B_qo = [0; B];
+Bfo(n+1:2*n, :) = B; 
 
 % Our quadratic output matrix is C' * C
-Q_qo = spalloc(2*n, 2*n, nnz(C' * C));
-Q_qo(1:n, 1:n) = C' * C; 
+Qfo           = spalloc(2*n, 2*n, nnz(C' * C));
+Qfo(1:n, 1:n) = C' * C; 
 fprintf(1, 'First-order realization built in %.2f s\n',toc)
 fprintf(1, '--------------------------------------------\n');
 
+
 %% Full-order simulation.
 % Frequencies to sample at in range of 0 - 250 hz
-s = 1i*linspace(0, 2*pi*250, 500);
+s    = 1i*linspace(0, 2*pi*250, 500);
 s_hz = imag(s)/2/pi;
 % recompute = true;
 recompute = false;
@@ -85,8 +91,8 @@ if recompute == true
     for ii=1:length(s)
         fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n',ii,imag(s(ii))/2/pi)
         current_iter = tic;
-        tmp = (s(ii)*E_qo - A_qo) \ B_qo;
-        res(ii) = sqrt((tmp'*Q_qo*tmp)/n_nodes); 
+        tmp = (s(ii)*Efo - Afo) \ Bfo;
+        res(ii) = sqrt((tmp'*Qfo*tmp)/n_nodes); 
         fprintf(1, 'Current iteration of full order simulation finished in %.2f s\n',toc(current_iter))
         fprintf(1, '----------------------------------------------------------------------\n');
     end
