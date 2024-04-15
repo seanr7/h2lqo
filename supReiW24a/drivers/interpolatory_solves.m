@@ -197,7 +197,7 @@ if opts.recomp_bases
         fprintf(1, 'Computing model reduction bases via Galerkin projection \n')
         fprintf(1, '--------------------------------------------------------\n')
         for k = 1:q
-            fprintf(1, 'Current iterate is k = %d\n', iter)
+            fprintf(1, 'Current iterate is k = %d\n', k)
             fprintf(1, '-------------------------\n')
             % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
             v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
@@ -219,7 +219,7 @@ if opts.recomp_bases
         fprintf(1, 'Computing model reduction bases via Petrov-Galerkin projection \n')
         fprintf(1, '---------------------------------------------------------------\n')
         for k = 1:q
-            fprintf(1, 'Current iterate is k = %d\n', iter)
+            fprintf(1, 'Current iterate is k = %d\n', k)
             fprintf(1, '-------------------------\n')
             % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
             v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
