@@ -77,7 +77,7 @@ function [Er, Ar, br, Qr, info] = lqoirka(Mso, Dso, Kso, bso, Qfo, r, opts)
 %   Ar   - reduced state matrix with dimensions r x r 
 %   br   - reduced descriptor matrix with dimensions r x 1 
 %   Qr   - reduced symmetric quadratic output matrix with dimensions r x r 
-%   info - structure, containing the following optional entries:
+%   info - structure, containing the following entries:
 %   +-----------------+---------------------------------------------------+
 %   |    PARAMETER    |                     MEANING                       |
 %   +-----------------+---------------------------------------------------+
