@@ -225,7 +225,8 @@ if opts.recomp_bases
             v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
             Vprim(:, k) = v;
             % Option 1 in 'so_structured_solve.m' implements ((-shifts(k) * E - A)')\(Q*v))
-            w           = so_structured_solve(Mso, Dso, Kso, Qfo*v, -shifts(k), 1, 1);
+            tmp         = Qfo*v;
+            w           = so_structured_solve(Mso, Dso, Kso, tmp(1:n, 1), -shifts(k), 1, 1);
             Wprim(:, k) = w;
         end
         fprintf(1, 'Primitive bases computed in %.2f s\n', toc(linear_solves))
