@@ -70,6 +70,13 @@ fprintf(1, 'Relative error in Vorth: %.16f \n', norm(Vorth - Vorth_exact,2)/norm
 fprintf(1, 'Relative error in Vprim: %.16f \n', norm(Vprim - Vprim_exact,2)/norm(Vprim_exact,2))
 fprintf(1, 'Relative error in Worth: %.16f \n', norm(Worth - Worth_exact,2)/norm(Worth_exact,2))
 fprintf(1, 'Relative error in Wprim: %.16f \n', norm(Wprim - Wprim_exact,2)/norm(Wprim_exact,2))
+
+for i = 1:250
+fprintf(1, 'Relative error in column i of Vorth: %.16f \n', norm(Vorth(:, i) - Vorth_exact(:, i),2)/norm(Vorth_exact,2))
+fprintf(1, 'Relative error in column i of Vprim: %.16f \n', norm(Vprim(:, i) - Vprim_exact(:, i),2)/norm(Vprim_exact,2))
+fprintf(1, 'Relative error in column i of Worth: %.16f \n', norm(Worth(:, i) - Worth_exact(:, i),2)/norm(Worth_exact,2))
+fprintf(1, 'Relative error in column i of Wprim: %.16f \n', norm(Wprim(:, i) - Wprim_exact(:, i),2)/norm(Wprim_exact,2))
+end
 %% Finished script.
 fprintf(1, 'FINISHED SCRIPT.\n');
 fprintf(1, '================\n');
