@@ -99,8 +99,8 @@ opts.compress     = 'Linfty';
 opts.proj         = 'g';
 % Set to true to recompute primitive bases and tf evals, else use those 
 % saved in 'results/'
-opts.recomp_bases = false;
-opts.recomp_evals = false;
+opts.recomp_bases = true;
+opts.recomp_evals = true;
 
 if ~(opts.recomp_bases)
     load('results/prim_bases_g') 
@@ -118,8 +118,10 @@ r = 100;
     K, Qfo, B, shifts, r, opts);
 
 % Save shifts and bases if first pass, else, can comment out
-% save('results/H_shifts.mat', 'H_shifts');
-% save('results/prim_bases_g', 'Vprim_g', 'Wprim_g');
+fprintf(1, 'Saving Galerkin bases ...\n')
+fprintf(1, '----------------------------------------------------------\n')
+save('results/H_shifts.mat', 'H_shifts');
+save('results/prim_bases_g', 'Vprim_g', 'Wprim_g');
 
 % Now, compute reduced models for orders r = 25, 50, 75, 100
 fprintf(1, '1a. Computing Linfty Galerkin reduced model, order r = 100\n')
@@ -200,7 +202,7 @@ opts.proj         = 'pg';
 % Set to true to recompute primitive bases and tf evals, else use those 
 % saved in 'results/'
 opts.recomp_bases = true;
-opts.recomp_evals = true;
+opts.recomp_evals = false;
 
 if ~(opts.recomp_bases)
     load('results/prim_bases_pg') 
@@ -218,7 +220,9 @@ r = 100;
     M, D, K, Qfo, B, shifts, r, opts);
 
 % Save shifts and bases if first pass, else, can comment out
-save('results/H_shifts.mat', 'H_shifts');
+fprintf(1, 'Saving Petrov-Galerkin bases ...\n')
+fprintf(1, '----------------------------------------------------------\n')
+% save('results/H_shifts.mat', 'H_shifts');
 save('results/prim_bases_pg', 'Vprim_pg', 'Wprim_pg');
 
 % Now, compute reduced models for orders r = 25, 50, 75, 100
