@@ -1,4 +1,4 @@
-function [Ar, Br, Cr, Mr, h2errs] = mimolqo_tsia(A, B, C, M, r, opts)
+function [Ar, Br, Cr, Mr, info] = mimolqo_tsia(A, B, C, M, r, opts)
 % MIMOLQO_TSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
@@ -52,14 +52,26 @@ function [Ar, Br, Cr, Mr, h2errs] = mimolqo_tsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
-%   Ar     - reduced state matrix with dimensions r x r in (1)
-%   Br     - reduced descriptor matrix with dimensions r x m in (1)
-%   Cr     - reduced linear output matrix with dimensions p x r in (2)
-%            If C is zero then Cr is zeros(p, r)
-%   Mr     - 3d-array of reduced (symmetric) quadratic output matrices 
-%            with dimensions p x r x r in (2) 
-%            If M is zero then Mr is zeros(r, r)
-%   h2errs - history of error convergence
+%   Ar   - reduced state matrix with dimensions r x r in (1)
+%   Br   - reduced descriptor matrix with dimensions r x m in (1)
+%   Cr   - reduced linear output matrix with dimensions p x r in (2)
+%          If C is zero then Cr is zeros(p, r)
+%   Mr   - 3d-array of reduced (symmetric) quadratic output matrices 
+%          with dimensions p x r x r in (2) 
+%          If M is zero then Mr is zeros(r, r)
+%   info - structure, containing the following information for monitoring
+%          convergence
+%   +-----------------+---------------------------------------------------+
+%   |    PARAMETER    |                     MEANING                       |
+%   +-----------------+---------------------------------------------------+
+%   | sqrd_relh2errs  | history of squared relative H2 errors throughout  |
+%   |                 | the iteration                                     |
+%   +-----------------+---------------------------------------------------+
+%   | tails           | variable parts of the relative H2 error           |
+%   +-----------------+---------------------------------------------------+ 
+%   | gradientAr      | absolute gradient w.r.t Ar of the squared H2 error|
+%   +-----------------+---------------------------------------------------+ 
+%
 
 %
 % Copyright (c) 2024 Sean Reiter
@@ -67,7 +79,7 @@ function [Ar, Br, Cr, Mr, h2errs] = mimolqo_tsia(A, B, C, M, r, opts)
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 3/14/2024
+% Last editied: 4/23/2024
 %
 
 %%
@@ -84,7 +96,6 @@ if isempty(C)
 else
     p = size(C, 1);
 end
-
 
 % Check and set inputs
 if (nargin < 6) 
@@ -129,7 +140,7 @@ fprintf(1, 'Initializing algorithm\n')
 fprintf(1, '----------------------\n');
 Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;   Mr = opts.Mr;  
 
-% Precompute squared H2 norm of full-order model
+% Precompute the H2 norm of the full-order model for rel error tracking
 norm_start = tic;
 fprintf(1, 'Precomputing H2 norm of full order model\n')
 fprintf(1, '----------------------------------------\n')
@@ -139,29 +150,37 @@ for i = 1:p
     rhs = rhs + M(:, :, i)*P*M(:, :, i);
 end
 Q  = lyap(A', rhs);
-h  = abs(trace(B'*Q*B)); % h = ||G||_{\mathcal{H}_2}
-fprintf(1, 'Norm computed in %8f s\n', toc(norm_start))
-fprintf(1, '--------------------------\n')
+h  = trace(B'*Q*B); % h = ||G||_{\mathcal{H}_2}^2
+fprintf(1, 'Norm computed in %d s\n', toc(norm_start))
+fprintf(1, '--------------------------\n') 
 
-iter = 1; 
-% Compute H2 error due to initial reduced model
-%   ||G - Gr||_{\mathcal{H}_2} = h + tr(Br'*Qr*Br) + 2tr(B'*Y*Br)
-% Here, Y denotes off diagonal block of error Gramian Q
+% Compute sqaured realtive H2 error due to initial reduced model
+%   ||G - Gr||_{\mathcal{H}_2}^2/||G||_{\mathcal{H}_2}^2 = 
+%       (h + tr(Br'*Qr*Br) + 2tr(B'*Y*Br))/h
+% Here, Y denotes the off diagonal block of the quadratic output error 
+% Gramian Q
 % 1. Computed reduced quadratic output observability Gramian Qr and Y
 Pr    = lyap(Ar, Br*Br'); 
 X     = lyap(A, Ar', B*Br');
 rhsQr = Cr'*Cr; 
 rhsY  = -C'*Cr;
+% For computing the gradient w.r.t Ar
+Qrone = lyap(Ar', rhsQr);
+Yone  = lyap(A', Ar, rhsY);
 for i = 1:p
     rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i);
     rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);
 end
-Qr           = lyap(Ar', rhsQr);
-Y            = lyap(A', Ar, rhsY);
-% 2. Compute H2 error from trace formula
-h2errs(iter) = h + abs(trace(Br'*Qr*Br)) + abs(trace(B'*Y*Br));
+Qr = lyap(Ar', rhsQr);
+Y  = lyap(A', Ar, rhsY);
 
-% Set convergence to enter while
+% 2. Compute squared relative H2 error from trace formula
+iter                 = 1;
+tails(iter)          = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
+gradientAr(iter)     = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
+sqrd_relh2errs(iter) = (h + tails(iter))/h;                               % Squared relative error
+
+% Set convergence criterion to enter while
 changein_h2errs(iter) = opts.tol + 1;
 
 while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
@@ -170,7 +189,6 @@ while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     fprintf(1, '---------------------------------------\n')
     % Solve equation (1) for n x r right projection matrix X
     X = lyap(A, Ar', B*Br');
-    % For some reason; Convergence is VERY poor if -B*Br' not present...
 
     % Solve equation (2) for n x r left projection matrix Z
     rhs = -C'*Cr;
@@ -179,17 +197,16 @@ while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     end
     Z = lyap(A', Ar, rhs);
     
-    % Orthonormalize projection matrices
+    % Orthonormalize projection matrices ...
     [V, ~] = qr(X, "econ");     [W, ~] = qr(Z, "econ");
-    % Compute reduced model via projection
+    % ... and compute reduced model via projection
     obl = W'*V;
     Ar  = (obl)\(W'*A*V);   Br = (obl)\(W'*B);   Cr = C*V;   
     for i = 1:p
         Mr(:, :, i) = V'*M(:, :, i)*V;    
     end
-        
-    iter = iter + 1;    
-
+  
+    iter = iter + 1;  
     fprintf(1, 'Computing H2 error at the current iteration\n')
     fprintf(1, '-------------------------------------------\n')
     % Compute H2 error at this iteration
@@ -199,21 +216,26 @@ while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     Pr    = lyap(Ar, Br*Br'); 
     rhsQr = Cr'*Cr; 
     rhsY  = -C'*Cr;
+    % For computing the gradient w.r.t Ar
+    Qrone = lyap(Ar', rhsQr);
+    Yone  = lyap(A', Ar, rhsY);
     for i = 1:p
         rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i); % No factor of 2 for Y
         rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);    % X was computed above
     end
     Qr = lyap(Ar', rhsQr);
     Y  = lyap(A', Ar, rhsY);
-    % 2. Compute H2 error from trace formula
-    h2errs(iter) = h + abs(trace(Br'*Qr*Br)) + abs(trace(B'*Y*Br));
-    fprintf(1, 'Rel. H2 error of current tsia reduced model is ||G - Gr||_H2/||G||_H2 = %.12f\n', ...
-        sqrt(h2errs(iter))/h);
+    % 2. Compute squared relative H2 error from trace formula
+    tails(iter)          = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
+    gradientAr(iter)     = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
+    sqrd_relh2errs(iter) = abs((h + tails(iter))/h);                          % Squared relative error
+    fprintf(1, 'Squared relative H2 error of current tsia reduced model is ||G - Gr||_H2^2/||G||_H2^2 = %.12f\n', ...
+        sqrd_relh2errs(iter));
 
-    % How has the H2 error changed since last iteration? We track
-    % convergence based on when this stops moving, compare to intial error
-    changein_h2errs(iter) = abs(h2errs(iter) - h2errs(iter-1))/h2errs(1);
-    fprintf('Change in squared H2 errors is is %.12f \n', changein_h2errs(iter))
+    % Compare change in relative H2 error with previous iteration to track
+    % convergence
+    changein_h2errs(iter) = abs(sqrd_relh2errs(iter) - sqrd_relh2errs(iter-1));
+    fprintf('Change in relative squared H2 errors is is %.12f \n', changein_h2errs(iter))
     fprintf(1, '----------------------------------------\n')
 
     % End the clock
@@ -222,8 +244,15 @@ while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     fprintf(1, '---------------------------------------\n')
 end
 
+% Save output info
+info                = struct();
+info.sqrd_relh2errs = sqrd_relh2errs;    
+info.tails          = tails;
+info.gradientAr     = gradientAr;
+
 if iter == (opts.maxiter + 1)
-    fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', toc(overall_start))
+    fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', ...
+        toc(overall_start))
     fprintf(1, '---------------------------------------\n')
 else
     fprintf('Algorithm has converged in %d iterations\n', iter)

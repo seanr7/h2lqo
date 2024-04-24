@@ -4,7 +4,8 @@
 
 %
 % This file is part of the archive Code, Data, and Results for Numerical 
-% Experiments in "..."
+% Experiments in "$\mathcal{H}_2$ optimal model reduction of linear 
+% systems with multiple quadratic outputs".
 % Copyright (c) 2024 Sean Reiter, ...
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
@@ -24,7 +25,7 @@ savename                = [rootpath filesep() ...
 % Add paths to drivers and data
 addpath([rootpath, '/drivers'])
 addpath([rootpath, '/data'])
-addpath([rootpath, '/QBDynamicsQBOutput_MATLAB'])
+addpath([rootpath, '/results'])
 
 % Write .log file, put in `out' folder
 if exist([savename '.log'], 'file') == 2
@@ -44,29 +45,62 @@ fprintf(1, '\n');
 fprintf(1, 'Load problem data\n');
 fprintf(1, '-----------------\n');
 
-% TODO: Check best practice for using someone else's code in code you want
-% to publish ... 
-nx   = 300;  % No. of spatial grid points
-diff = 1e-2; % Diffusion parameter
-adv  = 1;    % Advection parameter
-
 % Advection-diffusion problem taken from [Diaz et al., 2024]
-[E, A, B, ~] = AdvDiff_Probgen_1D(nx, adv, diff);  
-E            = full(E);     % E = I in this example
-A            = full(A);    
-B            = full(B);   
-Clin         = eye(nx, nx); % Linear output matrix
-Mquad        = eye(nx, nx); % Quadratic output matrix
+% nx   = 300;   No. of spatial grid points
+% diff = 1e-2;  Diffusion parameter
+% adv  = 1;     Advection parameter
+
+load('results/AdvecDiff_n300.mat')
 
 fprintf(1, '\n');
 
 
-%% Run ode15 and simulate output.
-fprintf(1, 'Solve AdvecDiff problem via ode15\n');
-fprintf(1, '---------------------------------\n');
+%% Compute reduced-order models.
 
-Tfin = 2;               % final time for simulation
-nt   = round(Tfin*128); % number of time steps
+r = 30; % Approximation order for both approacbes
+
+% Set to true to recompute reduced order models
+recompute = 1;
+if recompute
+    fprintf(1, 'Computing reduced model using LQO-TSIA.\n');
+    fprintf(1, '---------------------------------------\n');
+    % Input opts
+    opts         = struct();
+    opts.tol     = 10e-14;
+    opts.maxiter = 200; 
+    % Linear quadratic output two-sided iteration algoritm (LQO-TSIA)
+    [Ar_tsia, Br_tsia, Clinr_tsia, Mquadr_tsia, info_tsia] = mimolqo_tsia(...
+        A, B, Clin, Mquad, r, opts);
+    save('results/AdvecDiff_lqotsia_r30.mat', 'Ar_tsia', 'Br_tsia', 'Clinr_tsia', ...
+        'Mquadr_tsia', 'info_tsia')
+
+    fprintf(1, 'Computing reduced model using LQO-BT.\n');
+    fprintf(1, '-------------------------------------\n');
+    
+    % Linear quadratic output balanced truncation (LQO-BT)
+    [Ar_bt, Br_bt, Clinr_bt, Mquadr_bt, info_bt] = mimolqo_bt(A, B, Clin, ...
+        Mquad, r);
+    save('results/AdvecDiff_lqobt_r30.mat', 'Ar_bt', 'Br_bt', 'Clinr_bt', ...
+        'Mquadr_bt', 'info_bt')
+else 
+    fprintf(1, 'Loading reduced-order models.\n');
+    fprintf(1, '-----------------------------\n');
+    load('results/AdvecDiff_lqotsia_r30.mat') % Load LQO-TSIA reduced model
+    load('results/AdvecDiff_lqobt_r30.mat')   % Load LQO-BT reduced model
+end
+
+fprintf(1, '\n');
+
+
+%% Simulate full and reduced-order outputs; sinusoidal input.
+fprintf(1, 'Solving full-order AdvecDiff problem via ode15\n');
+fprintf(1, '----------------------------------------------\n');
+
+Tfin = 10;             % Final time for simulation
+nt   = round(Tfin*64); % Number of time steps
+
+fprintf(1, 'First, sinusoidal input u0(t) = 0.5*(cos(pi*t)+1)\n');
+fprintf(1, '-------------------------------------------------\n');
 
 % Set system inputs 
 u0 = @(t) 0.5*(cos(pi*t)+1); % Dirichlet input on left boundary
@@ -80,21 +114,18 @@ options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol',ode_rtol, ...
                   'MStateDependence', 'none', 'Stats','on');
 fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 [t, v]   = ode15s(fAdvDiff, tsteps, v0, options);
-
 % Note, v is nt \times nx
 % Compute quadratic cost by 1/(2*n) * ||x(t) - \bf{1}||_2^2
-h = 1/nx;
 
 fprintf(1, 'Simulate full output.\n');
 fprintf(1, '--------------------.\n');
 
 % Output has mixed linear and quadratic terms
-Clin = -h*ones(1, nx);
-y    = Clin*v';
+y = Clin*v';
 for tt = 1:length(t)
     y(:, tt) = y(:, tt) + (h/2)*v(tt, :)*Mquad*v(tt, :)';
 end
-y = y + (1/2) * ones(1, nt + 1);
+y = y + (1/2) * ones(1, length(t));
 
 % Colors for plotting
 ColMat(1,:) = [ 0.8500    0.3250    0.0980];
@@ -114,121 +145,225 @@ xlabel('$t$','fontsize',fs,'interpreter','latex');
 ylabel('$y(t)$','fontsize',fs,'interpreter','latex')
 
 
-%% Run algorithm.
-fprintf(1, 'Compute reduced-order models using lqo-tsia.\n');
-fprintf(1, '-------------------------------------------\n');
-
-% Set approximation order
-r = 25;
-
-% Run two-sided iteration
-[Ar, Br, Clinr, Mquadr, h2errs] = mimolqo_tsia(A, B, Clin, Mquad, ...
-    r);
-
-% Benchmark against balanced truncation approach
-[Arbt, Brbt, Clinrbt, Mquadrbt, info] = mimolqo_bt(A, B, Clin, Mquad, r);
-
-
-%% Run ode15 and simulate reduced output.
-fprintf(1, 'Solve reduced AdvecDiff problem via ode15\n');
-fprintf(1, '-----------------------------------------\n');
+fprintf(1, 'Solving reduced-order AdvecDiff problems via ode15\n');
+fprintf(1, '--------------------------------------------------\n');
 
 % For tsia reduced model
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
 options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', Ar, ...
+                  'Mass', eye(r,r), 'Jacobian', Ar_tsia, ...
                   'MStateDependence', 'none', 'Stats','on');
-fAdvDiffred = @(tr,vr)(Ar*vr + Br*[u0(tr);u1(tr)]);
-[tr, vr]    = ode15s(fAdvDiffred, tsteps, vr0, options);
-% Note, vr is nt \times nxr
+fAdvDiffred   = @(tr, vr_tsia)(Ar_tsia*vr_tsia + Br_tsia*[u0(tr);u1(tr)]);
+[tr, vr_tsia] = ode15s(fAdvDiffred, tsteps, vr0, options);
+% Note, vr is nt \times r
 
 fprintf(1, 'Simulate tsia reduced output\n');
 fprintf(1, '----------------------------\n');
-yr = Clinr*vr';
+yr_tsia = Clinr_tsia*vr_tsia';
 for tt = 1:length(tr)
-    yr(:,tt) = yr(:,tt) + (h/2)*vr(tt, :)*Mquadr*vr(tt, :)';
+    yr_tsia(:,tt) = yr_tsia(:,tt) + (h/2)*vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
 end
-yr = yr + (1/2) * ones(1, nt+1);
+yr_tsia = yr_tsia + (1/2) * ones(1, length(tr));
 
 % For bt reduced model
 vr0      = zeros(nxr, 1); % Initial condition 
 options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', Arbt, ...
+                  'Mass', eye(r,r), 'Jacobian', Ar_bt, ...
                   'MStateDependence', 'none', 'Stats','on');
-fAdvDiffredbt = @(tr,vrbt)(Arbt*vrbt + Brbt*[u0(tr);u1(tr)]);
-[trbt, vrbt]  = ode15s(fAdvDiffredbt, tsteps, vr0, options);
+fAdvDiffredbt = @(tr,vrbt)(Ar_bt*vrbt + Br_bt*[u0(tr);u1(tr)]);
+[tr, vr_bt] = ode15s(fAdvDiffredbt, tsteps, vr0, options);
 % Note, vr is nt \times nxr
 
 fprintf(1, 'Simulate bt reduced output\n');
 fprintf(1, '--------------------------\n');
-yrbt = Clinrbt*vrbt';
-for tt = 1:length(trbt)
-    yrbt(:,tt) = yrbt(:,tt) + (h/2)*vrbt(tt, :)*Mquadrbt*vrbt(tt, :)';
+yr_bt = Clinr_bt*vr_bt';
+for tt = 1:length(tr)
+    yr_bt(:,tt) = yr_bt(:,tt) + (h/2)*vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
 end
-yrbt = yrbt + (1/2) * ones(1, nt+1);
+yr_bt = yr_bt + (1/2) * ones(1, length(tr));
 
-plot(t, yr, '--', 'color',ColMat(3,:), LineWidth=1.5); hold on
-plot(t, yrbt, '-.', 'color',ColMat(4,:), LineWidth=1.5); 
-lgd = legend('$y(t)$', '$y_r(t)$', '$y_{r,bt}(t)$', 'interpreter','latex','FontName','Arial',...
-    'location', 'northeast');
+plot(t, yr_tsia, '--', 'color',ColMat(2,:), LineWidth=1.5); hold on
+plot(t, yr_bt, '-.', 'color',ColMat(3,:), LineWidth=1.5); 
+lgd = legend('$y(t)$', '$y_r(t)$', '$y_{r,bt}(t)$', 'interpreter','latex', ...
+    'FontName', 'Arial', 'location', 'northeast');
 fontsize(lgd, 10, 'points')
 
 subplot(2,1,2)
-plot(tr, abs(y - yr)./abs(y), '--','color',ColMat(3,:),LineWidth=1.5); 
+semilogy(tr, abs(y - yr_tsia)./abs(y), '--','color',ColMat(2,:),LineWidth=1.5); 
 hold on;
-plot(trbt, abs(y - yrbt)./abs(y), '-.','color',ColMat(4,:),LineWidth=1.5); 
+semilogy(tr, abs(y - yr_bt)./abs(y), '-.','color',ColMat(3,:),LineWidth=1.5); 
 xlabel('$t$','interpreter','latex'); 
 ylabel('$|y(t) - y_r(t)|/|y(t)|$ ', 'fontsize', fs, 'interpreter', 'latex', ...
     LineWidth=1.5)
 
 % Overwrite figure
-% saveas(figure(1), 'results/advecdiff_plots.png')
-print -depsc2 results/advecdiff_output_plots
+print -depsc2 results/AdvecDiff_sinusoidal_r30_OutputPlot
 
 % Write data
 write = 1;
 if write
-    outputs = [t, y', yr', yrbt'];
-    dlmwrite('results/r25_advecdiff_outputs.dat', outputs, 'delimiter', '\t', 'precision', ...
-        8);
-    outputerrors = [t, (abs(y-yr)./abs(y))', (abs(y-yrbt)./abs(y))'];
-    dlmwrite('results/r25_advecdiff_outputerrors.dat', outputerrors, ...
+    outputs = [t, y', yr_tsia', yr_bt'];
+    dlmwrite('results/AdvecDiff_sinusoidal_r30_Outputs.dat', outputs, 'delimiter', ...
+        '\t', 'precision', 8);
+    outputerrors = [t, (abs(y-yr_tsia)./abs(y))', (abs(y-yr_bt)./abs(y))'];
+    dlmwrite('results/AdvecDiff_sinusoidal_r30_OutputErrors.dat', outputerrors, ...
         'delimiter', '\t', 'precision', 8);
 end
 
+fprintf(1, '\n');
 
-%% Plot convergence of H2 errors.
-fprintf(1, 'Plotting convergence of the method\n');
-fprintf(1, '----------------------------------\n');
-maxiter = max(size(h2errs));  
+
+%% Simulate full and reduced-order outputs; exponentially damped input.
+fprintf(1, 'Solving full-order AdvecDiff problem via ode15\n');
+fprintf(1, '----------------------------------------------\n');
+
+fprintf(1, 'Second, exponentially damped input u0(t) = exp(-t/5)*t^2\n');
+fprintf(1, '--------------------------------------------------------\n');
+
+Tfin   = 30;                      % Final time for simulation
+nt     = round(Tfin*10);          % Number of time steps
+tsteps = linspace(0, Tfin, nt+1); % Time-steps
+
+% Reset relevant input
+u0 = @(t) exp(-t/5)*t^2; % Exponentially damped input on left boundary
+
+options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol',ode_rtol, ...
+                  'Mass', E, 'Jacobian', A, ...
+                  'MStateDependence', 'none', 'Stats','on');
+
+% Redefine problem
+fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
+[t, v]   = ode15s(fAdvDiff, tsteps, v0, options);
+
+fprintf(1, 'Simulate full output.\n');
+fprintf(1, '--------------------.\n');
+
+% Output has mixed linear and quadratic terms
+y = Clin*v';
+for tt = 1:length(t)
+    y(:, tt) = y(:, tt) + (h/2)*v(tt, :)*Mquad*v(tt, :)';
+end
+y = y + (1/2) * ones(1, length(t));
 
 figure(2)
 set(gca, 'fontsize', 10)
-semilogy(1:maxiter, h2errs, '-o', 'color',ColMat(3,:), LineWidth=1.5)
-xlim([2,maxiter])
-% golden_ratio = (sqrt(5)+1)/2;
-% axes('position', [.125 .15 .75 golden_ratio-1])
-xlabel('$k$', 'interpreter', 'latex')
+subplot(2,1,1)
+plot(t, y, '-','color',ColMat(1,:), LineWidth=1.5)
+hold on
+grid on
+xlabel('$t$','fontsize',fs,'interpreter','latex'); 
+ylabel('$y(t)$','fontsize',fs,'interpreter','latex')
 
-print -depsc2 results/advecdiff_conv_plots
+
+fprintf(1, 'Solving reduced-order AdvecDiff problems via ode15\n');
+fprintf(1, '--------------------------------------------------\n');
+
+% For tsia reduced model
+ode_rtol = 1e-6; 
+nxr      = r;
+vr0      = zeros(nxr, 1); % Initial condition 
+options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
+                  'Mass', eye(r,r), 'Jacobian', Ar_tsia, ...
+                  'MStateDependence', 'none', 'Stats','on');
+fAdvDiffred   = @(tr, vr_tsia)(Ar_tsia*vr_tsia + Br_tsia*[u0(tr);u1(tr)]);
+[tr, vr_tsia] = ode15s(fAdvDiffred, tsteps, vr0, options);
+
+fprintf(1, 'Simulate tsia reduced output\n');
+fprintf(1, '----------------------------\n');
+yr_tsia = Clinr_tsia*vr_tsia';
+for tt = 1:length(tr)
+    yr_tsia(:,tt) = yr_tsia(:,tt) + (h/2)*vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
+end
+yr_tsia = yr_tsia + (1/2) * ones(1, length(tr));
+
+% For bt reduced model
+vr0      = zeros(nxr, 1); % Initial condition 
+options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
+                  'Mass', eye(r,r), 'Jacobian', Ar_bt, ...
+                  'MStateDependence', 'none', 'Stats','on');
+fAdvDiffredbt = @(tr,vrbt)(Ar_bt*vrbt + Br_bt*[u0(tr);u1(tr)]);
+[tr, vr_bt] = ode15s(fAdvDiffredbt, tsteps, vr0, options);
+
+fprintf(1, 'Simulate bt reduced output\n');
+fprintf(1, '--------------------------\n');
+yr_bt = Clinr_bt*vr_bt';
+for tt = 1:length(tr)
+    yr_bt(:,tt) = yr_bt(:,tt) + (h/2)*vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
+end
+yr_bt = yr_bt + (1/2) * ones(1, length(tr));
+
+plot(t, yr_tsia, '--', 'color',ColMat(2,:), LineWidth=1.5); hold on
+plot(t, yr_bt, '-.', 'color',ColMat(3,:), LineWidth=1.5); 
+lgd = legend('$y(t)$', '$y_r(t)$', '$y_{r,bt}(t)$', 'interpreter','latex', ...
+    'FontName', 'Arial', 'location', 'northeast');
+fontsize(lgd, 10, 'points')
+
+subplot(2,1,2)
+semilogy(tr, abs(y - yr_tsia)./abs(y), '--','color',ColMat(2,:),LineWidth=1.5); 
+hold on;
+semilogy(tr, abs(y - yr_bt)./abs(y), '-.','color',ColMat(3,:),LineWidth=1.5); 
+xlabel('$t$','interpreter','latex'); 
+ylabel('$|y(t) - y_r(t)|/|y(t)|$ ', 'fontsize', fs, 'interpreter', 'latex', ...
+    LineWidth=1.5)
+
+% Overwrite figure
+print -depsc2 results/AdvecDiff_exponential_r30_OutputPlot
 
 % Write data
 write = 1;
 if write
-    conv = [(1:maxiter)', h2errs'];
-    dlmwrite('results/r25_advecdiff_conv.dat', conv, 'delimiter', '\t', 'precision', ...
-        8);
+    outputs = [t, y', yr_tsia', yr_bt'];
+    dlmwrite('results/AdvecDiff_exponential_r30_Outputs.dat', outputs, 'delimiter', ...
+        '\t', 'precision', 8);
+    outputerrors = [t, (abs(y-yr_tsia)./abs(y))', (abs(y-yr_bt)./abs(y))'];
+    dlmwrite('results/AdvecDiff_exponential_r30_OutputErrors.dat', outputerrors, ...
+        'delimiter', '\t', 'precision', 8);
+end
+
+fprintf(1, '\n');
+
+
+%% Convergence analysis.
+fprintf(1, 'Plotting convergence of the method\n');
+fprintf(1, '----------------------------------\n');
+
+% Three different metrics: Relative H2 error, `tails' of the H2 error, and
+% gradients w.r.t. Ar
+sqrd_relh2errs = info_tsia.sqrd_relh2errs;
+tails          = info_tsia.tails;
+gradientAr     = info_tsia.gradientAr; 
+
+% Total number of iterations taken 
+maxiter = max(size(sqrd_relh2errs));  
+
+figure(3)
+set(gca, 'fontsize', 10)
+semilogy(1:maxiter, sqrd_relh2errs, '-o', 'color', ColMat(1,:), LineWidth=1.5)
+hold on;
+semilogy(1:maxiter, abs(tails), '-*', 'color', ColMat(2,:), LineWidth=1.5)
+semilogy(1:maxiter, gradientAr, '-+', 'color', ColMat(3,:), LineWidth=1.5)
+xlim([2,maxiter])
+xlabel('iteration count, $k$', 'interpreter', 'latex')
+
+print -depsc2 results/AdvecDiff_r30_conv
+
+% Write data
+write = 1;
+if write
+    conv = [(1:maxiter)', sqrd_relh2errs', (abs(tails))', gradientAr'];
+    dlmwrite('results/AdvecDiff_r30_conv.dat', conv, 'delimiter', '\t', 'precision', ...
+        12);
 end
 
 %% Compute H2 errors for hierarchy of reduced models.
 fprintf(1, 'Computing hiearchy of reduced models using lqo-tsia\n')
 fprintf(1, '---------------------------------------------------\n')
 
-rmax       = 30;
-H2errors   = zeros(rmax/2, 1);
-H2errorsbt = zeros(rmax/2, 1);
+rmax             = 30;
+relh2errors_tsia = zeros(rmax/2, 1);
+relh2errorsbt    = zeros(rmax/2, 1);
 % Precompute H2 norm of full-order model for relative error
 P        = lyap(A, B*B');
 Q        = lyap(A', Clin'*Clin + Mquad*P*Mquad);
@@ -236,53 +371,54 @@ fom_norm = sqrt(abs(trace(B'*Q*B)));
 
 % Toggle input opts
 opts           = struct();
-% opts.tol     = 10e-8;
-% opts.maxiter = 200;
+opts.tol     = 10e-14;
+opts.maxiter = 200;
 for r = 2:2:rmax  
     fprintf(1, 'Current reduced model is hierarchy; r=%d\n', r)
     fprintf(1, '----------------------------------------\n')
 
     % tsia reduced models
-    [Ar, Br, Clinr, Mquadr, poles] = mimolqo_tsia(A, B, Clin, Mquad, r, opts);
+    [Ar_tsia, Br_tsia, Clinr_tsia, Mquadr_tsia, info_tsia] = mimolqo_tsia(A, B, Clin, Mquad, r, opts);
 
-    % Build error realization, and compute H2 error using Gramian
-    % formulation
-    Aerr        = [A, zeros(nx, r); zeros(r, nx), Ar]; 
-    Berr        = [B; Br];
-    Cerr        = [Clin, - Clinr]; 
-    Merr        = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadr];
-    Perr        = lyap(Aerr, Berr*Berr');                   % Error reachability Gramian
-    Qerr        = lyap(Aerr', Cerr'*Cerr + Merr*Perr*Merr); % Error observability Gramian
-    k           = r/2;  
-    H2errors(k) = sqrt(abs(trace(Berr'*Qerr*Berr)))/fom_norm;
-    fprintf(1, 'Relative H2 error of current tsia reduced model is ||G-Gr||_H2 = %.16f\n', ...
-        H2errors(k));
+    % % Build error realization, and compute H2 error using Gramian
+    % % formulation
+    % Aerr        = [A, zeros(nx, r); zeros(r, nx), Ar]; 
+    % Berr        = [B; Br];
+    % Cerr        = [Clin, - Clinr]; 
+    % Merr        = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadr];
+    % Perr        = lyap(Aerr, Berr*Berr');                   % Error reachability Gramian
+    % Qerr        = lyap(Aerr', Cerr'*Cerr + Merr*Perr*Merr); % Error observability Gramian
+    k                      = r/2;  
+    sqrd_relh2err          = info_tsia.sqrd_relh2errs(end);
+    relh2errors_tsia(k, :) = sqrt(sqrd_relh2err);
+    fprintf(1, 'Relative H2 error of current tsia reduced model is ||G-Gr||_H2/||G||_H2 = %.16f\n', ...
+        relh2errors_tsia(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n')
 
     % bt reduced models
-    [Arbt, Brbt, Clinrbt, Mquadrbt, info] = mimolqo_bt(A, B, Clin, Mquad, ...
+    [Ar_bt, Br_bt, Clinr_bt, Mquadr_bt, info] = mimolqo_bt(A, B, Clin, Mquad, ...
         r);
 
     % Build error realization, and compute H2 error using Gramian
     % formulation
-    Aerrbt        = [A, zeros(nx, r); zeros(r, nx), Arbt]; 
-    Berrbt        = [B; Brbt];
-    Cerrbt        = [Clin, - Clinrbt]; 
-    Merrbt        = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadrbt];
+    Aerrbt        = [A, zeros(nx, r); zeros(r, nx), Ar_bt]; 
+    Berrbt        = [B; Br_bt];
+    Cerrbt        = [Clin, - Clinr_bt]; 
+    Merrbt        = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadr_bt];
     Perrbt        = lyap(Aerrbt, Berrbt*Berrbt');                  
     Qerrbt        = lyap(Aerrbt', Cerrbt'*Cerrbt + Merrbt*Perrbt*Merrbt);
     k             = r/2;  
-    H2errorsbt(k) = sqrt(abs(trace(Berrbt'*Qerrbt*Berrbt)))/fom_norm;
-    fprintf(1, 'Relative H2 error of current bt reduced model is ||G-Gr||_H2 = %.16f\n', ...
-        H2errorsbt(k));
+    relh2errorsbt(k, :) = sqrt(abs(trace(Berrbt'*Qerrbt*Berrbt)))/fom_norm;
+    fprintf(1, 'Relative H2 error of current bt reduced model is ||G-Gr||_H2/||G||_H2 = %.16f\n', ...
+        relh2errorsbt(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n')
 
 end
 
 write = 1;
 if write
-    h2errors = [(2:2:rmax)', H2errors, H2errorsbt];
-    dlmwrite('results/advecdiff_h2errors.dat', h2errors, 'delimiter', '\t', 'precision', ...
+    relh2errors = [(2:2:rmax)', relh2errors_tsia, relh2errorsbt];
+    dlmwrite('results/advecdiff_h2errors.dat', relh2errors, 'delimiter', '\t', 'precision', ...
         8);
 end
 
@@ -291,13 +427,13 @@ end
 fprintf(1, 'Plotting H2 errors\n');
 fprintf(1, '------------------\n');
 
-figure(3)
+figure(4)
 set(gca, 'fontsize', 10)
 % golden_ratio = (sqrt(5)+1)/2;
 % axes('position', [.125 .15 .75 golden_ratio-1])
-semilogy(2:2:rmax, H2errors(1:rmax/2), '-o', 'color', ColMat(3,:), LineWidth=1.5)
+semilogy(2:2:rmax, relh2errors_tsia(1:rmax/2), '-o', 'color', ColMat(3,:), LineWidth=1.5)
 hold on;
-semilogy(2:2:rmax, H2errorsbt(1:rmax/2), '-*', 'color', ColMat(4,:), LineWidth=1.5)
+semilogy(2:2:rmax, relh2errorsbt(1:rmax/2), '-*', 'color', ColMat(4,:), LineWidth=1.5)
 xlim([2,rmax])
 lgd = legend('lqo-tsia', 'lqo-bt', 'interpreter', 'latex', 'FontName', 'Arial',...
     'location', 'northeast');
