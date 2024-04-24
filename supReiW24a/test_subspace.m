@@ -36,8 +36,10 @@ Vprim_exact = Vprim;
 Wprim_exact = Wprim;
 
 % Load bases computed with second-order solves.
-load('results/prim_bases_g.mat', 'Vprim')
-load('results/prim_bases_pg.mat', 'Wprim')
+load('results/prim_bases_g.mat', 'Vprim_g')
+load('results/prim_bases_pg.mat', 'Wprim_pg')
+Vprim = Vprim_g;
+Wprim = Wprim_pg;
 
 r = 25;
 % Orthogonalize via pivoted QR and compare. 
