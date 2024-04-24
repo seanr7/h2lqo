@@ -120,7 +120,7 @@ for i = 1:250
     fosolve = Wprim(:, i); 
     % Second order solve accounting for structure
     % rhs has form Bhat = [B; 0], here
-    w       = Q*sosolve;      % Save from before
+    w       = Q_qo*sosolve;      % Save from before
     B2      = w(1:n, :);
     sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
     
