@@ -120,7 +120,8 @@ for i = 1:250
     fosolve = Wprim(:, i); 
     % Second order solve accounting for structure
     % rhs has form Bhat = [B; 0], here
-    B2      = Bhat(1:n, :);
+    w       = Q*sosolve;      % Save from before
+    B2      = w(1:n, :);
     sosolve = so_structured_solve(M, E, K, B2, s1, 1, 1);
     
     fprintf(1, 'Relative solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve)/norm(fosolve));
