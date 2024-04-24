@@ -83,8 +83,8 @@ fprintf(1, 'Starting solves, v = (s*E - A)^{-1}*Bhat, rhs Bhat = [0; B]\n');
 fprintf(1, '---------------------------------------------------------------\n');
 Bhat = B_qo;
 shifts = 1i*linspace(1,2*pi*251, 250); % Shifts used in interpolatory solves
-load('prim_bases_g_exactsolves.mat', 'Vprim')
-load('prim_bases_pg_exactsolves.mat', 'Wprim')
+load('results/prim_bases_g_exactsolves.mat', 'Vprim')
+load('results/prim_bases_pg_exactsolves.mat', 'Wprim')
 for i = 1:250
     s1 = shifts(i);
     % tic
