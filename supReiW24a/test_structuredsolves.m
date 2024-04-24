@@ -172,3 +172,10 @@ fprintf(1, 'Relative solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B;
 fprintf(1, '---------------------------------------------------------------\n');
 fprintf(1, 'Absolute solution error, w = ((s*E - A)^H)^{-1}*Bhat, rhs Bhat = [B; 0] %.16f \n', norm(sosolve-fosolve));
 fprintf(1, '---------------------------------------------------------------\n');
+
+%% Finished script.
+fprintf(1, 'FINISHED SCRIPT.\n');
+fprintf(1, '================\n');
+fprintf(1, '\n');
+
+diary off

@@ -127,7 +127,7 @@ function [Wprim, Vprim, Worth, Vorth, H_shifts, pW, pV] = interpolatory_solves(.
 %
 
 % Virginia Tech, USA
-% Last editied: 4/15/2024
+% Last editied: 4/24/2024
 %%
 % Grab dimensions.
 q =  max(size(shifts));
@@ -199,8 +199,8 @@ if opts.recomp_bases
         for k = 1:q
             fprintf(1, 'Current iterate is k = %d\n', k)
             fprintf(1, '-------------------------\n')
-            % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
-            v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
+            % Option 0 in 'so_structured_solve.m' implements (shifts(k) * E - A)\b)
+            v           = so_structured_solve(Mso, Dso, Kso, bso, shifts(k), 0, 1);
             Vprim(:, k) = v;
             Wprim(:, k) = v;
         end
@@ -221,12 +221,12 @@ if opts.recomp_bases
         for k = 1:q
             fprintf(1, 'Current iterate is k = %d\n', k)
             fprintf(1, '-------------------------\n')
-            % Option 0 in 'so_structured_solve.m' implements (-shifts(k) * E - A)\b)
-            v           = so_structured_solve(Mso, Dso, Kso, bso, -shifts(k), 0, 1);
+            % Option 0 in 'so_structured_solve.m' implements (shifts(k) * E - A)\b)
+            v           = so_structured_solve(Mso, Dso, Kso, bso, shifts(k), 0, 1);
             Vprim(:, k) = v;
-            % Option 1 in 'so_structured_solve.m' implements ((-shifts(k) * E - A)')\(Q*v))
+            % Option 1 in 'so_structured_solve.m' implements ((shifts(k) * E - A)')\(Q*v))
             tmp         = Qfo*v;
-            w           = so_structured_solve(Mso, Dso, Kso, tmp(1:n, 1), -shifts(k), 1, 1);
+            w           = so_structured_solve(Mso, Dso, Kso, tmp(1:n, 1), shifts(k), 1, 1);
             Wprim(:, k) = w;
         end
         fprintf(1, 'Primitive bases computed in %.2f s\n', toc(linear_solves))
