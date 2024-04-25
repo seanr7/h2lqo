@@ -60,11 +60,15 @@ fprintf(1, 'Computing reduced-model via lqoirka\n')
 fprintf(1, '--------------------------------\n')
 
 % Set order of reduction and input opts
+% Restart method using poles from last iteration
+load('results/plateTVAlqo_r75_lqoirka.mat', 'poles', 'sores');
 opts          = struct();
 r             = 75;
-opts.maxiter  = 50;
+opts.maxiter  = 50; % Go another 50
 opts.tol      = 10e-4;
 opts.plotconv = false;
+opts.poles    = poles(:, end);
+opts.sores    = sores;
 
 [Efo_r, Afo_r, Bfo_r, Qfo_r, info] = lqoirka(M, D, K, B, Qfo, r, opts);
 
