@@ -329,21 +329,27 @@ fprintf(1, '\n');
 fprintf(1, 'Plotting convergence of the method\n');
 fprintf(1, '----------------------------------\n');
 
-% Three different metrics: Relative H2 error, `tails' of the H2 error, and
-% gradients w.r.t. Ar
-sqrd_relh2errs = info_tsia.sqrd_relh2errs;
-tails          = info_tsia.tails;
-gradientAr     = info_tsia.gradientAr; 
+% Plot convergence
+errs    = info_tsia.errs;
+tails   = info_tsia.tails;
+maxiter = max(size(errs));
 
-% Total number of iterations taken 
-maxiter = max(size(sqrd_relh2errs));  
+changeinerrs     = zeros(1, maxiter);
+changeinerrs(1)  = 1;
+changeintails    = zeros(1, maxiter);
+changeintails(1) = 1;
+for i = 2:maxiter
+    changeintails(i) = abs(tails(i) - tails(i-1))/tails(1);
+    changeinerrs(i)  = abs(errs(i) - errs(i-1))/errs(1);
+end
 
 figure(3)
 set(gca, 'fontsize', 10)
-semilogy(1:maxiter, sqrd_relh2errs, '-o', 'color', ColMat(1,:), LineWidth=1.5)
+semilogy(1:maxiter, errs, '-o', 'color', ColMat(1,:), LineWidth=1.5)
 hold on;
-semilogy(1:maxiter, abs(tails), '-*', 'color', ColMat(2,:), LineWidth=1.5)
-semilogy(1:maxiter, gradientAr, '-+', 'color', ColMat(3,:), LineWidth=1.5)
+semilogy(1:maxiter, changeintails, '-*', 'color', ColMat(2,:), LineWidth=1.5)
+% semilogy(1:maxiter, change_intails, '-*', 'color', ColMat(2,:), LineWidth=1.5)
+% semilogy(1:maxiter, gradientAr, '-+', 'color', ColMat(3,:), LineWidth=1.5)
 xlim([2,maxiter])
 xlabel('iteration count, $k$', 'interpreter', 'latex')
 
@@ -352,50 +358,42 @@ print -depsc2 results/AdvecDiff_r30_conv
 % Write data
 write = 1;
 if write
-    conv = [(1:maxiter)', sqrd_relh2errs', (abs(tails))', gradientAr'];
+    % conv = [(1:maxiter)', errs', (abs(tails))', gradientAr'];
+    conv = [(1:maxiter)', errs', changeintails'];
     dlmwrite('results/AdvecDiff_r30_conv.dat', conv, 'delimiter', '\t', 'precision', ...
         12);
 end
 
-%% Compute H2 errors for hierarchy of reduced models.
-fprintf(1, 'Computing hiearchy of reduced models using lqo-tsia\n')
-fprintf(1, '---------------------------------------------------\n')
+%% Hierarchy of reduced models.
+fprintf(1, 'Computing hiearchy of reduced models using LQO-TSIA and LQO-BT\n')
+fprintf(1, '--------------------------------------------------------------\n')
 
-rmax             = 30;
-relh2errors_tsia = zeros(rmax/2, 1);
-relh2errorsbt    = zeros(rmax/2, 1);
+rmax         = 30;
+relerrs_tsia = zeros(rmax/2, 1);
+relerrs_bt   = zeros(rmax/2, 1);
 % Precompute H2 norm of full-order model for relative error
 P        = lyap(A, B*B');
 Q        = lyap(A', Clin'*Clin + Mquad*P*Mquad);
 fom_norm = sqrt(abs(trace(B'*Q*B)));
 
 % Toggle input opts
-opts           = struct();
+opts         = struct();
 opts.tol     = 10e-14;
 opts.maxiter = 200;
 for r = 2:2:rmax  
     fprintf(1, 'Current reduced model is hierarchy; r=%d\n', r)
     fprintf(1, '----------------------------------------\n')
-
-    % tsia reduced models
+    
+    % LQO-TSIA
     [Ar_tsia, Br_tsia, Clinr_tsia, Mquadr_tsia, info_tsia] = mimolqo_tsia(A, B, Clin, Mquad, r, opts);
-
-    % % Build error realization, and compute H2 error using Gramian
-    % % formulation
-    % Aerr        = [A, zeros(nx, r); zeros(r, nx), Ar]; 
-    % Berr        = [B; Br];
-    % Cerr        = [Clin, - Clinr]; 
-    % Merr        = [Mquad, zeros(nx, r); zeros(r, nx), -Mquadr];
-    % Perr        = lyap(Aerr, Berr*Berr');                   % Error reachability Gramian
-    % Qerr        = lyap(Aerr', Cerr'*Cerr + Merr*Perr*Merr); % Error observability Gramian
-    k                      = r/2;  
-    sqrd_relh2err          = info_tsia.sqrd_relh2errs(end);
-    relh2errors_tsia(k, :) = sqrt(sqrd_relh2err);
-    fprintf(1, 'Relative H2 error of current tsia reduced model is ||G-Gr||_H2/||G||_H2 = %.16f\n', ...
-        relh2errors_tsia(k, :));
+    k                 = r/2;  
+    errs              = info_tsia.errs(end);
+    relerrs_tsia(k, :) = sqrt(errs);
+    fprintf(1, 'Relative H2 error of LQO-TSIA reduced model is ||G - Gr||_H2/||G||_H2 = %.16f\n', ...
+        relerrs_tsia(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n')
 
-    % bt reduced models
+    % LQO-BT
     [Ar_bt, Br_bt, Clinr_bt, Mquadr_bt, info] = mimolqo_bt(A, B, Clin, Mquad, ...
         r);
 
@@ -408,17 +406,17 @@ for r = 2:2:rmax
     Perrbt        = lyap(Aerrbt, Berrbt*Berrbt');                  
     Qerrbt        = lyap(Aerrbt', Cerrbt'*Cerrbt + Merrbt*Perrbt*Merrbt);
     k             = r/2;  
-    relh2errorsbt(k, :) = sqrt(abs(trace(Berrbt'*Qerrbt*Berrbt)))/fom_norm;
-    fprintf(1, 'Relative H2 error of current bt reduced model is ||G-Gr||_H2/||G||_H2 = %.16f\n', ...
-        relh2errorsbt(k, :));
+    relerrs_bt(k, :) = sqrt(abs(trace(Berrbt'*Qerrbt*Berrbt)))/fom_norm;
+    fprintf(1, 'Relative H2 error of LQO-BT reduced model is ||G - Gr||_H2/||G||_H2 = %.16f\n', ...
+        relerrs_bt(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n')
 
 end
 
 write = 1;
 if write
-    relh2errors = [(2:2:rmax)', relh2errors_tsia, relh2errorsbt];
-    dlmwrite('results/advecdiff_h2errors.dat', relh2errors, 'delimiter', '\t', 'precision', ...
+    relh2errors = [(2:2:rmax)', relerrs_tsia, relerrs_bt];
+    dlmwrite('results/AdvecDiff_H2errors.dat', relh2errors, 'delimiter', '\t', 'precision', ...
         8);
 end
 
@@ -429,11 +427,9 @@ fprintf(1, '------------------\n');
 
 figure(4)
 set(gca, 'fontsize', 10)
-% golden_ratio = (sqrt(5)+1)/2;
-% axes('position', [.125 .15 .75 golden_ratio-1])
-semilogy(2:2:rmax, relh2errors_tsia(1:rmax/2), '-o', 'color', ColMat(3,:), LineWidth=1.5)
+semilogy(2:2:rmax, relerrs_tsia(1:rmax/2), '-o', 'color', ColMat(2,:), LineWidth=1.5)
 hold on;
-semilogy(2:2:rmax, relh2errorsbt(1:rmax/2), '-*', 'color', ColMat(4,:), LineWidth=1.5)
+semilogy(2:2:rmax, relerrs_bt(1:rmax/2), '-*', 'color', ColMat(3,:), LineWidth=1.5)
 xlim([2,rmax])
 lgd = legend('lqo-tsia', 'lqo-bt', 'interpreter', 'latex', 'FontName', 'Arial',...
     'location', 'northeast');
@@ -441,7 +437,7 @@ xlabel('$r$', 'interpreter', 'latex')
 ylabel('$||\mathcal{G}-\mathcal{G}_r||_{\mathcal{H}_2}/||\mathcal{G}||_{\mathcal{H}_2}$',...
     'interpreter', 'latex')
 
-print -depsc2 results/advecdiff_h2errors_plots
+print -depsc2 results/AdvecDiff_r30_H2errors_Plot
 
 
 %% Finished script.

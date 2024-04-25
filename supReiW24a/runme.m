@@ -82,17 +82,17 @@ for ii=1:length(s)
     fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
     current_iter = tic;
     % Tmp solves
-    tmp_r25_irka = (s(ii)*Efo_r - Afo_r)\Bfo_r;
-    tmp_r25_Linfty_g = (s(ii)*Efo_r25_Linfty_g - Afo_r25_Linfty_g)\Bfo_r25_Linfty_g;
+    tmp_r25_irka      = (s(ii)*Efo_r - Afo_r)\Bfo_r;
+    tmp_r25_Linfty_g  = (s(ii)*Efo_r25_Linfty_g - Afo_r25_Linfty_g)\Bfo_r25_Linfty_g;
     tmp_r25_Linfty_pg = (s(ii)*Efo_r25_Linfty_pg - Afo_r25_Linfty_pg)\Bfo_r25_Linfty_pg;
-    tmp_r25_avg_g = (s(ii)*Efo_r25_avg_g - Afo_r25_avg_g)\Bfo_r25_avg_g;
-    tmp_r25_avg_pg = (s(ii)*Efo_r25_avg_pg - Afo_r25_avg_pg)\Bfo_r25_avg_pg;
+    tmp_r25_avg_g     = (s(ii)*Efo_r25_avg_g - Afo_r25_avg_g)\Bfo_r25_avg_g;
+    tmp_r25_avg_pg    = (s(ii)*Efo_r25_avg_pg - Afo_r25_avg_pg)\Bfo_r25_avg_pg;
     % Evaluate rms response
-    res_r25_irka(ii) = sqrt((tmp_r25_irka'*Qfo_r*tmp_r25_irka)/n_nodes);
-    res_r25_Linfty_g(ii) = sqrt((tmp_r25_Linfty_g'*Qfo_r25_Linfty_g*tmp_r25_Linfty_g)/n_nodes);
+    res_r25_irka(ii)      = sqrt((tmp_r25_irka'*Qfo_r*tmp_r25_irka)/n_nodes);
+    res_r25_Linfty_g(ii)  = sqrt((tmp_r25_Linfty_g'*Qfo_r25_Linfty_g*tmp_r25_Linfty_g)/n_nodes);
     res_r25_Linfty_pg(ii) = sqrt((tmp_r25_Linfty_pg'*Qfo_r25_Linfty_pg*tmp_r25_Linfty_pg)/n_nodes);
-    res_r25_avg_g(ii) = sqrt((tmp_r25_avg_g' * Qfo_r25_avg_g * tmp_r25_avg_g)/n_nodes);
-    res_r25_avg_pg(ii) = sqrt((tmp_r25_avg_pg'*Qfo_r25_avg_pg*tmp_r25_avg_pg)/n_nodes);
+    res_r25_avg_g(ii)     = sqrt((tmp_r25_avg_g' * Qfo_r25_avg_g * tmp_r25_avg_g)/n_nodes);
+    res_r25_avg_pg(ii)    = sqrt((tmp_r25_avg_pg'*Qfo_r25_avg_pg*tmp_r25_avg_pg)/n_nodes);
     fprintf(1, 'Current iteration of reduced order simulation finished in %.2f s\n',toc(current_iter))
     fprintf(1, '----------------------------------------------------------------------\n');
 end
@@ -204,17 +204,17 @@ for ii=1:length(s)
     fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
     current_iter = tic;
     % Tmp solves
-    tmp_r50_irka = (s(ii)*Efo_r - Afo_r)\Bfo_r;
-    tmp_r50_Linfty_g = (s(ii)*Efo_r50_Linfty_g - Afo_r50_Linfty_g)\Bfo_r50_Linfty_g;
+    tmp_r50_irka      = (s(ii)*Efo_r - Afo_r)\Bfo_r;
+    tmp_r50_Linfty_g  = (s(ii)*Efo_r50_Linfty_g - Afo_r50_Linfty_g)\Bfo_r50_Linfty_g;
     tmp_r50_Linfty_pg = (s(ii)*Efo_r50_Linfty_pg - Afo_r50_Linfty_pg)\Bfo_r50_Linfty_pg;
-    tmp_r50_avg_g = (s(ii)*Efo_r50_avg_g - Afo_r50_avg_g)\Bfo_r50_avg_g;
-    tmp_r50_avg_pg = (s(ii)*Efo_r50_avg_pg - Afo_r50_avg_pg)\Bfo_r50_avg_pg;
+    tmp_r50_avg_g     = (s(ii)*Efo_r50_avg_g - Afo_r50_avg_g)\Bfo_r50_avg_g;
+    tmp_r50_avg_pg    = (s(ii)*Efo_r50_avg_pg - Afo_r50_avg_pg)\Bfo_r50_avg_pg;
     % Evaluate rms response
-    res_r50_irka(ii) = sqrt((tmp_r50_irka'*Qfo_r*tmp_r50_irka)/n_nodes);
-    res_r50_Linfty_g(ii) = sqrt((tmp_r50_Linfty_g'*Qfo_r50_Linfty_g*tmp_r50_Linfty_g)/n_nodes);
+    res_r50_irka(ii)      = sqrt((tmp_r50_irka'*Qfo_r*tmp_r50_irka)/n_nodes);
+    res_r50_Linfty_g(ii)  = sqrt((tmp_r50_Linfty_g'*Qfo_r50_Linfty_g*tmp_r50_Linfty_g)/n_nodes);
     res_r50_Linfty_pg(ii) = sqrt((tmp_r50_Linfty_pg'*Qfo_r50_Linfty_pg*tmp_r50_Linfty_pg)/n_nodes);
-    res_r50_avg_g(ii) = sqrt((tmp_r50_avg_g' * Qfo_r50_avg_g * tmp_r50_avg_g)/n_nodes);
-    res_r50_avg_pg(ii) = sqrt((tmp_r50_avg_pg'*Qfo_r50_avg_pg*tmp_r50_avg_pg)/n_nodes);
+    res_r50_avg_g(ii)     = sqrt((tmp_r50_avg_g' * Qfo_r50_avg_g * tmp_r50_avg_g)/n_nodes);
+    res_r50_avg_pg(ii)    = sqrt((tmp_r50_avg_pg'*Qfo_r50_avg_pg*tmp_r50_avg_pg)/n_nodes);
     fprintf(1, 'Current iteration of reduced order simulation finished in %.2f s\n',toc(current_iter))
     fprintf(1, '----------------------------------------------------------------------\n');
 end
@@ -314,17 +314,17 @@ for ii=1:length(s)
     fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
     current_iter = tic;
     % Tmp solves
-    tmp_r75_irka = (s(ii)*Efo_r - Afo_r)\Bfo_r;
-    tmp_r75_Linfty_g = (s(ii)*Efo_r75_Linfty_g - Afo_r75_Linfty_g)\Bfo_r75_Linfty_g;
+    tmp_r75_irka      = (s(ii)*Efo_r - Afo_r)\Bfo_r;
+    tmp_r75_Linfty_g  = (s(ii)*Efo_r75_Linfty_g - Afo_r75_Linfty_g)\Bfo_r75_Linfty_g;
     tmp_r75_Linfty_pg = (s(ii)*Efo_r75_Linfty_pg - Afo_r75_Linfty_pg)\Bfo_r75_Linfty_pg;
-    tmp_r75_avg_g = (s(ii)*Efo_r75_avg_g - Afo_r75_avg_g)\Bfo_r75_avg_g;
-    tmp_r75_avg_pg = (s(ii)*Efo_r75_avg_pg - Afo_r75_avg_pg)\Bfo_r75_avg_pg;
+    tmp_r75_avg_g     = (s(ii)*Efo_r75_avg_g - Afo_r75_avg_g)\Bfo_r75_avg_g;
+    tmp_r75_avg_pg    = (s(ii)*Efo_r75_avg_pg - Afo_r75_avg_pg)\Bfo_r75_avg_pg;
     % Evaluate rms response
-    res_r75_irka(ii) = sqrt((tmp_r75_irka'*Qfo_r*tmp_r75_irka)/n_nodes);
-    res_r75_Linfty_g(ii) = sqrt((tmp_r75_Linfty_g'*Qfo_r75_Linfty_g*tmp_r75_Linfty_g)/n_nodes);
+    res_r75_irka(ii)      = sqrt((tmp_r75_irka'*Qfo_r*tmp_r75_irka)/n_nodes);
+    res_r75_Linfty_g(ii)  = sqrt((tmp_r75_Linfty_g'*Qfo_r75_Linfty_g*tmp_r75_Linfty_g)/n_nodes);
     res_r75_Linfty_pg(ii) = sqrt((tmp_r75_Linfty_pg'*Qfo_r75_Linfty_pg*tmp_r75_Linfty_pg)/n_nodes);
-    res_r75_avg_g(ii) = sqrt((tmp_r75_avg_g' * Qfo_r75_avg_g * tmp_r75_avg_g)/n_nodes);
-    res_r75_avg_pg(ii) = sqrt((tmp_r75_avg_pg'*Qfo_r75_avg_pg*tmp_r75_avg_pg)/n_nodes);
+    res_r75_avg_g(ii)     = sqrt((tmp_r75_avg_g' * Qfo_r75_avg_g * tmp_r75_avg_g)/n_nodes);
+    res_r75_avg_pg(ii)    = sqrt((tmp_r75_avg_pg'*Qfo_r75_avg_pg*tmp_r75_avg_pg)/n_nodes);
     fprintf(1, 'Current iteration of reduced order simulation finished in %.2f s\n',toc(current_iter))
     fprintf(1, '----------------------------------------------------------------------\n');
 end
@@ -392,114 +392,114 @@ legend('Full-order', 'r=75, IRKA', 'r=75 Linfty-g', 'r=75 Linfty-pg', ...
 saveas(figure(3), 'results/r75_plots.png')
 
 %% Load base data for r = 100.
-% fprintf(1, 'Load problem data for order r = 100 reduced models\n');
-% fprintf(1, '--------------------------------------------------\n');
-% 
-% % order r = 100 reduced models
-% load('results/plateTVAlqo_r100_lqoirka.mat')
-% load('results/plateTVAlqo_r100_Linfty_g.mat')
-% load('results/plateTVAlqo_r100_Linfty_pg.mat')
-% load('results/plateTVAlqo_r100_avg_g.mat')
-% load('results/plateTVAlqo_r100_avg_pg.mat')
+fprintf(1, 'Load problem data for order r = 100 reduced models\n');
+fprintf(1, '--------------------------------------------------\n');
+
+% order r = 100 reduced models
+load('results/plateTVAlqo_r100_lqoirka.mat')
+load('results/plateTVAlqo_r100_Linfty_g.mat')
+load('results/plateTVAlqo_r100_Linfty_pg.mat')
+load('results/plateTVAlqo_r100_avg_g.mat')
+load('results/plateTVAlqo_r100_avg_pg.mat')
 
 % All other data already loaded
-% fprintf(1, '\n');
+fprintf(1, '\n');
 
 %% Simulate rms response r = 100.
-% fprintf(1, 'Simulate rms response for order r = 100 reduced models\n');
-% fprintf(1, '-----------------------------------------------------\n');
-% 
-% % Allocate space for results
-% res_r100_irka      = zeros(1,length(s));
-% res_r100_Linfty_g  = zeros(1, length(s));
-% res_r100_Linfty_pg = zeros(1, length(s));
-% res_r100_avg_g     = zeros(1, length(s));
-% res_r100_avg_pg    = zeros(1, length(s));
-% 
-% fprintf(1, 'Beginning reduced order simulations\n')
-% fprintf(1, '-------------------------------\n');
-% overall_start = tic;
-% 
-% for ii=1:length(s)
-%     fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
-%     current_iter = tic;
-%     % Tmp solves
-%     tmp_r100_irka = (s(ii)*Efo_r - Afo_r)\Bfo_r;
-%     tmp_r100_Linfty_g = (s(ii)*Efo_r100_Linfty_g - Afo_r100_Linfty_g)\Bfo_r100_Linfty_g;
-%     tmp_r100_Linfty_pg = (s(ii)*Efo_r100_Linfty_pg - Afo_r100_Linfty_pg)\Bfo_r100_Linfty_pg;
-%     tmp_r100_avg_g = (s(ii)*Efo_r100_avg_g - Afo_r100_avg_g)\Bfo_r100_avg_g;
-%     tmp_r100_avg_pg = (s(ii)*Efo_r100_avg_pg - Afo_r100_avg_pg)\Bfo_r100_avg_pg;
-%     % Evaluate rms response
-%     res_r100_irka(ii) = sqrt((tmp_r100_irka'*Qfo_r*tmp_r100_irka)/n_nodes);
-%     res_r100_Linfty_g(ii) = sqrt((tmp_r100_Linfty_g'*Qfo_r100_Linfty_g*tmp_r100_Linfty_g)/n_nodes);
-%     res_r100_Linfty_pg(ii) = sqrt((tmp_r100_Linfty_pg'*Qfo_r100_Linfty_pg*tmp_r100_Linfty_pg)/n_nodes);
-%     res_r100_avg_g(ii) = sqrt((tmp_r100_avg_g' * Qfo_r100_avg_g * tmp_r100_avg_g)/n_nodes);
-%     res_r100_avg_pg(ii) = sqrt((tmp_r100_avg_pg'*Qfo_r100_avg_pg*tmp_r100_avg_pg)/n_nodes);
-%     fprintf(1, 'Current iteration of reduced order simulation finished in %.2f s\n',toc(current_iter))
-%     fprintf(1, '----------------------------------------------------------------------\n');
-% end
-% fprintf(1, 'Reduced order simulations finished in %.2f s\n', toc(overall_start))
-% fprintf(1, '--------------------------------------------------\n');
-% 
-% % Compute magnitudes to plot
-% % To plot magnitudes in absolute value, uncomment the code below
-% % mag_r100_irka      = abs(res_r100_irka);
-% % mag_r100_Linfty_g  = abs(res_r100_Linfty_g);
-% % mag_r100_Linfty_pg = abs(res_r100_Linfty_pg);
-% % mag_r100_avg_g     = abs(res_r100_avg_g);
-% % mag_r100_avg_pg    = abs(res_r100_avg_pg);
-% 
-% % To plot magnitudes in dB, uncomment the code below
-% mag_r100_irka      = 10*log10(abs(res_r100_irka)/1e-9);
-% mag_r100_Linfty_g  = 10*log10(abs(res_r100_Linfty_g)/1e-9);
-% mag_r100_Linfty_pg = 10*log10(abs(res_r100_Linfty_pg)/1e-9);
-% mag_r100_avg_g     = 10*log10(abs(res_r100_avg_g)/1e-9);
-% mag_r100_avg_pg    = 10*log10(abs(res_r100_avg_pg)/1e-9);
-% 
-% write = 1;
-% if write
-%     % Store data
-%     magmatrix = [s_hz', mag', mag_r100_irka', mag_r100_Linfty_g', mag_r100_Linfty_pg', ...
-%         mag_r100_avg_g', mag_r100_avg_pg'];
-%     dlmwrite('results/r100_mag.dat', magmatrix, ...
-%         'delimiter', '\t', 'precision', 8);
-%     errmatrix = [s_hz', (abs(mag-mag_r100_irka)./abs(mag))', (abs(mag-mag_r100_Linfty_g)./abs(mag))', ...
-%         (abs(mag-mag_r100_Linfty_pg)./abs(mag))', (abs(mag-mag_r100_avg_g)./abs(mag))', ...
-%         (abs(mag-mag_r100_avg_pg)./abs(mag))'];
-%     dlmwrite('results/r100_err.dat', errmatrix, ...
-%         'delimiter', '\t', 'precision', 8);
-% end
-% 
-% %% Plot transfer function errors and magnitude for r = 100 reduced models.
-% fprintf(1, 'Plotting response magnitude and error for order r = 100 reduced models\n');
-% fprintf(1, '----------------------------------------------------------------------\n');
-% figure(4)
-% % Pointwise L_infty error
-% subplot(2,1,1)
-% semilogy(s_hz, abs(mag-mag_r100_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
-% semilogy(s_hz, abs(mag-mag_r100_Linfty_g)./abs(mag),'--','color', ColMat(3,:),LineWidth=1);
-% semilogy(s_hz, abs(mag-mag_r100_Linfty_pg)./abs(mag),'--','color', ColMat(4,:),LineWidth=1);
-% semilogy(s_hz, abs(mag-mag_r100_avg_g)./abs(mag),'--.','color', ColMat(5,:),LineWidth=1);
-% semilogy(s_hz, abs(mag-mag_r100_avg_pg)./abs(mag),'--.','color', ColMat(6,:),LineWidth=1);
-% xlabel('Frequency [Hz]')
-% ylabel('Magnitude [dB]')
-% 
-% % Magnitude
-% subplot(2,1,2)
-% plot(s_hz, mag,'--o','color',ColMat(1,:),'markersize',4,LineWidth=1);hold on;
-% plot(s_hz, mag_r100_irka, '-.','color',ColMat(2,:),LineWidth=1);
-% plot(s_hz, mag_r100_Linfty_g,'--','color', ColMat(3,:),LineWidth=1);
-% plot(s_hz, mag_r100_Linfty_pg,'--','color', ColMat(4,:),LineWidth=1);
-% plot(s_hz, mag_r100_avg_g,'--.','color', ColMat(5,:),LineWidth=1);
-% plot(s_hz, mag_r100_avg_pg,'--.','color', ColMat(6,:),LineWidth=1);
-% xlabel('Frequency [Hz]')
-% ylabel('Magnitude [dB]')
-% legend('Full-order', 'r=100, IRKA', 'r=100 Linfty-g', 'r=100 Linfty-pg', ...
-%     'r=100 avg-g', 'r=100 avg-pg', 'Orientation', 'horizontal', 'Location', ...
-%     'southoutside', 'NumColumns', 3)
-% 
-% % Overwrite figure
-% saveas(figure(4), 'results/r100_plots.png')
+fprintf(1, 'Simulate rms response for order r = 100 reduced models\n');
+fprintf(1, '-----------------------------------------------------\n');
+
+% Allocate space for results
+res_r100_irka      = zeros(1,length(s));
+res_r100_Linfty_g  = zeros(1, length(s));
+res_r100_Linfty_pg = zeros(1, length(s));
+res_r100_avg_g     = zeros(1, length(s));
+res_r100_avg_pg    = zeros(1, length(s));
+
+fprintf(1, 'Beginning reduced order simulations\n')
+fprintf(1, '-------------------------------\n');
+overall_start = tic;
+
+for ii=1:length(s)
+    fprintf(1, 'Frequency step %d, f=%.2f Hz ...\n ',ii,imag(s(ii))/2/pi)
+    current_iter = tic;
+    % Tmp solves
+    tmp_r100_irka      = (s(ii)*Efo_r - Afo_r)\Bfo_r;
+    tmp_r100_Linfty_g  = (s(ii)*Efo_r100_Linfty_g - Afo_r100_Linfty_g)\Bfo_r100_Linfty_g;
+    tmp_r100_Linfty_pg = (s(ii)*Efo_r100_Linfty_pg - Afo_r100_Linfty_pg)\Bfo_r100_Linfty_pg;
+    tmp_r100_avg_g     = (s(ii)*Efo_r100_avg_g - Afo_r100_avg_g)\Bfo_r100_avg_g;
+    tmp_r100_avg_pg    = (s(ii)*Efo_r100_avg_pg - Afo_r100_avg_pg)\Bfo_r100_avg_pg;
+    % Evaluate rms response
+    res_r100_irka(ii)      = sqrt((tmp_r100_irka'*Qfo_r*tmp_r100_irka)/n_nodes);
+    res_r100_Linfty_g(ii)  = sqrt((tmp_r100_Linfty_g'*Qfo_r100_Linfty_g*tmp_r100_Linfty_g)/n_nodes);
+    res_r100_Linfty_pg(ii) = sqrt((tmp_r100_Linfty_pg'*Qfo_r100_Linfty_pg*tmp_r100_Linfty_pg)/n_nodes);
+    res_r100_avg_g(ii)     = sqrt((tmp_r100_avg_g' * Qfo_r100_avg_g * tmp_r100_avg_g)/n_nodes);
+    res_r100_avg_pg(ii)    = sqrt((tmp_r100_avg_pg'*Qfo_r100_avg_pg*tmp_r100_avg_pg)/n_nodes);
+    fprintf(1, 'Current iteration of reduced order simulation finished in %.2f s\n',toc(current_iter))
+    fprintf(1, '----------------------------------------------------------------------\n');
+end
+fprintf(1, 'Reduced order simulations finished in %.2f s\n', toc(overall_start))
+fprintf(1, '--------------------------------------------------\n');
+
+% Compute magnitudes to plot
+% To plot magnitudes in absolute value, uncomment the code below
+% mag_r100_irka      = abs(res_r100_irka);
+% mag_r100_Linfty_g  = abs(res_r100_Linfty_g);
+% mag_r100_Linfty_pg = abs(res_r100_Linfty_pg);
+% mag_r100_avg_g     = abs(res_r100_avg_g);
+% mag_r100_avg_pg    = abs(res_r100_avg_pg);
+
+% To plot magnitudes in dB, uncomment the code below
+mag_r100_irka      = 10*log10(abs(res_r100_irka)/1e-9);
+mag_r100_Linfty_g  = 10*log10(abs(res_r100_Linfty_g)/1e-9);
+mag_r100_Linfty_pg = 10*log10(abs(res_r100_Linfty_pg)/1e-9);
+mag_r100_avg_g     = 10*log10(abs(res_r100_avg_g)/1e-9);
+mag_r100_avg_pg    = 10*log10(abs(res_r100_avg_pg)/1e-9);
+
+write = 1;
+if write
+    % Store data
+    magmatrix = [s_hz', mag', mag_r100_irka', mag_r100_Linfty_g', mag_r100_Linfty_pg', ...
+        mag_r100_avg_g', mag_r100_avg_pg'];
+    dlmwrite('results/r100_mag.dat', magmatrix, ...
+        'delimiter', '\t', 'precision', 8);
+    errmatrix = [s_hz', (abs(mag-mag_r100_irka)./abs(mag))', (abs(mag-mag_r100_Linfty_g)./abs(mag))', ...
+        (abs(mag-mag_r100_Linfty_pg)./abs(mag))', (abs(mag-mag_r100_avg_g)./abs(mag))', ...
+        (abs(mag-mag_r100_avg_pg)./abs(mag))'];
+    dlmwrite('results/r100_err.dat', errmatrix, ...
+        'delimiter', '\t', 'precision', 8);
+end
+
+%% Plot transfer function errors and magnitude for r = 100 reduced models.
+fprintf(1, 'Plotting response magnitude and error for order r = 100 reduced models\n');
+fprintf(1, '----------------------------------------------------------------------\n');
+figure(4)
+% Pointwise L_infty error
+subplot(2,1,1)
+semilogy(s_hz, abs(mag-mag_r100_irka)./abs(mag), '-.','color',ColMat(2,:),LineWidth=1);hold on
+semilogy(s_hz, abs(mag-mag_r100_Linfty_g)./abs(mag),'--','color', ColMat(3,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r100_Linfty_pg)./abs(mag),'--','color', ColMat(4,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r100_avg_g)./abs(mag),'--.','color', ColMat(5,:),LineWidth=1);
+semilogy(s_hz, abs(mag-mag_r100_avg_pg)./abs(mag),'--.','color', ColMat(6,:),LineWidth=1);
+xlabel('Frequency [Hz]')
+ylabel('Magnitude [dB]')
+
+% Magnitude
+subplot(2,1,2)
+plot(s_hz, mag,'--o','color',ColMat(1,:),'markersize',4,LineWidth=1);hold on;
+plot(s_hz, mag_r100_irka, '-.','color',ColMat(2,:),LineWidth=1);
+plot(s_hz, mag_r100_Linfty_g,'--','color', ColMat(3,:),LineWidth=1);
+plot(s_hz, mag_r100_Linfty_pg,'--','color', ColMat(4,:),LineWidth=1);
+plot(s_hz, mag_r100_avg_g,'--.','color', ColMat(5,:),LineWidth=1);
+plot(s_hz, mag_r100_avg_pg,'--.','color', ColMat(6,:),LineWidth=1);
+xlabel('Frequency [Hz]')
+ylabel('Magnitude [dB]')
+legend('Full-order', 'r=100, IRKA', 'r=100 Linfty-g', 'r=100 Linfty-pg', ...
+    'r=100 avg-g', 'r=100 avg-pg', 'Orientation', 'horizontal', 'Location', ...
+    'southoutside', 'NumColumns', 3)
+
+% Overwrite figure
+saveas(figure(4), 'results/r100_plots.png')
 
 %% Finished script.
 fprintf(1, 'FINISHED SCRIPT.\n');

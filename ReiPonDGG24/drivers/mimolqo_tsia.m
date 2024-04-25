@@ -64,7 +64,7 @@ function [Ar, Br, Cr, Mr, info] = mimolqo_tsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %   |    PARAMETER    |                     MEANING                       |
 %   +-----------------+---------------------------------------------------+
-%   | sqrd_relh2errs  | history of squared relative H2 errors throughout  |
+%   | errs            | history of squared relative H2 errors throughout  |
 %   |                 | the iteration                                     |
 %   +-----------------+---------------------------------------------------+
 %   | tails           | variable parts of the relative H2 error           |
@@ -175,15 +175,15 @@ Qr = lyap(Ar', rhsQr);
 Y  = lyap(A', Ar, rhsY);
 
 % 2. Compute squared relative H2 error from trace formula
-iter                 = 1;
-tails(iter)          = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
-gradientAr(iter)     = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
-sqrd_relh2errs(iter) = (h + tails(iter))/h;                               % Squared relative error
+iter             = 1;
+tails(iter)      = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
+gradientAr(iter) = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
+errs(iter)       = (h + tails(iter))/h;                               % Squared relative H2 error
 
 % Set convergence criterion to enter while
-changein_h2errs(iter) = opts.tol + 1;
+changein_errs(iter) = opts.tol + 1;
 
-while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
+while (changein_errs(iter) > opts.tol && iter <= opts.maxiter)
     iter_start = tic; % Start timer on this iteration
     fprintf(1, 'Current iterate is k = %d\n', iter)
     fprintf(1, '---------------------------------------\n')
@@ -226,29 +226,29 @@ while (changein_h2errs(iter) > opts.tol && iter <= opts.maxiter)
     Qr = lyap(Ar', rhsQr);
     Y  = lyap(A', Ar, rhsY);
     % 2. Compute squared relative H2 error from trace formula
-    tails(iter)          = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
-    gradientAr(iter)     = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
-    sqrd_relh2errs(iter) = abs((h + tails(iter))/h);                          % Squared relative error
+    tails(iter)      = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
+    gradientAr(iter) = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
+    errs(iter)       = abs((h + tails(iter))/h);                          % Squared relative error
     fprintf(1, 'Squared relative H2 error of current tsia reduced model is ||G - Gr||_H2^2/||G||_H2^2 = %.12f\n', ...
-        sqrd_relh2errs(iter));
+        errs(iter));
 
     % Compare change in relative H2 error with previous iteration to track
     % convergence
-    changein_h2errs(iter) = abs(sqrd_relh2errs(iter) - sqrd_relh2errs(iter-1));
-    fprintf('Change in relative squared H2 errors is is %.12f \n', changein_h2errs(iter))
+    changein_errs(iter) = abs(errs(iter) - errs(iter-1))/errs(1);
+    fprintf('Relative change in relative squared H2 errors is |e(j) - e(j-1)|/e(1) = %.12f \n', changein_errs(iter))
     fprintf(1, '----------------------------------------\n')
 
     % End the clock
-    fprintf(1, 'Current iterate finished in %.2f s\n',toc(iter_start))
+    fprintf(1, 'Current iterate finished in %.2f s\n', toc(iter_start))
     fprintf(1, 'End of current iterate k = %d\n', iter)
     fprintf(1, '---------------------------------------\n')
 end
 
 % Save output info
-info                = struct();
-info.sqrd_relh2errs = sqrd_relh2errs;    
-info.tails          = tails;
-info.gradientAr     = gradientAr;
+info            = struct();
+info.errs       = errs;    
+info.tails      = tails;
+info.gradientAr = gradientAr;
 
 if iter == (opts.maxiter + 1)
     fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', ...
