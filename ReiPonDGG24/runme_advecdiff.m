@@ -348,8 +348,6 @@ set(gca, 'fontsize', 10)
 semilogy(1:maxiter, errs, '-o', 'color', ColMat(1,:), LineWidth=1.5)
 hold on;
 semilogy(1:maxiter, changeintails, '-*', 'color', ColMat(2,:), LineWidth=1.5)
-% semilogy(1:maxiter, change_intails, '-*', 'color', ColMat(2,:), LineWidth=1.5)
-% semilogy(1:maxiter, gradientAr, '-+', 'color', ColMat(3,:), LineWidth=1.5)
 xlim([2,maxiter])
 xlabel('iteration count, $k$', 'interpreter', 'latex')
 
@@ -358,7 +356,6 @@ print -depsc2 results/AdvecDiff_r30_conv
 % Write data
 write = 1;
 if write
-    % conv = [(1:maxiter)', errs', (abs(tails))', gradientAr'];
     conv = [(1:maxiter)', errs', changeintails'];
     dlmwrite('results/AdvecDiff_r30_conv.dat', conv, 'delimiter', '\t', 'precision', ...
         12);
