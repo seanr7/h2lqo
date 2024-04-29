@@ -6,7 +6,7 @@
 % This file is part of the archive Code, Data, and Results for Numerical 
 % Experiments in "$\mathcal{H}_2$ optimal model reduction of linear 
 % systems with multiple quadratic outputs".
-% Copyright (c) 2024 Sean Reiter, ...
+% Copyright (c) 2024 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
@@ -50,7 +50,7 @@ fprintf(1, '-----------------\n');
 % diff = 1e-2;  Diffusion parameter
 % adv  = 1;     Advection parameter
 
-load('results/AdvecDiff_n300.mat')
+load('AdvecDiff_n300.mat')
 
 fprintf(1, '\n');
 
@@ -60,7 +60,7 @@ fprintf(1, '\n');
 r = 30; % Approximation order for both approacbes
 
 % Set to true to recompute reduced order models
-recompute = 1;
+recompute = 0;
 if recompute
     fprintf(1, 'Computing reduced model using LQO-TSIA.\n');
     fprintf(1, '---------------------------------------\n');
