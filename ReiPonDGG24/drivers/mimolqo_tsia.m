@@ -69,8 +69,6 @@ function [Ar, Br, Cr, Mr, info] = mimolqo_tsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %   | tails           | variable parts of the relative H2 error           |
 %   +-----------------+---------------------------------------------------+ 
-%   | gradientAr      | absolute gradient w.r.t Ar of the squared H2 error|
-%   +-----------------+---------------------------------------------------+ 
 %
 
 %
@@ -79,7 +77,7 @@ function [Ar, Br, Cr, Mr, info] = mimolqo_tsia(A, B, C, M, r, opts)
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 4/23/2024
+% Last editied: 4/29/2024
 %
 
 %%
@@ -164,9 +162,6 @@ Pr    = lyap(Ar, Br*Br');
 X     = lyap(A, Ar', B*Br');
 rhsQr = Cr'*Cr; 
 rhsY  = -C'*Cr;
-% For computing the gradient w.r.t Ar
-Qrone = lyap(Ar', rhsQr);
-Yone  = lyap(A', Ar, rhsY);
 for i = 1:p
     rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i);
     rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);
@@ -177,7 +172,6 @@ Y  = lyap(A', Ar, rhsY);
 % 2. Compute squared relative H2 error from trace formula
 iter             = 1;
 tails(iter)      = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
-gradientAr(iter) = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
 errs(iter)       = (h + tails(iter))/h;                               % Squared relative H2 error
 
 % Set convergence criterion to enter while
@@ -216,9 +210,6 @@ while (changein_errs(iter) > opts.tol && iter <= opts.maxiter)
     Pr    = lyap(Ar, Br*Br'); 
     rhsQr = Cr'*Cr; 
     rhsY  = -C'*Cr;
-    % For computing the gradient w.r.t Ar
-    Qrone = lyap(Ar', rhsQr);
-    Yone  = lyap(A', Ar, rhsY);
     for i = 1:p
         rhsQr = rhsQr + Mr(:, :, i)*Pr*Mr(:, :, i); % No factor of 2 for Y
         rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);    % X was computed above
@@ -227,7 +218,6 @@ while (changein_errs(iter) > opts.tol && iter <= opts.maxiter)
     Y  = lyap(A', Ar, rhsY);
     % 2. Compute squared relative H2 error from trace formula
     tails(iter)      = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);               % `Tail' of H2 error
-    gradientAr(iter) = norm(2*((2*Qr - Qrone)*Pr + (2*Y' - Yone')*X), 2); % Gradient of squared H2 error w.r.t Ar
     errs(iter)       = abs((h + tails(iter))/h);                          % Squared relative error
     fprintf(1, 'Squared relative H2 error of current tsia reduced model is ||G - Gr||_H2^2/||G||_H2^2 = %.12f\n', ...
         errs(iter));
@@ -248,7 +238,6 @@ end
 info            = struct();
 info.errs       = errs;    
 info.tails      = tails;
-info.gradientAr = gradientAr;
 
 if iter == (opts.maxiter + 1)
     fprintf('Algorithm has terminated due to reaching the max no. of iterations; total time elapsed is %.2f s\n', ...
