@@ -74,7 +74,7 @@ opts.sores    = sores;
 
 poles    = info.pole_hist;
 sores    = info.sores; 
-filename = 'results/plateTVAlqo_r100_lqoirka.mat';
+filename = 'results/plateTVAlqo_r100_lqoirka_restart.mat';
 save(filename, 'Efo_r', 'Afo_r', 'Bfo_r', 'Qfo_r', 'poles', 'sores') 
 
 %% Finished script.
