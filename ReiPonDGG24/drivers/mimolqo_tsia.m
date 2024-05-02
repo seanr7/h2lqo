@@ -107,7 +107,7 @@ if ~isfield(opts, 'maxiter')
     opts.maxiter = 100;
 end
 if ~isfield(opts, 'Ar')
-    opts.Ar = -diag(logspace(-3, -1, r)); 
+    opts.Ar = -diag(logspace(0, 4, r)); 
 end
 if ~isfield(opts, 'Br')
     opts.Br = eye(r, m);  

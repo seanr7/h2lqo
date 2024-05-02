@@ -51,7 +51,6 @@ fprintf(1, '-----------------\n');
 % adv  = 1;     Advection parameter
 
 load('AdvecDiff_n300.mat')
-
 fprintf(1, '\n');
 
 
@@ -60,7 +59,7 @@ fprintf(1, '\n');
 r = 30; % Approximation order for both approacbes
 
 % Set to true to recompute reduced order models
-recompute = 0;
+recompute = 1;
 if recompute
     fprintf(1, 'Computing reduced model using LQO-TSIA.\n');
     fprintf(1, '---------------------------------------\n');
@@ -110,7 +109,7 @@ ode_rtol = 1e-6;
 tsteps   = linspace(0, Tfin, nt+1); % Time-steps
 v0       = zeros(nx, 1);            % Initial condition 
 options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol',ode_rtol, ...
-                  'Mass', E, 'Jacobian', A, ...
+                  'Mass', eye(nx, nx), 'Jacobian', A, ...
                   'MStateDependence', 'none', 'Stats','on');
 fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 [t, v]   = ode15s(fAdvDiff, tsteps, v0, options);
@@ -123,7 +122,7 @@ fprintf(1, '--------------------.\n');
 % Output has mixed linear and quadratic terms
 y = Clin*v';
 for tt = 1:length(t)
-    y(:, tt) = y(:, tt) + (h/2)*v(tt, :)*Mquad*v(tt, :)';
+    y(:, tt) = y(:, tt) + v(tt, :)*Mquad*v(tt, :)';
 end
 y = y + (1/2) * ones(1, length(t));
 
@@ -163,7 +162,7 @@ fprintf(1, 'Simulate tsia reduced output\n');
 fprintf(1, '----------------------------\n');
 yr_tsia = Clinr_tsia*vr_tsia';
 for tt = 1:length(tr)
-    yr_tsia(:,tt) = yr_tsia(:,tt) + (h/2)*vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
+    yr_tsia(:,tt) = yr_tsia(:,tt) + vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
 end
 yr_tsia = yr_tsia + (1/2) * ones(1, length(tr));
 
@@ -180,7 +179,7 @@ fprintf(1, 'Simulate bt reduced output\n');
 fprintf(1, '--------------------------\n');
 yr_bt = Clinr_bt*vr_bt';
 for tt = 1:length(tr)
-    yr_bt(:,tt) = yr_bt(:,tt) + (h/2)*vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
+    yr_bt(:,tt) = yr_bt(:,tt) + vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
 end
 yr_bt = yr_bt + (1/2) * ones(1, length(tr));
 
@@ -230,7 +229,7 @@ tsteps = linspace(0, Tfin, nt+1); % Time-steps
 u0 = @(t) exp(-t/5)*t^2; % Exponentially damped input on left boundary
 
 options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol',ode_rtol, ...
-                  'Mass', E, 'Jacobian', A, ...
+                  'Mass', eye(nx, nx), 'Jacobian', A, ...
                   'MStateDependence', 'none', 'Stats','on');
 
 % Redefine problem
@@ -243,7 +242,7 @@ fprintf(1, '--------------------.\n');
 % Output has mixed linear and quadratic terms
 y = Clin*v';
 for tt = 1:length(t)
-    y(:, tt) = y(:, tt) + (h/2)*v(tt, :)*Mquad*v(tt, :)';
+    y(:, tt) = y(:, tt) + v(tt, :)*Mquad*v(tt, :)';
 end
 y = y + (1/2) * ones(1, length(t));
 
@@ -274,7 +273,7 @@ fprintf(1, 'Simulate tsia reduced output\n');
 fprintf(1, '----------------------------\n');
 yr_tsia = Clinr_tsia*vr_tsia';
 for tt = 1:length(tr)
-    yr_tsia(:,tt) = yr_tsia(:,tt) + (h/2)*vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
+    yr_tsia(:,tt) = yr_tsia(:,tt) + vr_tsia(tt, :)*Mquadr_tsia*vr_tsia(tt, :)';
 end
 yr_tsia = yr_tsia + (1/2) * ones(1, length(tr));
 
@@ -290,7 +289,7 @@ fprintf(1, 'Simulate bt reduced output\n');
 fprintf(1, '--------------------------\n');
 yr_bt = Clinr_bt*vr_bt';
 for tt = 1:length(tr)
-    yr_bt(:,tt) = yr_bt(:,tt) + (h/2)*vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
+    yr_bt(:,tt) = yr_bt(:,tt) + vr_bt(tt, :)*Mquadr_bt*vr_bt(tt, :)';
 end
 yr_bt = yr_bt + (1/2) * ones(1, length(tr));
 
