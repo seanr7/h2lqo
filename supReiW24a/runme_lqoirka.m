@@ -61,7 +61,7 @@ fprintf(1, '--------------------------------\n')
 
 % Set order of reduction and input opts
 % Restart method using poles from last iteration
-load('results/plateTVAlqo_r75_lqoirka.mat', 'poles', 'sores');
+load('results/plateTVAlqo_r75_lqoirka_restart.mat', 'poles', 'sores');
 opts          = struct();
 r             = 75;
 opts.maxiter  = 50; % Go another 50
@@ -74,7 +74,7 @@ opts.sores    = sores;
 
 poles    = info.pole_hist;
 sores    = info.sores; 
-filename = 'results/plateTVAlqo_r75_lqoirka_restart.mat';
+filename = 'results/plateTVAlqo_r75_lqoirka_restart2.mat';
 save(filename, 'Efo_r', 'Afo_r', 'Bfo_r', 'Qfo_r', 'poles', 'sores') 
 
 %% Finished script.
