@@ -286,7 +286,7 @@ fprintf(1, 'Load problem data for order r = 75 reduced models\n');
 fprintf(1, '-------------------------------------------------\n');
 
 % order r = 75 reduced models
-load('results/plateTVAlqo_r75_lqoirka.mat')
+load('results/plateTVAlqo_r75_lqoirka_restart2.mat')
 load('results/plateTVAlqo_r75_Linfty_g.mat')
 load('results/plateTVAlqo_r75_Linfty_pg.mat')
 load('results/plateTVAlqo_r75_avg_g.mat')
@@ -396,7 +396,7 @@ fprintf(1, 'Load problem data for order r = 100 reduced models\n');
 fprintf(1, '--------------------------------------------------\n');
 
 % order r = 100 reduced models
-load('results/plateTVAlqo_r100_lqoirka.mat')
+load('results/plateTVAlqo_r100_lqoirka_restart2.mat')
 load('results/plateTVAlqo_r100_Linfty_g.mat')
 load('results/plateTVAlqo_r100_Linfty_pg.mat')
 load('results/plateTVAlqo_r100_avg_g.mat')
@@ -500,6 +500,87 @@ legend('Full-order', 'r=100, IRKA', 'r=100 Linfty-g', 'r=100 Linfty-pg', ...
 
 % Overwrite figure
 saveas(figure(4), 'results/r100_plots.png')
+
+%% Compute single error values
+fprintf(1, 'Computing relative H2 errors\n')
+fprintf(1, '-----------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 25)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative H2 error due to IRKA     : %.10f \n', sum((abs(mag-mag_r25_irka)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-g : %.10f \n', sum((abs(mag-mag_r25_Linfty_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-pg: %.10f \n', sum((abs(mag-mag_r25_Linfty_pg)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-g    : %.10f \n', sum((abs(mag-mag_r25_avg_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-pg   : %.10f \n', sum((abs(mag-mag_r25_avg_pg)))/sum(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 50)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative H2 error due to IRKA     : %.10f \n', sum((abs(mag-mag_r50_irka)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-g : %.10f \n', sum((abs(mag-mag_r50_Linfty_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-pg: %.10f \n', sum((abs(mag-mag_r50_Linfty_pg)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-g    : %.10f \n', sum((abs(mag-mag_r50_avg_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-pg   : %.10f \n', sum((abs(mag-mag_r50_avg_pg)))/sum(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 75)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative H2 error due to IRKA     : %.10f \n', sum((abs(mag-mag_r75_irka)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-g : %.10f \n', sum((abs(mag-mag_r75_Linfty_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-pg: %.10f \n', sum((abs(mag-mag_r75_Linfty_pg)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-g    : %.10f \n', sum((abs(mag-mag_r75_avg_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-pg   : %.10f \n', sum((abs(mag-mag_r75_avg_pg)))/sum(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 100)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative H2 error due to IRKA     : %.10f \n', sum((abs(mag-mag_r100_irka)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-g : %.10f \n', sum((abs(mag-mag_r100_Linfty_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to Linfty-pg: %.10f \n', sum((abs(mag-mag_r100_Linfty_pg)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-g    : %.10f \n', sum((abs(mag-mag_r100_avg_g)))/sum(abs(mag)))
+fprintf(1, 'Relative H2 error due to avg-pg   : %.10f \n', sum((abs(mag-mag_r100_avg_pg)))/sum(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+
+%%
+fprintf(1, 'Computing relative Hinfty errors\n')
+fprintf(1, '-----------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 25)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative Hinfty error due to IRKA     : %.10f \n', max((abs(mag-mag_r25_irka)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-g : %.10f \n', max((abs(mag-mag_r25_Linfty_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-pg: %.10f \n', max((abs(mag-mag_r25_Linfty_pg)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-g    : %.10f \n', max((abs(mag-mag_r25_avg_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-pg   : %.10f \n', max((abs(mag-mag_r25_avg_pg)))/max(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 50)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative Hinfty error due to IRKA     : %.10f \n', max((abs(mag-mag_r50_irka)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-g : %.10f \n', max((abs(mag-mag_r50_Linfty_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-pg: %.10f \n', max((abs(mag-mag_r50_Linfty_pg)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-g    : %.10f \n', max((abs(mag-mag_r50_avg_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-pg   : %.10f \n', max((abs(mag-mag_r50_avg_pg)))/max(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 75)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative Hinfty error due to IRKA     : %.10f \n', max((abs(mag-mag_r75_irka)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-g : %.10f \n', max((abs(mag-mag_r75_Linfty_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-pg: %.10f \n', max((abs(mag-mag_r75_Linfty_pg)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-g    : %.10f \n', max((abs(mag-mag_r75_avg_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-pg   : %.10f \n', max((abs(mag-mag_r75_avg_pg)))/max(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
+
+fprintf(1, 'Order r = %d\n', 100)
+fprintf(1, '--------------\n')
+fprintf(1, 'Relative Hinfty error due to IRKA     : %.10f \n', max((abs(mag-mag_r100_irka)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-g : %.10f \n', max((abs(mag-mag_r100_Linfty_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to Linfty-pg: %.10f \n', max((abs(mag-mag_r100_Linfty_pg)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-g    : %.10f \n', max((abs(mag-mag_r100_avg_g)))/max(abs(mag)))
+fprintf(1, 'Relative Hinfty error due to avg-pg   : %.10f \n', max((abs(mag-mag_r100_avg_pg)))/max(abs(mag)))
+fprintf(1, '------------------------------------------------------------\n')
 
 %% Finished script.
 fprintf(1, 'FINISHED SCRIPT.\n');

@@ -2,9 +2,9 @@ name: Code and Results for Numerical Experiments in "Interpolatory model
  order reduction of large-scale dynamical systems with root mean 
  squared error measures"
 shortname:
-version: 1.0
-release-date: 2024-02-29
-id: 10.5281/zenodo.10729524
+version: 1.1
+release-date: 2024-06-10
+id: 10.5281/zenodo.11550171
 id-type: doi
 authors: Sean Reiter, Steffen W. R. Werner
 orcids: 0000-0002-7510-1530, 0000-0003-1667-4862
@@ -18,7 +18,7 @@ repository-type: git
 languages: MATLAB
 dependencies: MATLAB (2023b)
 systems: Linux
-website: https://zenodo.org/record/10729524
+website: https://zenodo.org/record/11550171
 keywords: Model Order Reduction, Linear Quadratic Output Systems, Root Mean 
  Squared Error, Vibro-acoustic System, MOR, MATLAB, Rational Interpolation,
  IRKA
