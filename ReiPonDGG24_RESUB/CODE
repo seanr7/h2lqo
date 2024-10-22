@@ -1,0 +1,22 @@
+name: Code, Data, and Results for Numerical Experiments in "$\mathcal{H}_2$ 
+ optimal model reduction of linear systems with multiple quadratic outputs"
+shortname:
+version: 1.1
+release-date: 2024-05-02
+id: 10.5281/zenodo.11104814
+id-type: doi
+authors: Sean Reiter
+orcids: 0000-0002-7510-1530
+topic: $\mathcal{H}_2$ optimal model order reduction methods for linear 
+ quadratic output systems.
+type: Companion code
+license: BSD-2-Clause
+license-type: Open
+repository: private development
+repository-type: git
+languages: MATLAB
+dependencies: MATLAB (2023b)
+systems: Mac
+website: https://zenodo.org/record/11104814
+keywords: Model Order Reduction, Linear Quadratic Output Systems, MOR, 
+ MATLAB, TSIA, H2 Optimal
