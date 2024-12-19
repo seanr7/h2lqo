@@ -8,13 +8,16 @@ the paper:
 S. Reiter, I. Pontes Duff, I. V. Gosea, S. Gugercin; "$\mathcal{H}_2$ 
 optimal model reduction of linear systems with multiple quadratic outputs",
 
-which implement numerical experiments with $\mathcal{H}_2$ model order 
-reduction methods for linear quadratic output systems.
+which implement numerical experiments using $\mathcal{H}_2$ model order 
+reduction methods for linear quadratic-output systems.
 
 
 ## Dependencies and Installation
 
 The code was tested under MATLAB 2023b.
+The Matrix Equation Sparse Solver (M-M.E.S.S.) Library version 3.0. is 
+used for solving the sparse-dense Sylvester equations in 
+the `\drivers\mimolqo_tsia.m` function.
 
 
 ## Getting Started
@@ -22,10 +25,10 @@ The code was tested under MATLAB 2023b.
 The file `runme_advecdiff.m` can be used to reproduce experiments from the 
 corresponding paper on the advection diffusion problem with a quadratic 
 cost function as the quantity of interest. The model can be found under
-`data\AdvecDiff_n300.mat`. The file `runme_advecdiff.m` generates the 
+`data\AdvecDiff_n3000.mat`. The file `runme_advecdiff.m` generates the 
 reduced-order models computed using `\drivers\mimolqo_tsia.m` and 
-`mimolqo_bt.m`, and reproduces the experiments found in Section 5 of the 
-companion paper.
+`\drivers\mimolqo_bt.m`, and reproduces the experiments found in Section 5 
+of the companion paper.
 
 The results computed by these scripts will be saved to the `results`
 folder. Existing results will be overwritten.
@@ -55,16 +58,16 @@ See [COPYING_DATA](COPYING_DATA) for a copy of the license.
 
 ### DOI
 
-The DOI for version 1.1 is
-[10.5281/zenodo.11104814](https://doi.org/10.5281/zenodo.11104814).
+The DOI for version 1.2 is
+[10.5281/zenodo.14532348](https://doi.org/10.5281/zenodo.14532348).
 
 
 ### Cite as
 
 S. Reiter. Code, data, and results for numerical 
 experiments in "$\mathcal{H}_2$ optimal model reduction of linear systems 
-with multiple quadratic outputs" (version 1.1),
-May 2024. doi:10.5281/zenodo.11104814
+with multiple quadratic outputs" (version 1.2),
+December 2024. doi:10.5281/zenodo.11104814
 
 
 ### BibTeX
@@ -74,8 +77,8 @@ May 2024. doi:10.5281/zenodo.11104814
       title  =       {Code, Data, and Results for Numerical Experiments in 
                       ``$\mathcal{H}_2$ optimal model reduction of linear 
                       systems with multiple quadratic outputs'' 
-                      (version 1.1)},
-      month  =       may,
+                      (version 1.2)},
+      month  =       dec,
       year   =       {2024},
-      doi    =       {10.5281/zenodo.11104814}
+      doi    =       {10.5281/zenodo.14532348}
     }

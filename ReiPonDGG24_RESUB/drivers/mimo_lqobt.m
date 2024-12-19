@@ -2,6 +2,9 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqobt(A, B, C, M, r)
 % MIMO_LQOBT Balanced truncation algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
+% SYNTAX:
+%   [Ar, Br, Cr, Mr, info] = mimo_lqobt(A, B, C, M, r)
+%
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Ar, Br, Cr, M1r, ...,
 %   Mpr) using the balanced truncation algorithm given in:

@@ -2,6 +2,9 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
 %MIMO_LQOTSIA Two-sided iteration algorithm for model-order reudction of
 % linear systems with multiple quadratic outputs
 %
+% SYNTAX:
+%   [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
+%
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Ar, Br, Cr, Mr)
 %   using the two-sided iteration algorithm given in 
@@ -38,17 +41,28 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
 %   |                 | steps                                             |
 %   |                 | (default 100)                                     |
 %   +-----------------+---------------------------------------------------+
-%   | Ar              | Initial state matrix                              |
+%   | Ar              | initial state matrix                              |
 %   |                 | (default -diag(logspace(0,4,r))                   |
 %   +-----------------+---------------------------------------------------+
-%   | Br              | Initial input matrix                              |
+%   | Br              | initial input matrix                              |
 %   |                 | (default eye(n, m))                               |
 %   +-----------------+---------------------------------------------------+
-%   | Cr              | Initial linear-output matrix                      |
+%   | Cr              | initial linear-output matrix                      |
 %   |                 | (default eye(p, r))                               |
 %   +-----------------+---------------------------------------------------+
-%   | Mr              | Initial quadratic-output matrices                 |
+%   | Mr              | initial quadratic-output matrices                 |
 %   |                 | (default repmat(eye(n,n), 1, 1, p)                |
+%   +-----------------+---------------------------------------------------+
+%   | storeBases      | option to store final model reduction bases       |
+%   |                 | (default false)                                   |
+%   +-----------------+---------------------------------------------------+
+%   | convMonitoring  | string, for monitoring convergence using exact or |
+%   |                 | approximate calculation of the squared H2 error   |
+%   |                 | (default 'approximate')                           |
+%   +-----------------+---------------------------------------------------+
+%   | fomNorm         | optional argument, value of the H2 norm of the    |
+%   |                 | fom; use in computing a hierarchy of ROMs         |
+%   |                 | (default [])                                      |
 %   +-----------------+---------------------------------------------------+
 %
 % OUTPUTS:
@@ -66,12 +80,19 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
 %   +-----------------+---------------------------------------------------+
 %   | errors          | history of squared relative H2 errors throughout  |
 %   |                 | the iteration                                     |
+%   |                 | (tails if opts.convMonitoring == 'approximate')   |
 %   +-----------------+---------------------------------------------------+
 %   | tails           | variable parts of the relative H2 error           |
 %   +-----------------+---------------------------------------------------+ 
 %   | changeInErrors  | change in squared H2 errors throughout            |
+%   |                 | (changeInTails if opts.convMonitoring ==          |
+%   |                 |  'approximate')                                   |
 %   +-----------------+---------------------------------------------------+
 %   | changeInTails   | change in tails of squared H2 errors throughout   |
+%   +-----------------+---------------------------------------------------+ 
+%   | Wt              | final left model reduction basis                  |
+%   +-----------------+---------------------------------------------------+
+%   | V               | final right model reduction basis                 |
 %   +-----------------+---------------------------------------------------+ 
 %
 
@@ -132,6 +153,25 @@ if ~isfield(opts, 'Mr')
         opts.Mr = repmat(eye(r, r), 1, 1, p);
     end
 end
+if ~isfield(opts, 'storeBases')
+    opts.storeBases = false;
+end
+if ~isfield(opts, 'convMonitoring')
+    opts.convMonitoring = 'approximate';
+end
+if ~isfield(opts, 'fomNorm')
+    opts.fomNorm = [];
+end
+
+assert(strcmp(opts.convMonitoring, 'approximate') || strcmp(opts.convMonitoring, 'exact'), ...
+    'Unrecognized input for convergence monitoring!')
+
+% Use bool to avoid repeated strcmps. 
+if strcmp(opts.convMonitoring, 'exact')
+    exactConv = true;
+else
+    exactConv = false; 
+end
 
 % Set linear output to zero if not included.
 if isempty(C)
@@ -148,25 +188,37 @@ fprintf(1, '--------------------------------------------------\n');
 % Initial reduced model.
 Ar = opts.Ar;   Br = opts.Br;   Cr = opts.Cr;   Mr = opts.Mr;  
 
-% Pre-compute full-order model H2 norm.
-normStart = tic;
-fprintf(1, 'COMPUTING H2 NORM OF FULL-ORDER MODEL.\n');
-fprintf(1, '--------------------------------------------------\n');
-P   = lyap(A, B*B');
-rhs = C'*C; 
-for i = 1:p
-    rhs = rhs + M(:, :, i)*P*M(:, :, i);
+% Pre-compute FOM H2 norm (if desired).
+if exactConv
+    if ~isempty(opts.fomNorm)
+        % If FOM H2 norm is passed.
+        h = opts.fomNorm;
+        fprintf(1, 'H2 NORM OF THE FULL-ORDER MODEL PASSED AS AN ARG.\n');
+        fprintf(1, '--------------------------------------------------\n');
+    else
+        normStart = tic;
+        fprintf(1, 'COMPUTING H2 NORM OF FULL-ORDER MODEL.\n');
+        fprintf(1, '--------------------------------------------------\n');
+        P   = lyap(A, B*B');
+        rhs = C'*C; 
+        for i = 1:p
+            rhs = rhs + M(:, :, i)*P*M(:, :, i);
+        end
+        Q  = lyap(A', rhs);
+        
+        % (Squared) H2 norm of full-order model.
+        h  = trace(B'*Q*B); 
+        fprintf(1, 'H2 NORM COMPUTED IN %d s\n', toc(normStart));
+        fprintf(1, '--------------------------------------------------\n');
+    end
+else
+    fprintf(1, 'H2 NORM NOT COMPUTED OR PASSED; MONITORING TAILS FOR CONVERGENCE.\n');
+    fprintf(1, '-----------------------------------------------------------------\n');
 end
-Q  = lyap(A', rhs);
-
-% (Squared) H2 norm of full-order model.
-h  = trace(B'*Q*B); 
-fprintf(1, 'H2 NORM COMPUTED IN %d s\n', toc(normStart));
-fprintf(1, '--------------------------------------------------\n');
 
 % (Squared) relative H2 error due to initial reduced model.
 Pr    = lyap(Ar, Br*Br'); 
-X     = lyap(A, Ar', B*Br');
+X     = mess_sylvester_sparse_dense(A, 'N', Ar, 'T', B*Br', speye(n, n), eye(r, r));
 rhsQr = Cr'*Cr; 
 rhsY  = -C'*Cr;
 for i = 1:p
@@ -174,31 +226,39 @@ for i = 1:p
     rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);
 end
 Qr = lyap(Ar', rhsQr);
-Y  = lyap(A', Ar, rhsY);
+Y  = mess_sylvester_sparse_dense(A, 'T', Ar, 'N', rhsY, speye(n, n), eye(r, r));
 
 % (Squared) relative H2 error from trace formula.
 iterate         = 1;
 tails(iterate)  = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br); % `Tail' of H2 error
-errors(iterate) = (h + tails(iterate))/h;              % Relative, squared H2 error
+if exactConv
+    errors(iterate) = (h + tails(iterate))/h; % Relative, squared H2 error
+else
+    errors(iterate) = tails(iterate);
+end
 
 % Set iteration count and tolerance to engage `while'.
 changeInErrors(iterate) = opts.tol + 1;
 changeInTails(iterate)  = opts.tol + 1;
 
+% If opts.convMonitoring == 'exact', changeInErrors will be exact change in
+% the error. Else, it will be changeInTails. 
 while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     thisIterStart = tic; 
     fprintf(1, 'CURRENT ITERATE IS k = %d\n', iterate);
     fprintf(1, '--------------------------------------------------\n');
 
     % Solve for right projection matrix V = X in (1).
-    X = lyap(A, Ar', B*Br');
+    % XCheck = lyap(A, Ar', B*Br');
+    X = mess_sylvester_sparse_dense(A, 'N', Ar, 'T', B*Br', speye(n, n), eye(r, r));
 
     % Solve for left projection matrix W = Z in (2).
     rhs = -C'*Cr;
     for i = 1:p
         rhs = rhs - 2*M(:, :, i)*X*Mr(:, :, i);
     end
-    Z = lyap(A', Ar, rhs);
+    % ZCheck = lyap(full(A'), Ar, rhs);
+    Z = mess_sylvester_sparse_dense(A, 'T', Ar, 'N', rhs, speye(n, n), eye(r, r));
     
     % Orthonormalize projection matrice.
     [V, ~] = qr(X, "econ");     [W, ~] = qr(Z, "econ");
@@ -223,18 +283,26 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
         rhsY  = rhsY - M(:, :, i)*X*Mr(:, :, i);  
     end
     Qr = lyap(Ar', rhsQr);
-    Y  = lyap(A', Ar, rhsY);
+    Y  = mess_sylvester_sparse_dense(A, 'T', Ar, 'N', rhsY, speye(n, n), eye(r, r));
 
     % Trace formula.
-    tails(iterate)  = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br);  % `Tail' of H2 error
-    errors(iterate) = abs((h + tails(iterate))/h);          % Relatve, squared H2 error
+    tails(iterate)  = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br); % `Tail' of H2 error
+    if exactConv
+        errors(iterate) = abs((h + tails(iterate))/h); % Relatve, squared H2 error
+        fprintf(1, 'RELATIVE, SQUARED H2 ERROR OF CURRENT MODEL ITERATE IS: e(k) = ||G - Gr(k)||_H2^2/||G||_H2^2 = %.12f\n', ...
+            errors(iterate));
+    else
+        errors(iterate) = tails(iterate);
+    end
 
     % Convergence tracking.
-    fprintf(1, 'RELATIVE, SQUARED H2 ERROR OF CURRENT MODEL ITERATE IS: e(k) = ||G - Gr(k)||_H2^2/||G||_H2^2 = %.12f\n', ...
-        errors(iterate));
-    changeInErrors(iterate) = abs(errors(iterate) - errors(iterate-1))/errors(1);
+    changeInErrors(iterate) = abs(errors(iterate) - errors(iterate-1))/abs(errors(1));
     changeInTails(iterate)  = abs(tails(iterate) - tails(iterate-1))/abs(tails(1));
-    fprintf('RELATIVE CHANGE IN SQUARED H2 ERRORS IS |e(k) - e(k-1)|/e(1) = %.12f \n', changeInErrors(iterate))
+    if exactConv
+        fprintf('RELATIVE CHANGE IN SQUARED H2 ERRORS IS |e(k) - e(k-1)|/e(1) = %.12f \n', changeInErrors(iterate))
+    else
+        fprintf('CHANGE IN VARIABLE TAILS OF THE SQUARED H2 ERROR IS |t(k) - t(k-1)|/t(1) = %.12f \n', changeInErrors(iterate))
+    end
     fprintf(1, '--------------------------------------------------\n');
     
     % Timing.
@@ -252,6 +320,10 @@ info.errors         = errors;
 info.tails          = tails;
 info.changeInErrors = changeInErrors;
 info.changeInTails  = changeInTails;
+if opts.storeBases
+    info.Wt  = Wt;
+    info.V   = V;
+end
 
 if iterate == (opts.maxIter + 1)
     fprintf('ALGORITHM HAS TERMINATED DUE TO REACHING MAX NO. OF ITERATIONS; TOTAL TIME ELAPSED IS %.2f s\n', toc(overallStart))
