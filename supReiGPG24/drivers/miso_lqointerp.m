@@ -3,10 +3,15 @@ function [Er, Ar, Br, cr, Mr] = miso_lqointerp(E, A, B, c, M, r, opts)
 % quadratic-output systems with multiple inputs, and a single output using
 % methods of tangential interpolation.
 %
+% SYNTAX:
+%   [Er, Ar, Br, cr, Mr] = miso_lqointerp(E, A, B, c, M, r, opts)
+%   [Er, Ar, Br, cr, Mr] = miso_lqointerp(E, A, B, c, M, r, opts)
+%
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Er, Ar, Br, cr, Mr)
-%   using the methods of tangential interpolation presented in.
-%   "..."
+%   using the methods of tangential interpolation presented in
+%   "$\mathcal{H}_2$-optimal model reduction of linear quadratic-output 
+%   systems by tangential interpolation".
 %   For the given data, an interpolatory reduced model is computed using
 %   one of the following strategies.
 %   If opts.interpolation == 'standard', Galerkin projection is performed
@@ -18,14 +23,14 @@ function [Er, Ar, Br, cr, Mr] = miso_lqointerp(E, A, B, c, M, r, opts)
 %   performed, where V is computed according to (1) and W is computed
 %   according to
 %
-%       W(:, k) = ((shifts(k))*E.' - A.')\(2*(soRes(k, 1)*M*V(:, i)) + ... 
-%                   + (soLeftTangents(k, r)*M*V(:, r)) + ...
-%                       c*foLeftTangents(k)))                           (2) 
+%       W(:, k) = ((shifts(k))*E.' - A.')\(2*(qoLeftTangents(k, 1)*M*V(:, i)) + ... 
+%                   + (qoLeftTangents(k, r)*M*V(:, r)) + ...
+%                       c*loLeftTangents(k)))                           (2) 
 %
 %   The matrices are constructred to ensure realness of the reduced-order
 %   model, and then orthonormalized.
 %   It is assumed that the eigenvalues of (s*E-A) lie in the open left
-%   half-plane, and all interpolation data are sorted into complex
+%   half-plane, and all interpolation data are pre-sorted into complex
 %   conjugate pairs.
 %
 % INPUTS:
@@ -73,12 +78,12 @@ function [Er, Ar, Br, cr, Mr] = miso_lqointerp(E, A, B, c, M, r, opts)
 %
 
 %
-% Copyright (c) 2024 Sean Reiter
+% Copyright (c) 2025 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 1/20/2025
+% Last editied: 4/30/2025
 %
 
 %%
@@ -150,12 +155,12 @@ for k = 1:r
 end
 
 if strcmp(opts.interpolation, 'standard')
-    % Compute reduced model using standard (no mixed) tangential
-    % interpolation and Galerkin projection with V = W. 
+    % Compute interpolatory reduced model using standard using Galerkin 
+    % projection with V = W (no mixed conditions).
     WPrim = VPrim; 
 else
-    % Compute reduced model using mixed tangential interpolation and
-    % Petrov-Galerkin projection.
+    % Compute interpolatory reduced model using Petrov-Galerkin projection
+    % with V \neq W (mixed conditions).
     % Fill out columns of W in (2).
     for k = 1:r
         % fprintf(1, 'COMPUTING COMLUMN k = %d of W\n', k)
@@ -194,7 +199,7 @@ while k <= r
 end
 
 % Orthonormalize projection matrices.
-[V, ~] = qr(VPrim, "econ");     [W, ~] = qr(WPrim, "econ");
+[V, ~] = qr(V, "econ");     [W, ~] = qr(W, "econ");
 
 fprintf(1, 'COMPUTING REDUCED-ORDER MODEL VIA PROJECTION.\n')
 fprintf(1, '--------------------------------------------------\n');
@@ -214,8 +219,8 @@ if opts.checkInterp
     fprintf(1, '1. LINEAR, RIGHT TANGENTIAL CONDITIONS.\n')
     fprintf(1, '--------------------------------------------------\n');
     for k = 1:r
-        fprintf(1, 'ABSOLUTE ERROR IN CONDITION %d: %d\n', k, ...
-            norm(c.'*VPrim(:, k) - cr.'*VrPrim(:, k), 2))
+        fprintf(1, 'RELATIVE ERROR IN CONDITION %d: %d\n', k, ...
+            norm(c.'*VPrim(:, k) - cr.'*VrPrim(:, k), 2)/norm(c.'*VPrim(:, k), 2))
         fprintf(1, '--------------------------------------------------\n');
     end
 
@@ -223,8 +228,8 @@ if opts.checkInterp
     fprintf(1, '--------------------------------------------------\n');
     for i = 1:r
         for j = 1:r
-            fprintf(1, 'ABSOLUTE ERROR IN CONDITION (%d, %d): %d\n', i, j, ...
-                norm(MVec.'*kron(VPrim(:, i), VPrim(:, j)) -  MrVec.'*kron(VrPrim(:, i), VrPrim(:, j)), 2))
+            fprintf(1, 'RELATIVE ERROR IN CONDITION (%d, %d): %d\n', i, j, ...
+                norm(MVec.'*kron(VPrim(:, i), VPrim(:, j)) -  MrVec.'*kron(VrPrim(:, i), VrPrim(:, j)), 2)/norm(MVec.'*kron(VPrim(:, i), VPrim(:, j)), 2))
             fprintf(1, '--------------------------------------------------\n');
         end
     end
@@ -238,16 +243,16 @@ if opts.checkInterp
             foQuadTerm = 0;
             for i = 1:r
                 foQuadTerm = foQuadTerm + qoLeftTangents(k, i)*MVec.'*kron(-((shifts(k)*E - A)\(E*VPrim(:, k))), VPrim(:, i)) + ...
-                    qoLeftTangents(i, k)*MVec.'*kron(VPrim(:, i), -((shifts(k)*E - A)\VPrim(:, k)));
-    
-                roQuadTerm = roQuadTerm + qoLeftTangents(k, i)*MrVec.'*kron(-((shifts(k)*Er - Ar)\VrPrim(:, k)), VrPrim(:, i)) + ...
+                    qoLeftTangents(i, k)*MVec.'*kron(VPrim(:, i), -((shifts(k)*E - A)\(E*VPrim(:, k))));
+
+                roQuadTerm = roQuadTerm + qoLeftTangents(k, i)*MrVec.'*kron(-((shifts(k)*Er - Ar)\(Er*VrPrim(:, k))), VrPrim(:, i)) + ...
                     qoLeftTangents(i, k)*MrVec.'*kron(VrPrim(:, i), -((shifts(k)*Er - Ar)\(Er*VrPrim(:, k))));
             end
             foLinTerm = -loLeftTangents(k)*c.'*((shifts(k)*E - A)\(E*VPrim(:, k)));
             roLinTerm = -loLeftTangents(k)*cr.'*((shifts(k)*Er - Ar)\(Er*VrPrim(:, k)));
-    
-            fprintf(1, 'ABSOLUTE ERROR IN CONDITION %d: %d\n', k, ...
-                norm(foLinTerm + foQuadTerm - (roLinTerm + roQuadTerm), 2))
+
+            fprintf(1, 'RELATIVE ERROR IN CONDITION %d: %d\n', k, ...
+                norm(foLinTerm + foQuadTerm - (roLinTerm + roQuadTerm), 2)/norm(foLinTerm + foQuadTerm, 2))
             fprintf(1, '--------------------------------------------------\n');
         end
     end
