@@ -1,9 +1,10 @@
-function [Ar, Br, Cr, Mr, info] = mimo_lqobt(A, B, C, M, r)
-% MIMO_LQOBT Balanced truncation algorithm for model-order reudction of
-% linear systems with multiple quadratic outputs
+function [Ar, Br, cr, Mr, info] = mimo_lqobt(A, B, c, M, r)
+% MISO_LQOBT Balanced truncation algorithm for model-order reudction of
+% linear systems with quadratic outputs
 %
 % SYNTAX:
-%   [Ar, Br, Cr, Mr, info] = mimo_lqobt(A, B, C, M, r)
+%   [Ar, Br, cr, Mr, info] = miso_lqobt(A, B, c, M, r, opts)
+%   [Ar, Br, cr, Mr]       = miso_lqobt(A, B, c, M, r)
 %
 % DESCRIPTION:
 %   Computes a linear quadratic output reduced model (Ar, Br, Cr, M1r, ...,
@@ -15,107 +16,83 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqobt(A, B, C, M, r)
 %   Square root factors of the quadratic output system Gramians P = U*U'
 %   and Q = L*L', which satisfy
 %
-%       A*P + P*A' + B*B' = 0                               (1)
-%       A'*Q + Q*A + C'*C + M1*P*M1 + ... + 2*Mp*P*Mp = 0   (2)
+%       A*P  + P*A' + B*B' = 0                               (1)
+%       A'*Q + Q*A  + c'*c + M*P*M= 0   (2)
 %
-%   are solved for. A singular value decomposition (svd) of U'*L is
+%   are solved for. A singular value decomposition (svd) of U'L is
 %   computed
 %
-%       U'*L = [Z1, Z2] * diag(S1, S2) * [Y1, Y2]'          (3)
+%       U'L = [Z1, Z2] * diag(S1, S2) * [Y1, Y2]'          (2)
 %
 %   Where the matrices in the svd are partitioned according to the
 %   reduction order 1 < r <= n. A reduced order model is obtained using the
 %   projection matrices
 %
-%       Vr = U*Z1*S1^(-1/2) and Wr = L*Y1*S1^(-1/2)         (4)
+%       Vr = U*Z1*S1^(-1/2) and Wr = L*Y1*S1^(-1/2)         (3)
 %
-%   It is assumed that the eigenvalues of (s*I-A) lie in the open left
+%   It is assumed that the eigenvalues of (s*E - A) lie in the open left
 %   half-plane.
 %
 % INPUTS:
 %   A    - state matrix with dimensions n x n in (1)
 %   B    - input matrix with dimensions n x m in (1)
-%   C    - linear output matrix with dimensions p x n in (2)
-%          if empty set to zeros(p, n)
-%   M    - 3d-array of (symmetric) quadratic output matrices with 
-%          dimensions p x n x n in (2)
-%          if empty set to zeros(n, n)
+%   c    - linear output matrix with dimensions 1 x n in (2)
+%   M    - (symmetric) quadratic output matrix n x n
 %   r    - order of reduction
 % 
-% OUTPUTS:
-%   Ar    - reduced state matrix with dimensions r x r in (1)
-%   Br    - reduced descriptor matrix with dimensions r x m in (1)
-%   Cr    - reduced linear output matrix with dimensions p x r in (2)
-%           If C is zero then Cr is zeros(p, r)
-%   Mr    - 3d-array of reduced (symmetric) quadratic output matrices with 
-%           dimensions p x r x r in (2) 
-%           If M is zero then Mr is zeros(r, r)
+% OUTPUTS: 
+%   Ar    - reduced state matrix with dimensions r x r 
+%   Br    - reduced descriptor matrix with dimensions r x m 
+%   cr    - reduced linear output matrix with dimensions 1 x r 
+%   Mr    - reduced (symmetric) quadratic output matrix with dimensions 
+%           r x r
 %   info  - output info, containing the following 
 %   +-----------------+---------------------------------------------------+
 %   |    PARAMETER    |                     MEANING                       |
 %   +-----------------+---------------------------------------------------+
 %   | svs             | singular values of the matrix U'*L                |
 %   +-----------------+---------------------------------------------------+
-%   | leftproj        | left projection matrix in the order reduction     |
+%   | leftProj        | left projection matrix in the order reduction     |
 %   +-----------------+---------------------------------------------------+
-%   | rightproj       | right projection matrix in the order reduction    |
+%   | rightProj       | right projection matrix in the order reduction    |
 %   +-----------------+---------------------------------------------------+
 %
 
 %
-% Copyright (c) 2024 Sean Reiter
+% Copyright (c) 2025 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 3/27/2024
+% Last editied: 6/23/2025
 %
 
 %%
-% Grab state, input, output dimensions
-% Check input matrices.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CHECK INPUTS.                                                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n = size(A, 1);
-if isempty(C)
-    try
-        [~, ~, p] = size(M, 1);
-    catch
-        p = 1;
-    end
-    pureqo = true;
-    C      = zeros(p, r);
-    Cr     = zeros(p, r);
-else
-    p      = size(C, 1);
-    pureqo = false;
-end
 
-%% Begin algorithm.
-overall_start = tic;
-fprintf(1, 'Beginning algorithm\n')
-fprintf(1, '-------------------\n');
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ALGORITHM.                                                              %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+overallStart = tic;
 
-lyap_time = tic; 
-fprintf(1, 'Solving for Gramians from Lyapunov equations\n')
-fprintf(1, '--------------------------------------------\n');
-% Solve for reachability Gramian P
+lyapTime = tic; 
+fprintf(1, 'SOLVING FOR GRAMIANS FROM LYAPUNOV EQUATIONS.\n')
+fprintf(1, '---------------------------------------------\n');
+% Solve for reachability Gramian P.
 P = lyap(A, B*B');
 
-% Solve for quadratic output observability Gramian Q
-if ~pureqo % If output is not purely quadratic
-    rhs = C'*C;
-else
-    rhs = zeros(n, n);
-end
-for i = 1:p
-    rhs = rhs + M(:, :, i)*P*M(:, :, i);
-end
-Q = lyap(A', rhs);
-fprintf(1, 'Gramians solved for in %.2f s\n', toc(lyap_time))
+% Solve for quadratic output observability Gramian Q.
+Q = lyap(A', (c'*c + M*P*M));
+fprintf(1, 'GRAMIANS SOLVED FOR IN %.2f s\n', toc(lyapTime))
 
-fprintf(1, 'Computing projection matrices\n')
-fprintf(1, '---------------------------- \n');
+fprintf(1, 'COMPUTING PROJECTION MATRICES.\n')
+fprintf(1, '------------------------------\n');
 
-% Compute square root factors of Gramians, and take the svd of U'*L
+% Compute square root factors of Gramians, and take the svd of U'*L.
 try
     U = chol(P);   
     U = U';
@@ -132,29 +109,24 @@ catch
 end
 [Z, S, Y] = svd(U'*L);
 
-% Compute projection matrices
+% Compute projection matrices.
 V = U*Z(:, 1:r)*S(1:r, 1:r)^(-1/2); % Right
 W = L*Y(:, 1:r)*S(1:r, 1:r)^(-1/2);% Left
 
-% Compute reduced order model via projection
-Ar  = W'*A*V;   Br = W'*B;   
-% Linear output
-if ~pureqo
-    Cr = C*V;   
-end
-% Quadratic output
-Mr = repmat(zeros(r, r), 1, 1, p);
-for i = 1:p
-    Mr(:, :, i) = V'*M(:, :, i)*V;
-end
+% Compute reduced order model via projection.
+Ar  = W.'*A*V;   Br = W.'*B;   
+% Linear output.
+cr = c*V;
+% Quadratic output.
+Mr = V'*M*V;
 
-% Output info
+% Output info.
 info           = struct();
 info.svs       = diag(S);
 info.leftproj  = W;
 info.rightproj = V;
 
-fprintf(1, 'Algorithm has completed\n')
-fprintf(1, 'Total time elapsed is %.2f s\n', toc(overall_start))
+fprintf(1, 'ALGORITHM HAS COMPLETED.\n')
+fprintf(1, 'TOTAL ELAPSED TIME IS %.2f s\n', toc(overallStart))
 fprintf(1, '---------------------------------------\n')
 end

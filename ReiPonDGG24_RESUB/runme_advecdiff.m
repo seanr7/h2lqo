@@ -6,7 +6,7 @@
 % This file is part of the archive Code, Data, and Results for Numerical 
 % Experiments in "$\mathcal{H}_2$ optimal model reduction of linear 
 % systems with multiple quadratic outputs".
-% Copyright (c) 2024 Sean Reiter
+% Copyright (c) 2025 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
@@ -15,7 +15,7 @@ clc;
 clear all;
 close all;
 
-% Get and set all paths
+% Get and set all paths.
 [rootpath, filename, ~] = fileparts(mfilename('fullpath'));
 loadname                = [rootpath filesep() ...
     'data' filesep() filename];
@@ -27,7 +27,7 @@ addpath([rootpath, '/drivers'])
 addpath([rootpath, '/data'])
 addpath([rootpath, '/results'])
 
-% Write .log file, put in `out' folder
+% Write .log file, put in `out' folder.
 if exist([savename '.log'], 'file') == 2
     delete([savename '.log']);
 end
@@ -41,32 +41,32 @@ fprintf(1, ['========' repmat('=', 1, length(filename)) '\n']);
 fprintf(1, '\n');
 
 
-%% Load base data.
+%% Problem data.
 fprintf(1, 'Load problem data\n');
 fprintf(1, '-----------------\n');
 
 % Advection-diffusion problem taken from [Diaz et al., 2024]
 % nx   = 3000; % No. of spatial grid points
 % adv  = 1;    % Advection parameter
-% diff = 1;   % Diffusion parameter
+% diff = 1;    % Diffusion parameter
 
 load('data/AdvecDiff_n3000.mat')
 fprintf(1, '\n');
 
-% Input, output dimensions.
+% State, input, output dimensions.
 [n, m] = size(B);
 [p, ~] = size(Clin);
 
-%% Compute reduced-order models.
+%% Reduced-order models.
 
-% Order of approximation.
+% Approximation order.
 r = 30; 
 
 % Boolean; set `true' to recompute reduced models.
-recompute = true;
-% recompute = false;
+% recompute = true;
+recompute = false;
 if recompute
-    fprintf(1, '1. Computing reduced model using LQO-TSIA (defailt, diagonal initialization).\n');
+    fprintf(1, '1. Computing reduced model using LQO-TSIA (default, diagonal initialization).\n');
     fprintf(1, '-----------------------------------------------------------------------------\n');
 
     % Input opts.
@@ -76,7 +76,7 @@ if recompute
     opts_stdInit.convMonitoring = 'approximate';
 
     % Initial model values are vanilla; diagonal matrix spread among
-    % full-order model poles, and identity input, output matrices.
+    % full-order model poles; input and output matrices are columns of I.
     opts_stdInit.Ar = -diag(logspace(0, 4, r));
     opts_stdInit.Br = eye(r, m);
     opts_stdInit.Cr = eye(p, r);
@@ -129,7 +129,7 @@ if recompute
     eigsOpts     = struct();
     eigsOpts.p   = 100;
     eigsOpts.tol = 1e-10;
-    [V, D, ~]    = eigs(A, r, 'bothendsreal', eigsOpts);
+    [V, ~, ~]    = eigs(A, r, 'bothendsreal', eigsOpts);
     [V, ~]       = qr(V, 'econ');
 
     iopts_eigsInit.Ar = (V.'*A*V);
@@ -185,9 +185,9 @@ u1 = @(t) zeros(size(t));    % Neumann input on right boundary
 ode_rtol = 1e-6; 
 tsteps   = linspace(0, Tfin, nt+1); % Time-steps
 v0       = zeros(nx, 1);            % Initial condition 
-options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(nx, nx), 'Jacobian', A, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nx^2,    'RelTol',   ode_rtol, ...
+                  'Mass',   speye(nx, nx), 'Jacobian', A, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 [t, v]   = ode15s(fAdvDiff, tsteps, v0, options);
 % Note, v is nt \times nx.
@@ -233,9 +233,9 @@ fprintf(1, '--------------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_stdInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_stdInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffred          = @(tr, vrTSIA_stdInit)(ArTSIA_stdInit*vrTSIA_stdInit + BrTSIA_stdInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_stdInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
@@ -255,9 +255,9 @@ fprintf(1, '--------------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_truncInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_truncInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffred            = @(tr, vrTSIA_truncInit)(ArTSIA_truncInit*vrTSIA_truncInit + BrTSIA_truncInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_truncInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
@@ -277,11 +277,11 @@ fprintf(1, '--------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_eigsInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_eigsInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
-fAdvDiffred         = @(tr, vrTSIA_eigsInit)(ArTSIA_eigsInit*vrTSIA_eigsInit + BrTSIA_eigsInit*[u0(tr);u1(tr)]);
+fAdvDiffred           = @(tr, vrTSIA_eigsInit)(ArTSIA_eigsInit*vrTSIA_eigsInit + BrTSIA_eigsInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_eigsInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
 % Note, vr is nt \times r.
 
@@ -297,9 +297,9 @@ fprintf(1, '----------------------------------\n');
 
 % Opts.
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArBT, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArBT, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffredbt = @(tr,vrBT)(ArBT*vrBT + BrBT*[u0(tr);u1(tr)]);
 [tr, vrBT]    = ode15s(fAdvDiffredbt, tsteps, vr0, options);
@@ -338,10 +338,10 @@ fprintf(1, 'Sinusoidal input: Relative L-infty error due to LQO-TSIA (truncated 
 fprintf(1, 'Sinusoidal input: Relative L-infty error due to LQO-TSIA (eigs initialization)     : %.16f \n', max(abs(y - yrTSIA_eigsInit)./abs(y)))
 fprintf(1, 'Sinusoidal input: Relative L-infty error due to LQO-BT                             : %.16f \n', max(abs(y - yrBT)./abs(y)))
 fprintf(1, '------------------------------------------------------------\n')
-fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (standard initialization) : %.16f \n', sum(abs(y - yrTSIA_stdInit))/sum(abs(y)))
-fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (truncated initialization): %.16f \n', sum(abs(y - yrTSIA_truncInit))/sum(abs(y)))
-fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (eigs initialization)     : %.16f \n', sum(abs(y - yrTSIA_eigsInit))/sum(abs(y)))
-fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-BT                             : %.16f \n', sum(abs(y - yrBT))/sum(abs(y)))
+fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (standard initialization)     : %.16f \n', sqrt(sum(abs(y - yrTSIA_stdInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (truncated initialization)    : %.16f \n', sqrt(sum(abs(y - yrTSIA_truncInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-TSIA (eigs initialization)         : %.16f \n', sqrt(sum(abs(y - yrTSIA_eigsInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Sinusoidal input: Relative L-2 error due to LQO-BT                                 : %.16f \n', sqrt(sum(abs(y - yrBT).^2)/sum(abs(y).^2)))
 fprintf(1, '------------------------------------------------------------\n')
 
 % Write data.
@@ -367,7 +367,6 @@ fprintf(1, '-----------------------------------------------\n');
 
 Tfin   = 30;                      % Final time for simulation
 nt     = round(Tfin*10);          % Number of time steps
-% tsteps = linspace(0, Tfin, nt+1); % Time-steps
 
 fprintf(1, 'Exponentially damped input: u0(t) = exp(-t/5)*t^2.\n');
 fprintf(1, '--------------------------------------------------\n');
@@ -379,8 +378,8 @@ u1 = @(t) zeros(size(t));    % Neumann input on right boundary
 ode_rtol = 1e-6; 
 tsteps   = linspace(0, Tfin, nt+1); % Time-steps
 v0       = zeros(nx, 1);            % Initial condition 
-options  = odeset('AbsTol',1.e-2/nx^2, 'RelTol', ode_rtol, ...
-                  'Mass', eye(nx, nx), 'Jacobian', A, ...
+options  = odeset('AbsTol', 1.e-2/nx^2,    'RelTol', ode_rtol, ...
+                  'Mass',   speye(nx, nx), 'Jacobian', A, ...
                   'MStateDependence', 'none', 'Stats','on');
 fAdvDiff = @(t,y)(A*y + B*[u0(t);u1(t)]);
 [t, v]   = ode15s(fAdvDiff, tsteps, v0, options);
@@ -427,9 +426,9 @@ fprintf(1, '--------------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_stdInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_stdInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffred          = @(tr, vrTSIA_stdInit)(ArTSIA_stdInit*vrTSIA_stdInit + BrTSIA_stdInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_stdInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
@@ -449,9 +448,9 @@ fprintf(1, '--------------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_truncInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_truncInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffred            = @(tr, vrTSIA_truncInit)(ArTSIA_truncInit*vrTSIA_truncInit + BrTSIA_truncInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_truncInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
@@ -471,11 +470,11 @@ fprintf(1, '--------------------------------------------------------\n');
 ode_rtol = 1e-6; 
 nxr      = r;
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArTSIA_eigsInit, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArTSIA_eigsInit, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
-fAdvDiffred         = @(tr, vrTSIA_BTInit)(ArTSIA_eigsInit*vrTSIA_BTInit + BrTSIA_eigsInit*[u0(tr);u1(tr)]);
+fAdvDiffred           = @(tr, vrTSIA_BTInit)(ArTSIA_eigsInit*vrTSIA_BTInit + BrTSIA_eigsInit*[u0(tr);u1(tr)]);
 [tr, vrTSIA_eigsInit] = ode15s(fAdvDiffred, tsteps, vr0, options);
 % Note, vr is nt \times r.
 
@@ -491,9 +490,9 @@ fprintf(1, '----------------------------------\n');
 
 % Opts.
 vr0      = zeros(nxr, 1); % Initial condition 
-options  = odeset('AbsTol',1.e-2/nxr^2, 'RelTol',ode_rtol, ...
-                  'Mass', eye(r,r), 'Jacobian', ArBT, ...
-                  'MStateDependence', 'none', 'Stats','on');
+options  = odeset('AbsTol', 1.e-2/nxr^2, 'RelTol',   ode_rtol, ...
+                  'Mass',   eye(r,r),    'Jacobian', ArBT, ...
+                  'MStateDependence', 'none', 'Stats', 'on');
 % Simulation.
 fAdvDiffredbt = @(tr,vrBT)(ArBT*vrBT + BrBT*[u0(tr);u1(tr)]);
 [tr, vrBT]    = ode15s(fAdvDiffredbt, tsteps, vr0, options);
@@ -532,10 +531,10 @@ fprintf(1, 'Exponential input: Relative L-infty error due to LQO-TSIA (truncated
 fprintf(1, 'Exponential input: Relative L-infty error due to LQO-TSIA (eigs initialization)     : %.16f \n', max(abs(y - yrTSIA_eigsInit)./abs(y)))
 fprintf(1, 'Exponential input: Relative L-infty error due to LQO-BT                             : %.16f \n', max(abs(y - yrBT)./abs(y)))
 fprintf(1, '------------------------------------------------------------\n')
-fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (standard initialization) : %.16f \n', sum(abs(y - yrTSIA_stdInit))/sum(abs(y)))
-fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (truncated initialization): %.16f \n', sum(abs(y - yrTSIA_truncInit))/sum(abs(y)))
-fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (eigs initialization)     : %.16f \n', sum(abs(y - yrTSIA_eigsInit))/sum(abs(y)))
-fprintf(1, 'Exponential input: Relative L-2 error due to LQO-BT                             : %.16f \n', sum(abs(y - yrBT))/sum(abs(y)))
+fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (standard initialization)     : %.16f \n', sqrt(sum(abs(y - yrTSIA_stdInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (truncated initialization)    : %.16f \n', sqrt(sum(abs(y - yrTSIA_truncInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Exponential input: Relative L-2 error due to LQO-TSIA (eigs initialization)         : %.16f \n', sqrt(sum(abs(y - yrTSIA_eigsInit).^2)/sum(abs(y).^2)))
+fprintf(1, 'Exponential input: Relative L-2 error due to LQO-BT                                 : %.16f \n', sqrt(sum(abs(y - yrBT).^2)/sum(abs(y).^2)))
 fprintf(1, '------------------------------------------------------------\n')
 
 % Write data.
@@ -555,16 +554,29 @@ end
 
 fprintf(1, '\n');
 
-
 %% Convergence study.
 fprintf(1, 'Convergence plotting.\n');
 fprintf(1, '---------------------\n');
 
+% Save change in tails from previous iteration.
+% Standard initialization.
+changeInTails_stdInit = infoTSIA_stdInit.changeInTails;
+maxIterTails_stdInit  = max(size(changeInTails_stdInit));
+
+% Truncated initialization.
+changeInTails_truncInit = infoTSIA_truncInit.changeInTails;
+maxIterTails_truncInit  = max(size(changeInTails_truncInit));
+
+% eigs initialization.
+changeInTails_eigsInit = infoTSIA_eigsInit.changeInTails;
+maxIterTails_eigsInit  = max(size(changeInTails_eigsInit));
+
+% Re-run iterations.
 fprintf(1, 'PRECOMPUTING FOM H2-NORM FOR EXACT CONVERGENCE MONITORING.\n')
 fprintf(1, '---------------------------------------------------------.\n')
 P       = lyap(A, B*B');
 Q       = lyap(A', Clin'*Clin + Mquad*P*Mquad);
-fomNorm = abs(trace(B'*Q*B));
+fomNorm = abs(trace(B'*Q*B)); % Note: This is the squared H2 norm.
 
 % 1. Standard (diagonal) initialization.
 % Reset input opts.
@@ -611,8 +623,11 @@ opts_eigsInit.fomNorm        = fomNorm;
 
 % Initial model values are obtained from projecting the dominant
 % eigenvectors.
-[V, D, ~] = eigs(A, r, 'bothendsreal', eigsOpts);
-[V, ~]    = qr(V, 'econ');
+eigsOpts     = struct();
+eigsOpts.p   = 100;
+eigsOpts.tol = 1e-10;
+[V, D, ~]    = eigs(A, r, 'bothendsreal', eigsOpts);
+[V, ~]       = qr(V, 'econ');
 
 opts_eigsInit.Ar = (V.'*A*V);
 opts_eigsInit.Br = (V.'*B);
@@ -623,29 +638,27 @@ opts_eigsInit.Mr = V.'*Mquad*V;
 
 % Standard initialization.
 changeInErrors_stdInit = infoTSIA_stdInit.changeInErrors;
-changeInTails_stdInit  = infoTSIA_stdInit.changeInTails;
-maxIter_stdInit        = max(size(changeInTails_stdInit));
+maxIterErrors_stdInit  = max(size(changeInErrors_stdInit));
 
 % Truncated initialization.
 changeInErrors_truncInit = infoTSIA_truncInit.changeInErrors;
-changeInTails_truncInit  = infoTSIA_truncInit.changeInTails;
-maxIter_truncInit        = max(size(changeInTails_truncInit));
+maxIterErrors_truncInit  = max(size(changeInErrors_truncInit));
 
 % eigs initialization.
 changeInErrors_eigsInit = infoTSIA_eigsInit.changeInErrors;
-changeInTails_eigsInit  = infoTSIA_eigsInit.changeInTails;
-maxIter_eigsInit        = max(size(changeInTails_eigsInit));
+maxIterErrors_eigsInit  = max(size(changeInErrors_eigsInit));
 
 figure(3)
 set(gca, 'fontsize', 10)
-semilogy(1:maxIter_stdInit,   changeInErrors_stdInit,   '-o', 'color', ColMat(2,:), LineWidth=1.5); hold on;
-semilogy(1:maxIter_stdInit,   changeInTails_stdInit,    '-*', 'color', ColMat(2,:), LineWidth=1.5);
-semilogy(1:maxIter_truncInit, changeInErrors_truncInit, '-o', 'color', ColMat(3,:), LineWidth=1.5);
-semilogy(1:maxIter_truncInit, changeInTails_truncInit,  '-*', 'color', ColMat(3,:), LineWidth=1.5);
-semilogy(1:maxIter_eigsInit,  changeInErrors_eigsInit,  '-o', 'color', ColMat(4,:), LineWidth=1.5); 
-semilogy(1:maxIter_eigsInit,  changeInTails_eigsInit,   '-*', 'color', ColMat(4,:), LineWidth=1.5);
+semilogy(1:maxIterErrors_stdInit,   changeInErrors_stdInit,   '-o', 'color', ColMat(2,:), LineWidth=1.5); hold on;
+semilogy(1:maxIterTails_stdInit,    changeInTails_stdInit,    '-*', 'color', ColMat(2,:), LineWidth=1.5);
+semilogy(1:maxIterErrors_truncInit, changeInErrors_truncInit, '-o', 'color', ColMat(3,:), LineWidth=1.5);
+semilogy(1:maxIterTails_truncInit,  changeInTails_truncInit,  '-*', 'color', ColMat(3,:), LineWidth=1.5);
+semilogy(1:maxIterErrors_eigsInit,  changeInErrors_eigsInit,  '-o', 'color', ColMat(4,:), LineWidth=1.5); 
+semilogy(1:maxIterTails_eigsInit,   changeInTails_eigsInit,   '-*', 'color', ColMat(4,:), LineWidth=1.5);
 
-xMax =  max([maxIter_stdInit, maxIter_truncInit, maxIter_eigsInit]);
+xMax = max([maxIterTails_stdInit, maxIterTails_truncInit, maxIterTails_eigsInit, ...
+    maxIterErrors_stdInit, maxIterErrors_truncInit, maxIterErrors_eigsInit]);
 xlim([2, xMax])
 xlabel('iteration count, $k$', 'interpreter', 'latex')
 
@@ -654,19 +667,31 @@ lgd = legend('Std (errors)', 'Std (tails)', 'Truncated (errors)', 'Truncated (ta
     'Arial', 'location', 'northeast');
 fontsize(lgd, 10, 'points')
 
-% Write data
+% Write data.
 write = 1;
 if write
     print -depsc2 results/AdvecDiff3000_r30_conv
 
-    convStdInit   = [(1:maxIter_stdInit)', changeInErrors_stdInit', changeInTails_stdInit'];
-    dlmwrite('results/AdvecDiff3000_r30_conv_stdInit.dat', convStdInit, 'delimiter', '\t', 'precision', ...
+    % Tails.
+    convTails_stdInit   = [(1:maxIterTails_stdInit)', changeInTails_stdInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convTails_stdInit.dat', convTails_stdInit, 'delimiter', '\t', 'precision', ...
         12);
-    convTruncInit = [(1:maxIter_truncInit)', changeInErrors_truncInit', changeInTails_truncInit'];
-    dlmwrite('results/AdvecDiff3000_r30_conv_truncInit.dat', convTruncInit, 'delimiter', '\t', 'precision', ...
+    convTails_truncInit = [(1:maxIterTails_truncInit)', changeInTails_truncInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convTails_truncInit.dat', convTails_truncInit, 'delimiter', '\t', 'precision', ...
         12);
-    conveigsInit    = [(1:maxIter_eigsInit)', changeInErrors_eigsInit', changeInTails_eigsInit'];
-    dlmwrite('results/AdvecDiff3000_r30_conv_eigsInit.dat', conveigsInit, 'delimiter', '\t', 'precision', ...
+    convTails_eigsInit    = [(1:maxIterTails_eigsInit)', changeInTails_eigsInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convTails_eigsInit.dat', convTails_eigsInit, 'delimiter', '\t', 'precision', ...
+        12);
+
+    % Errors.
+    convErrors_stdInit   = [(1:maxIterErrors_stdInit)', changeInErrors_stdInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convErrors_stdInit.dat', convErrors_stdInit, 'delimiter', '\t', 'precision', ...
+        12);
+    convErrors_truncInit = [(1:maxIterErrors_truncInit)', changeInErrors_truncInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convErrors_truncInit.dat', convErrors_truncInit, 'delimiter', '\t', 'precision', ...
+        12);
+    convErrors_eigsInit    = [(1:maxIterErrors_eigsInit)', changeInErrors_eigsInit'];
+    dlmwrite('results/AdvecDiff3000_r30_convErrors_eigsInit.dat', convErrors_eigsInit, 'delimiter', '\t', 'precision', ...
         12);
 end
 
@@ -677,7 +702,7 @@ fprintf(1, '---------------------------------------------------------------\n')
 rmax                 = 30;
 errorsTSIA_stdInit   = zeros(rmax/2, 1);
 errorsTSIA_truncInit = zeros(rmax/2, 1);
-errorsTSIA_BTInit    = zeros(rmax/2, 1);
+errorsTSIA_eigsInit  = zeros(rmax/2, 1);
 errorsBT             = zeros(rmax/2, 1);
 
 % Full model H2 norm saved from previous section.
@@ -712,8 +737,8 @@ for r = 2:2:rmax
     opts_stdInit                = struct();
     opts_stdInit.tol            = 10e-14;
     opts_stdInit.maxIter        = 200; 
-    opts_stdInit.convMonitoring = 'exact';
-    opts_stdInit.fomNorm        = fomNorm;
+    opts_stdInit.convMonitoring = 'approximate';
+    % opts_stdInit.fomNorm        = fomNorm;
 
     % Initial model values are vanilla; diagonal matrix spread among
     % full-order model poles, and identity input, output matrices.
@@ -724,9 +749,8 @@ for r = 2:2:rmax
     [ArTSIA_stdInit, BrTSIA_stdInit, ClinrTSIA_stdInit, MquadrTSIA_stdInit, infoTSIA_stdInit] ...
         = mimo_lqotsia(A, B, Clin, Mquad, r, opts_stdInit);
 
-    % Squared H2 errors relative to squared H2 error of FOM are computed
-    % throughout iteration.
-    errorsTSIA_stdInit(k) = infoTSIA_stdInit.errors(end);
+    errorsTSIA_stdInit(k, :) = (compute_lqoH2_error(A, B, Clin, Mquad, ...
+        ArTSIA_stdInit, BrTSIA_stdInit, ClinrTSIA_stdInit, MquadrTSIA_stdInit, sqrt(fomNorm)))^2;
     fprintf(1, 'Squared H2 error due to LQOTSIA (std) relative to that of the FOM is: ||G - Gr||^2_H2/||G||^2_H2 = %.16f\n', ...
         errorsTSIA_stdInit(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n');
@@ -738,8 +762,8 @@ for r = 2:2:rmax
     opts_truncInit                = struct();
     opts_truncInit.tol            = 10e-14;
     opts_truncInit.maxIter        = 200; 
-    opts_truncInit.convMonitoring = 'exact';
-    opts_truncInit.fomNorm        = fomNorm;
+    opts_truncInit.convMonitoring = 'approximate';
+    % opts_truncInit.fomNorm        = fomNorm;
 
     % Initial model values are obtained by truncating full-order matrices.
     opts_truncInit.Ar = A(1:r, 1:r);
@@ -749,9 +773,8 @@ for r = 2:2:rmax
     [ArTSIA_truncInit, BrTSIA_truncInit, ClinrTSIA_truncInit, MquadrTSIA_truncInit, infoTSIA_truncInit] ...
         = mimo_lqotsia(A, B, Clin, Mquad, r, opts_truncInit);
 
-    % Squared H2 errors relative to squared H2 error of FOM are computed
-    % throughout iteration.
-    errorsTSIA_truncInit(k) = infoTSIA_truncInit.errors(end);
+    errorsTSIA_truncInit(k, :) = (compute_lqoH2_error(A, B, Clin, Mquad, ...
+        ArTSIA_truncInit, BrTSIA_truncInit, ClinrTSIA_truncInit, MquadrTSIA_truncInit, sqrt(fomNorm)))^2;
     fprintf(1, 'Squared H2 error due to LQOTSIA (truncated) relative to that of the FOM is: ||G - Gr||^2_H2/||G||^2_H2 = %.16f\n', ...
         errorsTSIA_truncInit(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n');
@@ -763,13 +786,15 @@ for r = 2:2:rmax
     opts_eigsInit                = struct();
     opts_eigsInit.tol            = 10e-14;
     opts_eigsInit.maxIter        = 200; 
-    opts_eigsInit.convMonitoring = 'exact';
-    opts_eigsInit.fomNorm        = fomNorm;
+    opts_eigsInit.convMonitoring = 'approximate';
 
     % Initial model values are obtained from projecting the dominant
     % eigenvectors.
-    [V, D, ~] = eigs(A, r, 'bothendsreal', eigsOpts);
-    [V, ~]    = qr(V, 'econ');
+    eigsOpts     = struct();
+    eigsOpts.p   = 100;
+    eigsOpts.tol = 1e-10;
+    [V, D, ~]    = eigs(A, r, 'bothendsreal', eigsOpts);
+    [V, ~]       = qr(V, 'econ');
 
     opts_eigsInit.Ar = (V.'*A*V);
     opts_eigsInit.Br = (V.'*B);
@@ -778,11 +803,10 @@ for r = 2:2:rmax
     [ArTSIA_eigsInit, BrTSIA_eigsInit, ClinrTSIA_eigsInit, MquadrTSIA_eigsInit, infoTSIA_eigsInit] ...
         = mimo_lqotsia(A, B, Clin, Mquad, r, opts_eigsInit);
     
-    % Squared H2 errors relative to squared H2 error of FOM are computed
-    % throughout iteration.
-    errorsTSIA_BTInit(k) = infoTSIA_eigsInit.errors(end);
+    errorsTSIA_eigsInit(k, :) = (compute_lqoH2_error(A, B, Clin, Mquad, ...
+        ArTSIA_eigsInit, BrTSIA_eigsInit, ClinrTSIA_eigsInit, MquadrTSIA_eigsInit, sqrt(fomNorm)))^2;
     fprintf(1, 'Squared H2 error due to LQOTSIA (BT) relative to that of the FOM is: ||G - Gr||^2_H2/||G||^2_H2 = %.16f\n', ...
-        errorsTSIA_BTInit(k, :));
+        errorsTSIA_eigsInit(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n');
 
     fprintf(1, '4. Computing reduced model using LQO-BT.\n');
@@ -795,14 +819,7 @@ for r = 2:2:rmax
     % Compute reduced order model via projection.
     ArBT = W'*A*V;   BrBT = W'*B;  ClinrBT = Clin*V;   MquadrBT = V'*Mquad*V;
 
-    % H2 error using trace formula.
-    AerrBT         = [A, zeros(nx, r); zeros(r, nx), ArBT]; 
-    BerrBT         = [B; BrBT];
-    CerrBT         = [Clin, - ClinrBT]; 
-    MerrBT         = [Mquad, zeros(nx, r); zeros(r, nx), -MquadrBT];
-    PerrBT         = lyap(AerrBT, BerrBT*BerrBT');                  
-    QerrBT         = lyap(AerrBT', CerrBT'*CerrBT + MerrBT*PerrBT*MerrBT);
-    errorsBT(k, :) = abs(trace(BerrBT'*QerrBT*BerrBT))/fomNorm;
+    errorsBT(k, :) = (compute_lqoH2_error(A, B, Clin, Mquad, ArBT, BrBT, ClinrBT, MquadrBT, sqrt(fomNorm)))^2;
     fprintf(1, 'Squared H2 error due to LQOBT relative to that of the FOM is: ||G - Gr||^2_H2/||G||^2_H2 = %.16f\n', ...
         errorsBT(k, :));
     fprintf(1, '------------------------------------------------------------------------------\n')
@@ -810,7 +827,7 @@ end
 
 write = 1;
 if write
-    relh2errors = [(2:2:rmax)', errorsTSIA_stdInit, errorsTSIA_truncInit, errorsTSIA_BTInit, errorsBT];
+    relh2errors = [(2:2:rmax)', errorsTSIA_stdInit, errorsTSIA_truncInit, errorsTSIA_eigsInit, errorsBT];
     dlmwrite('results/AdvecDiff3000_H2errors.dat', relh2errors, 'delimiter', '\t', 'precision', ...
         8);
 end
@@ -824,7 +841,7 @@ figure(4)
 set(gca, 'fontsize', 10)
 semilogy(2:2:rmax, errorsTSIA_stdInit(1:rmax/2),   '-o', 'color', ColMat(2,:), LineWidth=1.5); hold on;
 semilogy(2:2:rmax, errorsTSIA_truncInit(1:rmax/2), '-o', 'color', ColMat(3,:), LineWidth=1.5)
-semilogy(2:2:rmax, errorsTSIA_BTInit(1:rmax/2),    '-o', 'color', ColMat(4,:), LineWidth=1.5)
+semilogy(2:2:rmax, errorsTSIA_eigsInit(1:rmax/2),    '-o', 'color', ColMat(4,:), LineWidth=1.5)
 semilogy(2:2:rmax, errorsBT(1:rmax/2),             '-*', 'color', ColMat(5,:), LineWidth=1.5)
 xlim([2,rmax])
 lgd = legend('LQO-TSIA (std)', 'LQO-TSIA (trunc)', 'LQO-TSIA (eigs)', 'LQO-BT', 'interpreter', 'latex', 'FontName', 'Arial',...

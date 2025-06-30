@@ -60,7 +60,7 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
 %   |                 | approximate calculation of the squared H2 error   |
 %   |                 | (default 'approximate')                           |
 %   +-----------------+---------------------------------------------------+
-%   | fomNorm         | optional argument, value of the H2 norm of the    |
+%   | fomNorm         | optional argument, squared H2 norm of the         |
 %   |                 | fom; use in computing a hierarchy of ROMs         |
 %   |                 | (default [])                                      |
 %   +-----------------+---------------------------------------------------+
@@ -97,12 +97,12 @@ function [Ar, Br, Cr, Mr, info] = mimo_lqotsia(A, B, C, M, r, opts)
 %
 
 %
-% Copyright (c) 2024 Sean Reiter
+% Copyright (c) 2025 Sean Reiter
 % All rights reserved.
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 9/23/2024
+% Last editied: 6/23/2025
 %
 
 %%
@@ -193,11 +193,11 @@ if exactConv
     if ~isempty(opts.fomNorm)
         % If FOM H2 norm is passed.
         h = opts.fomNorm;
-        fprintf(1, 'H2 NORM OF THE FULL-ORDER MODEL PASSED AS AN ARG.\n');
+        fprintf(1, '(Squared) H2 NORM OF THE FULL-ORDER MODEL PASSED AS AN ARG.\n');
         fprintf(1, '--------------------------------------------------\n');
     else
         normStart = tic;
-        fprintf(1, 'COMPUTING H2 NORM OF FULL-ORDER MODEL.\n');
+        fprintf(1, 'COMPUTING (Squared) H2 NORM OF FULL-ORDER MODEL.\n');
         fprintf(1, '--------------------------------------------------\n');
         P   = lyap(A, B*B');
         rhs = C'*C; 
@@ -208,11 +208,11 @@ if exactConv
         
         % (Squared) H2 norm of full-order model.
         h  = trace(B'*Q*B); 
-        fprintf(1, 'H2 NORM COMPUTED IN %d s\n', toc(normStart));
+        fprintf(1, '(Squared) H2 NORM COMPUTED IN %d s\n', toc(normStart));
         fprintf(1, '--------------------------------------------------\n');
     end
 else
-    fprintf(1, 'H2 NORM NOT COMPUTED OR PASSED; MONITORING TAILS FOR CONVERGENCE.\n');
+    fprintf(1, '(Squared) H2 NORM NOT COMPUTED OR PASSED; MONITORING TAILS FOR CONVERGENCE.\n');
     fprintf(1, '-----------------------------------------------------------------\n');
 end
 
@@ -249,7 +249,7 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     fprintf(1, '--------------------------------------------------\n');
 
     % Solve for right projection matrix V = X in (1).
-    % XCheck = lyap(A, Ar', B*Br');
+    % X = lyap(A, Ar', B*Br');
     X = mess_sylvester_sparse_dense(A, 'N', Ar, 'T', B*Br', speye(n, n), eye(r, r));
 
     % Solve for left projection matrix W = Z in (2).
@@ -257,7 +257,7 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     for i = 1:p
         rhs = rhs - 2*M(:, :, i)*X*Mr(:, :, i);
     end
-    % ZCheck = lyap(full(A'), Ar, rhs);
+    % Z = lyap(full(A'), Ar, rhs);
     Z = mess_sylvester_sparse_dense(A, 'T', Ar, 'N', rhs, speye(n, n), eye(r, r));
     
     % Orthonormalize projection matrice.
@@ -271,7 +271,7 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     end
   
     iterate = iterate + 1;  
-    fprintf(1, 'COMPUTING H2 ERROR AT CURRENT ITERATE.\n');
+    fprintf(1, 'COMPUTING (Squared) H2 ERROR AT CURRENT ITERATE.\n');
     fprintf(1, '--------------------------------------------------\n');
     Pr    = lyap(Ar, Br*Br'); 
     rhsQr = Cr'*Cr; 
@@ -289,7 +289,7 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     tails(iterate)  = trace(Br'*Qr*Br) + 2*trace(B'*Y*Br); % `Tail' of H2 error
     if exactConv
         errors(iterate) = abs((h + tails(iterate))/h); % Relatve, squared H2 error
-        fprintf(1, 'RELATIVE, SQUARED H2 ERROR OF CURRENT MODEL ITERATE IS: e(k) = ||G - Gr(k)||_H2^2/||G||_H2^2 = %.12f\n', ...
+        fprintf(1, 'RELATIVE, (Squared) H2 ERROR OF CURRENT MODEL ITERATE IS: e(k) = ||G - Gr(k)||_H2^2/||G||_H2^2 = %.12f\n', ...
             errors(iterate));
     else
         errors(iterate) = tails(iterate);
@@ -299,9 +299,9 @@ while (changeInErrors(iterate) > opts.tol && iterate <= opts.maxIter)
     changeInErrors(iterate) = abs(errors(iterate) - errors(iterate-1))/abs(errors(1));
     changeInTails(iterate)  = abs(tails(iterate) - tails(iterate-1))/abs(tails(1));
     if exactConv
-        fprintf('RELATIVE CHANGE IN SQUARED H2 ERRORS IS |e(k) - e(k-1)|/e(1) = %.12f \n', changeInErrors(iterate))
+        fprintf('RELATIVE CHANGE IN (Squared) H2 ERRORS IS |e(k) - e(k-1)|/e(1) = %.12f \n', changeInErrors(iterate))
     else
-        fprintf('CHANGE IN VARIABLE TAILS OF THE SQUARED H2 ERROR IS |t(k) - t(k-1)|/t(1) = %.12f \n', changeInErrors(iterate))
+        fprintf('NORMALIZED CHANGE IN VARIABLE TAILS OF THE (Squared) H2 ERROR IS |t(k) - t(k-1)|/t(1) = %.12f \n', changeInErrors(iterate))
     end
     fprintf(1, '--------------------------------------------------\n');
     
