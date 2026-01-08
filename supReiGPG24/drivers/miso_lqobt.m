@@ -64,7 +64,7 @@ function [Ar, Br, cr, Mr, info] = miso_lqobt(A, B, c, M, r)
 % License: BSD 2-Clause license (see COPYING)
 %
 % Virginia Tech, USA
-% Last editied: 4/30/2024
+% Last editied: 4/30/2025
 %
 
 %%

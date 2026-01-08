@@ -379,8 +379,6 @@ while (poleChange(iterate) > opts.tol && iterate <= opts.maxIter)
         errorStart = tic;
         fprintf(1, 'COMPUTING H2 ERROR OF CURRENT MODEL ITERATE.\n');
         fprintf(1, '--------------------------------------------------\n');
-        % Reduced model error; use Gramian-based formula.
-        Berr = [B; Er\Br];
         
         % Off-diagonal, (1,2) and (2,1), blocks of error Gramians.
         % Xr = lyap(A,  (Er\Ar).', B*(Er\Br).');
@@ -392,11 +390,7 @@ while (poleChange(iterate) > opts.tol && iterate <= opts.maxIter)
         Pr = lyap(Er\Ar,    (Er\Br)*(Er\Br)');                  
         Qr = lyap((Er\Ar)', cr*cr' + Mr*Pr*Mr);
 
-        % Error Gramian.
-        % Qerr = [Q, Zr; Zr.', Qr];
-
         % Save relative H2 error of current model iterate.
-        % H2errors(:, iterate) = sqrt(abs(trace(Berr'*Qerr*Berr)))/fomH2norm;
         H2errors(:, iterate) = sqrt(abs(fomH2norm^2 + trace((Er\Br)'*Qr*(Er\Br)) + ...
             2*trace(B'*Zr*(Er\Br))))/fomH2norm;
 
